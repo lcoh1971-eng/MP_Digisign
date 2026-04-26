@@ -1,1 +1,1920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administración — Marriott Panama Signage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#B8962E;--gold-l:#D4AF5A;--gold-pale:#F5EDD6;--dark:#1A1A1A;--surface:#F8F6F1;--border:rgba(184,150,46,0.25);--text:#2C2C2A;--muted:#888780;--white:#fff;--danger:#A32D2D;--success:#3B6D11;--marriott:#A0213F;}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:999}
+.login-box{background:#222;border:1px solid var(--border);border-radius:14px;padding:48px 40px;width:360px;text-align:center}
+.login-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:28px;margin-top:8px}
+.login-box input{width:100%;padding:11px 14px;background:#2A2A2A;border:1px solid rgba(184,150,46,.3);border-radius:7px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px}
+.login-box input:focus{border-color:var(--gold)}
+.login-btn{width:100%;padding:11px;background:var(--marriott);border:none;border-radius:7px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+.login-btn:hover{background:#c02850}
+.login-err{color:#E57373;font-size:12px;margin-top:10px;display:none}
+
+/* TOPBAR */
+.topbar{background:var(--dark);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;position:sticky;top:0;z-index:100}
+.topbar-nav{display:flex;gap:4px}
+.nav-btn{padding:7px 16px;background:transparent;border:none;color:rgba(255,255,255,.45);font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .15s}
+.nav-btn.active{background:rgba(184,150,46,.15);color:var(--gold-l)}
+.nav-btn:hover:not(.active){background:rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
+.logout-btn{padding:6px 14px;border:1px solid rgba(184,150,46,.25);background:transparent;color:rgba(255,255,255,.4);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;border-radius:5px}
+.logout-btn:hover{color:var(--gold-l);border-color:var(--gold)}
+
+/* PANELS */
+.panel{display:none;min-height:calc(100vh - 54px)}.panel.active{display:block}
+
+/* SIDEBAR + MAIN */
+.ev-layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 54px)}
+.sidebar{background:var(--dark);padding:20px 0;border-right:1px solid var(--border)}
+.sb-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 18px 12px}
+.salon-item{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;cursor:pointer;transition:background .15s}
+.salon-item:hover{background:rgba(255,255,255,.04)}
+.salon-item.sel{background:rgba(184,150,46,.12);border-left:2px solid var(--gold)}
+.salon-nm{font-size:13px;color:rgba(255,255,255,.8)}
+.salon-st{font-size:10px;padding:2px 8px;border-radius:20px}
+.st-on{background:rgba(59,109,17,.25);color:#7FBB3A}
+.st-off{background:rgba(136,135,128,.15);color:rgba(255,255,255,.3)}
+.sb-add{margin:12px 14px 0;width:calc(100% - 28px);padding:8px;background:rgba(184,150,46,.1);border:1px solid var(--border);color:var(--gold-l);font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;border-radius:5px}
+.sb-add:hover{background:rgba(184,150,46,.2)}
+.main{padding:28px 32px}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400}
+.sec-sub{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.date-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.date-nav button{width:30px;height:30px;border:0.5px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;font-size:14px;color:var(--muted)}
+.date-nav button:hover{border-color:var(--gold);color:var(--gold)}
+.date-nav input[type=date]{padding:6px 10px;border:0.5px solid var(--border);border-radius:6px;background:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none}
+
+/* EVENT CARDS */
+.ev-list{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.ev-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:14px 18px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;transition:border-color .15s}
+.ev-card:hover{border-color:rgba(184,150,46,.5)}
+.ev-card.paused{border-color:rgba(163,45,45,.4);background:rgba(252,235,235,.3)}
+.ev-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.ev-nm{font-size:14px;font-weight:500}
+.ev-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--gold-pale);color:#7A6115;letter-spacing:.05em}
+.ev-badge-live{background:rgba(59,109,17,.15);color:#3B6D11}
+.ev-badge-paused{background:rgba(163,45,45,.15);color:var(--danger)}
+.ev-meta{font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.ev-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ic-btn{width:30px;height:30px;border:.5px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.ic-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-pale)}
+.ic-btn.del:hover{border-color:var(--danger);color:var(--danger);background:rgba(163,45,45,.06)}
+.ic-btn.pause-btn{font-size:11px;width:auto;padding:0 10px;letter-spacing:.04em}
+.ic-btn.pause-btn.paused{border-color:var(--success);color:var(--success)}
+.ic-btn.design-btn{font-size:11px;width:auto;padding:0 10px;letter-spacing:.04em;border-color:var(--marriott);color:var(--marriott)}
+.ic-btn.design-btn:hover{background:rgba(160,33,63,.08)}
+.empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-btn{padding:5px 14px;border-radius:20px;border:1.5px solid transparent;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;letter-spacing:.04em;transition:all .15s;background:transparent;}
+.filter-btn.all{border-color:rgba(136,135,128,.3);color:var(--muted);}
+.filter-btn.all.active{background:var(--dark);color:#fff;border-color:var(--dark);}
+.filter-btn.live{border-color:#3B6D11;color:#3B6D11;}
+.filter-btn.live.active{background:#3B6D11;color:#fff;}
+.filter-btn.upcoming{border-color:#B8962E;color:#B8962E;}
+.filter-btn.upcoming.active{background:#B8962E;color:#fff;}
+.filter-btn.done{border-color:#888780;color:#888780;}
+.filter-btn.done.active{background:#888780;color:#fff;}
+.filter-btn.paused-f{border-color:#A0213F;color:#A0213F;}
+.filter-btn.paused-f.active{background:#A0213F;color:#fff;}
+
+/* STATUS FLAGS */
+.ev-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600;letter-spacing:.04em;}
+.ev-status.live{background:rgba(59,109,17,.15);color:#3B6D11;border:1px solid rgba(59,109,17,.3);}
+.ev-status.upcoming{background:rgba(184,150,46,.15);color:#7A6115;border:1px solid rgba(184,150,46,.3);}
+.ev-status.done{background:rgba(136,135,128,.12);color:#888780;border:1px solid rgba(136,135,128,.25);}
+.ev-status.paused{background:rgba(160,33,63,.12);color:#A0213F;border:1px solid rgba(160,33,63,.25);}
+.ev-card.done{opacity:.65;}
+.ev-card.done:hover{opacity:.85;}
+
+/* FORMS */
+.form-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:24px;margin-bottom:16px}
+.form-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;padding-bottom:14px;border-bottom:.5px solid var(--border)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.s1{grid-template-columns:1fr}.form-row.s3{grid-template-columns:1fr 1fr 1fr}
+label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=date],input[type=time],input[type=url],input[type=number],select,textarea{width:100%;padding:9px 12px;border:.5px solid rgba(136,135,128,.4);border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
+input[type=range]{width:100%;accent-color:var(--marriott)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);background:var(--white)}
+textarea{resize:none;height:58px}
+
+/* MEDIA */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px}
+.media-item{border:.5px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.media-thumb{position:relative;aspect-ratio:16/9;background:#eee}
+.media-thumb img,.media-thumb video{width:100%;height:100%;object-fit:cover}
+.media-thumb .media-del{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(163,45,45,.85);border:none;border-radius:50%;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.media-thumb .media-type{position:absolute;bottom:4px;left:4px;font-size:9px;background:rgba(0,0,0,.6);color:#fff;padding:2px 6px;border-radius:10px}
+.media-dur{padding:6px 8px;display:flex;align-items:center;gap:6px}
+.media-dur label{font-size:10px;color:var(--muted);margin:0;text-transform:none;letter-spacing:0;white-space:nowrap}
+.media-dur input{width:52px;padding:3px 6px;font-size:12px;text-align:center}
+
+.color-row{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+.cswatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s}
+.cswatch.sel{border-color:var(--dark)}
+.form-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:18px;border-top:.5px solid var(--border)}
+.btn-sec{padding:8px 16px;border:.5px solid var(--border);background:transparent;border-radius:6px;font-size:13px;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif}
+.btn-pri{padding:8px 22px;background:var(--marriott);border:none;border-radius:6px;font-size:13px;cursor:pointer;color:#fff;font-family:'DM Sans',sans-serif;font-weight:500;transition:background .15s}
+.btn-pri:hover{background:#c02850}
+.btn-pri:disabled{background:var(--muted);cursor:not-allowed}
+.saving{font-size:12px;color:var(--muted);display:none;align-items:center;gap:6px}
+.saving.show{display:flex}
+
+/* AGENDA */
+.agenda-wrap{padding:28px 32px}
+.ag-time{padding:10px 14px;font-size:11px;color:var(--muted);border-right:.5px solid var(--border);background:rgba(248,246,241,.7)}
+.ag-slot{padding:6px 10px;border-right:.5px solid var(--border);min-height:44px;position:relative}
+.ag-slot:last-child{border-right:none}
+.ag-ev{border-radius:5px;padding:5px 8px;font-size:11px}
+.ag-ev-nm{font-weight:500}.ag-ev-hr{font-size:10px;opacity:.7;margin-top:1px}
+.type-boda{background:rgba(184,150,46,.15);border-left:2px solid var(--gold)}.type-boda .ag-ev-nm{color:#7A6115}
+.type-corp{background:rgba(55,138,221,.1);border-left:2px solid #378ADD}.type-corp .ag-ev-nm{color:#185FA5}
+.type-soc{background:rgba(212,83,126,.1);border-left:2px solid #D4537E}.type-soc .ag-ev-nm{color:#993556}
+.type-otro{background:rgba(136,135,128,.12);border-left:2px solid var(--muted)}.type-otro .ag-ev-nm{color:var(--muted)}
+
+/* SALONES */
+.salones-wrap{padding:28px 32px}
+.salones-tbl{width:100%;border-collapse:collapse;background:var(--white);border-radius:10px;overflow:hidden;border:.5px solid var(--border)}
+.salones-tbl th{background:var(--dark);color:rgba(255,255,255,.55);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:12px 16px;text-align:left;font-weight:400}
+.salones-tbl td{padding:12px 16px;border-bottom:.5px solid var(--border);font-size:13px}
+.salones-tbl tr:last-child td{border-bottom:none}
+.salon-url{font-size:11px;color:var(--muted);font-family:monospace}
+.toggle-sw{width:36px;height:20px;background:var(--muted);border-radius:20px;cursor:pointer;position:relative;transition:background .2s;border:none}
+.toggle-sw.on{background:var(--success)}
+.toggle-sw::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle-sw.on::after{left:19px}
+
+/* ══ VISUAL DESIGNER ══ */
+#designer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;flex-direction:column;}
+.designer-topbar{background:#111;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;flex-shrink:0;}
+.designer-title{font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.06em}
+.designer-actions{display:flex;gap:8px}
+.d-btn{padding:7px 16px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif;font-size:12px;border-radius:6px;cursor:pointer;transition:all .15s}
+.d-btn:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.d-btn.primary{background:var(--marriott);border-color:var(--marriott);color:#fff}
+.d-btn.primary:hover{background:#c02850}
+
+.designer-body{display:grid;grid-template-columns:1fr 280px;flex:1;overflow:hidden}
+.designer-canvas-wrap{position:relative;display:flex;align-items:center;justify-content:center;background:#0D0D0B;overflow:hidden;padding:20px;}
+.designer-canvas{position:relative;background:#1A1A1A;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+.d-canvas-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.d-canvas-overlay{position:absolute;inset:0;}
+
+/* Draggable elements */
+.d-element{position:absolute;cursor:move;user-select:none;padding:4px;}
+.d-element:hover .d-handle{opacity:1;}
+.d-element.selected .d-handle{opacity:1;border-color:rgba(255,255,255,.8);}
+.d-handle{position:absolute;inset:-4px;border:1.5px dashed rgba(255,255,255,.3);border-radius:4px;pointer-events:none;opacity:0;transition:opacity .15s;}
+.d-el-tipo{letter-spacing:.2em;text-transform:uppercase;color:#D4AF5A;font-family:'DM Sans',sans-serif;}
+.d-el-nombre{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.6);}
+.d-el-sub{color:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif;}
+.d-el-divider{background:#B8962E;height:1px;}
+.d-el-hora{background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;display:inline-flex;flex-direction:column;align-items:center;}
+.d-el-hora-lbl{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.d-el-hora-val{font-weight:500;color:#B8962E;}
+.d-el-salon{font-family:'DM Sans',sans-serif;}
+.d-el-salon-lbl{font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.d-el-salon-nm{font-family:'Cormorant Garamond',serif;color:rgba(255,255,255,.9);font-weight:400;}
+.d-el-logo img{display:block;}
+
+/* Designer sidebar */
+.designer-sidebar{background:#161616;border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:16px;}
+.d-section{margin-bottom:20px;}
+.d-section-title{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);}
+.d-prop{margin-bottom:10px;}
+.d-prop label{display:block;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase;}
+.d-prop input[type=range]{width:100%;accent-color:var(--marriott);}
+.d-prop input[type=number]{width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.d-prop select{width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.d-prop-row{display:flex;align-items:center;justify-content:space-between;}
+.d-prop-val{font-size:11px;color:var(--marriott);min-width:36px;text-align:right;}
+.d-toggle{display:flex;align-items:center;gap:8px;}
+.d-toggle input[type=checkbox]{width:16px;height:16px;accent-color:var(--marriott);}
+.d-toggle label{font-size:12px;color:rgba(255,255,255,.6);margin:0;text-transform:none;letter-spacing:0;}
+.d-el-list{display:flex;flex-direction:column;gap:4px;}
+.d-el-item{padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.5);transition:background .15s;}
+.d-el-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.8);}
+.d-el-item.active{background:rgba(160,33,63,.2);color:#fff;border-left:2px solid var(--marriott);}
+.d-el-item span{font-size:14px;}
+
+/* PREVIEW MODAL */
+#preview-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;}
+.preview-modal-top{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:960px;padding:0 0 14px;flex-shrink:0;}
+.preview-modal-title{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.06em;}
+.preview-close{padding:6px 16px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:12px;border-radius:6px;cursor:pointer;}
+.preview-close:hover{color:#fff;border-color:rgba(255,255,255,.5);}
+.preview-frame{position:relative;width:100%;max-width:960px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);}
+.preview-frame-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.preview-frame-overlay{position:absolute;inset:0;}
+.preview-frame-content{position:absolute;z-index:2;}
+.preview-frame-salon{position:absolute;z-index:3;top:3%;left:3%;}
+.preview-frame-logo{position:absolute;z-index:3;top:3%;right:3%;}
+.preview-frame-clock{position:absolute;z-index:3;bottom:3%;left:3%;font-size:1vw;color:rgba(255,255,255,.5);}
+.pf-salon-lbl{font-size:.7vw;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.45);}
+.pf-salon-nm{font-family:'Cormorant Garamond',serif;color:rgba(255,255,255,.9);font-weight:400;}
+.pf-tipo{letter-spacing:.25em;text-transform:uppercase;color:#D4AF5A;}
+.pf-nombre{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.6);}
+.pf-sub{color:rgba(255,255,255,.6);}
+.pf-divider{height:1px;margin:8px 0;}
+.pf-hora{display:inline-flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;margin-top:10px;}
+.pf-hora-lbl{font-size:.6vw;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);}
+.pf-hora-val{font-weight:500;}
+
+/* UPSELLING */
+.up-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:20px;}
+.up-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;overflow:hidden;}
+.up-card-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--border);}
+.up-card-title{font-size:14px;font-weight:500;}
+.up-card-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.up-card-body{padding:14px 18px;}
+.up-timeline{display:flex;flex-direction:column;gap:6px;}
+.up-slide-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface);border-radius:6px;border:.5px solid var(--border);}
+.up-slide-thumb{width:48px;height:30px;border-radius:4px;object-fit:cover;background:#eee;flex-shrink:0;}
+.up-slide-thumb-vid{width:48px;height:30px;border-radius:4px;background:#111;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.up-slide-info{flex:1;font-size:11px;color:var(--muted);}
+.up-slide-dur{font-size:11px;font-weight:500;color:var(--marriott);white-space:nowrap;}
+.up-badge-all{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(59,109,17,.12);color:#3B6D11;font-weight:500;}
+.up-badge-specific{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(184,150,46,.12);color:#7A6115;font-weight:500;}
+.up-badge-off{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(136,135,128,.12);color:var(--muted);font-weight:500;}
+
+/* UPSELLING FORM */
+.up-form-wrap{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;}
+.up-salon-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px;}
+.up-salon-check{display:flex;align-items:center;gap:8px;padding:6px 10px;border:.5px solid var(--border);border-radius:6px;cursor:pointer;}
+.up-salon-check input{width:15px;height:15px;accent-color:var(--marriott);}
+.up-salon-check label{font-size:12px;cursor:pointer;}
+.up-timeline-builder{margin-top:12px;}
+.up-timeline-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.up-tl-item{display:grid;grid-template-columns:56px 1fr auto auto;gap:8px;align-items:center;padding:8px;background:var(--surface);border-radius:8px;border:.5px solid var(--border);}
+.up-tl-thumb{width:56px;height:35px;border-radius:4px;object-fit:cover;background:#eee;}
+.up-tl-thumb-vid{width:56px;height:35px;border-radius:4px;background:#111;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.up-tl-name{font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.up-tl-type{font-size:10px;color:var(--muted);}
+.up-tl-dur{display:flex;align-items:center;gap:4px;}
+.up-tl-dur input{width:52px;padding:4px 6px;border:.5px solid var(--border);border-radius:5px;font-size:12px;text-align:center;font-family:'DM Sans',sans-serif;}
+.up-tl-dur span{font-size:11px;color:var(--muted);}
+
+/* UPSELLING DESIGNER */
+#up-designer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:250;display:none;flex-direction:column;height:100vh;}
+.up-designer-topbar{background:#111;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;flex-shrink:0;}
+.up-designer-body{display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;height:calc(100vh - 52px);}
+.up-canvas-wrap{display:flex;align-items:center;justify-content:center;background:#0D0D0B;padding:20px;overflow:hidden;min-height:0;height:100%;}
+.up-canvas{position:relative;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+.up-canvas-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.up-canvas-overlay{position:absolute;inset:0;}
+.up-d-element{position:absolute;cursor:move;user-select:none;padding:4px;}
+.up-d-element .d-handle{position:absolute;inset:-4px;border:1.5px dashed rgba(255,255,255,.3);border-radius:4px;pointer-events:none;opacity:0;transition:opacity .15s;}
+.up-d-element:hover .d-handle,.up-d-element.selected .d-handle{opacity:1;}
+.up-designer-sidebar{background:#161616;border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:16px;}
+.up-d-section{margin-bottom:20px;}
+.up-d-section-title{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);}
+.up-d-prop{margin-bottom:10px;}
+.up-d-prop label{display:block;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase;}
+.up-d-prop input[type=range]{width:100%;accent-color:var(--marriott);}
+.up-d-prop input[type=text],.up-d-prop input[type=url],.up-d-prop input[type=number],.up-d-prop select{width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.up-d-prop-row{display:flex;align-items:center;justify-content:space-between;}
+.up-d-prop-val{font-size:11px;color:var(--marriott);min-width:36px;text-align:right;}
+.up-el-list{display:flex;flex-direction:column;gap:4px;}
+.up-el-item{padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.5);transition:background .15s;}
+.up-el-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.8);}
+.up-el-item.active{background:rgba(160,33,63,.2);color:#fff;border-left:2px solid var(--marriott);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;border-left:3px solid var(--marriott);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{border-left-color:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="background:white;padding:12px 20px;border-radius:8px;display:inline-block;margin-bottom:12px;">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:70px;width:auto;display:block;">
+    </div>
+    <div class="login-sub">Gestión de Señalización DigiSign</div>
+    <input type="password" id="pwd-input" placeholder="Contraseña de administrador" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="login-err">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar" style="display:none" id="topbar">
+  <div>
+    <div style="background:white;padding:4px 10px;border-radius:5px;display:inline-block;">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:28px;width:auto;display:block;">
+    </div>
+  </div>
+  <div class="topbar-nav">
+    <button class="nav-btn active" onclick="showPanel('eventos')">Eventos</button>
+    <button class="nav-btn" onclick="showPanel('agenda')">Agenda</button>
+    <button class="nav-btn" onclick="showPanel('salones')">Salones</button>
+    <button class="nav-btn" onclick="showPanel('upselling')">🎯 Upselling</button>
+    <a href="/bi" class="nav-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">📊 BI</a>
+  </div>
+  <button class="logout-btn" onclick="doLogout()">Salir</button>
+</div>
+
+<!-- EVENTOS -->
+<div id="panel-eventos" class="panel active" style="display:none">
+  <div class="ev-layout">
+    <aside class="sidebar">
+      <div class="sb-title">Salones</div>
+      <div id="sidebar-salones"></div>
+      <button class="sb-add" onclick="openSalonForm()">+ Agregar salón</button>
+    </aside>
+    <div class="main">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title" id="ev-salon-title">Selecciona un salón</div>
+          <div class="sec-sub" id="ev-salon-url"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="saving" id="saving-indicator"><span style="width:8px;height:8px;background:var(--gold);border-radius:50%;display:inline-block;animation:pulse 1s infinite"></span>Guardando...</span>
+          <button class="btn-pri" id="new-ev-btn" onclick="openEventForm()" style="display:none">+ Nuevo evento</button>
+        </div>
+      </div>
+      <div class="date-nav">
+        <button onclick="changeDate(-1)">‹</button>
+        <input type="date" id="fecha-filtro" onchange="loadEventos()">
+        <button onclick="changeDate(1)">›</button>
+        <span style="font-size:12px;color:var(--muted)" id="fecha-label"></span>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn all active" id="fb-all" onclick="setFilter('all')">Todos</button>
+        <button class="filter-btn live" id="fb-live" onclick="setFilter('live')">🔴 En ejecución</button>
+        <button class="filter-btn upcoming" id="fb-upcoming" onclick="setFilter('upcoming')">🟡 Por ejecutar</button>
+        <button class="filter-btn done" id="fb-done" onclick="setFilter('done')">⚫ Ejecutados</button>
+        <button class="filter-btn paused-f" id="fb-paused" onclick="setFilter('paused')">⏸ Pausados</button>
+      </div>
+      <div id="ev-list" class="ev-list"><div class="empty-state">Selecciona un salón para ver sus eventos</div></div>
+      <div id="ev-form" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENDA -->
+<div id="panel-agenda" class="panel" style="display:none">
+  <div class="agenda-wrap">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Agenda del día</div><div class="sec-sub" id="agenda-fecha-label"></div></div>
+      <div class="date-nav" style="margin:0">
+        <button onclick="changeAgendaDate(-1)">‹</button>
+        <input type="date" id="agenda-fecha" onchange="loadAgenda()">
+        <button onclick="changeAgendaDate(1)">›</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto"><div id="agenda-grid"></div></div>
+  </div>
+</div>
+
+<!-- SALONES -->
+<div id="panel-salones" class="panel" style="display:none">
+  <div class="salones-wrap">
+    <div class="sec-hdr">
+      <div class="sec-title">Gestión de salones</div>
+      <button class="btn-pri" onclick="openSalonForm()">+ Nuevo salón</button>
+    </div>
+    <table class="salones-tbl">
+      <thead><tr><th>Nombre</th><th>URL de tableta</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody id="salones-tbody"></tbody>
+    </table>
+    <div id="salon-form-area" style="margin-top:20px;display:none"></div>
+  </div>
+</div>
+
+<!-- ══ UPSELLING PANEL ══ -->
+<div id="panel-upselling" class="panel" style="display:none">
+  <div class="main">
+    <div class="sec-hdr">
+      <div>
+        <div class="sec-title">Upselling — Carrusel Promocional</div>
+        <div class="sec-sub">Se muestra en tabletas cuando no hay evento activo</div>
+      </div>
+      <button class="btn-pri" onclick="openUpsellingForm()">+ Nueva campaña</button>
+    </div>
+    <div id="up-form-area" style="display:none"></div>
+    <div id="up-campaigns-grid" class="up-grid">
+      <div class="empty-state">Cargando campañas...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VISUAL DESIGNER OVERLAY ══ -->
+<div id="designer-overlay">
+  <div class="designer-topbar">
+    <div class="designer-title" id="designer-event-title">Editor Visual — Evento</div>
+    <div class="designer-actions">
+      <button class="d-btn" onclick="closeDesigner()">✕ Cerrar sin guardar</button>
+      <button class="d-btn primary" onclick="saveDesign()">💾 Guardar diseño</button>
+    </div>
+  </div>
+  <div class="designer-body">
+    <!-- CANVAS -->
+    <div class="designer-canvas-wrap" id="canvas-wrap">
+      <div class="designer-canvas" id="designer-canvas">
+        <div class="d-canvas-bg" id="d-canvas-bg"></div>
+        <div class="d-canvas-overlay" id="d-canvas-overlay"></div>
+        <!-- Draggable elements injected by JS -->
+      </div>
+    </div>
+    <!-- SIDEBAR -->
+    <div class="designer-sidebar">
+      <div class="d-section">
+        <div class="d-section-title">Elementos</div>
+        <div class="d-el-list" id="d-el-list">
+          <div class="d-el-item" onclick="selectElement('content')" id="deli-content"><span>📝</span> Bloque de texto</div>
+          <div class="d-el-item" onclick="selectElement('salon')" id="deli-salon"><span>🏷</span> Nombre del salón</div>
+          <div class="d-el-item" onclick="selectElement('logo')" id="deli-logo"><span>🏨</span> Logo del hotel</div>
+          <div class="d-el-item" onclick="selectElement('clock')" id="deli-clock"><span>🕐</span> Reloj</div>
+        </div>
+      </div>
+
+      <div class="d-section" id="d-props-content" style="display:none">
+        <div class="d-section-title">Bloque de texto</div>
+        <div class="d-prop">
+          <div class="d-prop-row"><label>Tamaño título</label><span class="d-prop-val" id="dpv-titulo">4vw</span></div>
+          <input type="range" min="1.5" max="9" step="0.5" value="4" id="dp-titulo" oninput="updateElement()">
+        </div>
+        <div class="d-prop">
+          <div class="d-prop-row"><label>Tamaño subtítulo</label><span class="d-prop-val" id="dpv-sub">1.4vw</span></div>
+          <input type="range" min="0.6" max="3" step="0.1" value="1.4" id="dp-sub" oninput="updateElement()">
+        </div>
+        <div class="d-prop">
+          <div class="d-prop-row"><label>Tamaño tipo evento</label><span class="d-prop-val" id="dpv-tipo">1.1vw</span></div>
+          <input type="range" min="0.5" max="2" step="0.1" value="1.1" id="dp-tipo" oninput="updateElement()">
+        </div>
+        <div class="d-prop">
+          <label>Alineación</label>
+          <select id="dp-align" onchange="updateElement()">
+            <option value="center">Centro</option>
+            <option value="left">Izquierda</option>
+            <option value="right">Derecha</option>
+          </select>
+        </div>
+        <div class="d-prop" style="margin-top:8px">
+          <div class="d-toggle"><input type="checkbox" id="dp-vis-tipo" checked onchange="updateElement()"><label>Mostrar tipo de evento</label></div>
+          <div class="d-toggle" style="margin-top:6px"><input type="checkbox" id="dp-vis-sub" checked onchange="updateElement()"><label>Mostrar subtítulo</label></div>
+          <div class="d-toggle" style="margin-top:6px"><input type="checkbox" id="dp-vis-hora" checked onchange="updateElement()"><label>Mostrar horario</label></div>
+        </div>
+        <div class="d-prop" style="margin-top:8px">
+          <div class="d-prop-row"><label>Opacidad overlay</label><span class="d-prop-val" id="dpv-overlay">60%</span></div>
+          <input type="range" min="0" max="90" step="5" value="60" id="dp-overlay" oninput="updateOverlay()">
+        </div>
+      </div>
+
+      <div class="d-section" id="d-props-salon" style="display:none">
+        <div class="d-section-title">Nombre del salón</div>
+        <div class="d-prop">
+          <div class="d-prop-row"><label>Tamaño</label><span class="d-prop-val" id="dpv-salon-size">1.8vw</span></div>
+          <input type="range" min="0.8" max="4" step="0.1" value="1.8" id="dp-salon-size" oninput="updateElement()">
+        </div>
+        <div class="d-prop">
+          <div class="d-toggle"><input type="checkbox" id="dp-vis-salon" checked onchange="updateElement()"><label>Visible</label></div>
+        </div>
+      </div>
+
+      <div class="d-section" id="d-props-logo" style="display:none">
+        <div class="d-section-title">Logo del hotel</div>
+        <div class="d-prop">
+          <div class="d-prop-row"><label>Tamaño (alto)</label><span class="d-prop-val" id="dpv-logo-size">50px</span></div>
+          <input type="range" min="20" max="120" step="5" value="50" id="dp-logo-size" oninput="updateElement()">
+        </div>
+      </div>
+
+      <div class="d-section" id="d-props-clock" style="display:none">
+        <div class="d-section-title">Reloj</div>
+        <div class="d-prop">
+          <div class="d-toggle"><input type="checkbox" id="dp-vis-clock" checked onchange="updateElement()"><label>Visible</label></div>
+        </div>
+      </div>
+
+      <div class="d-section">
+        <div class="d-section-title">Velocidad carrusel</div>
+        <p style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:8px">Duración por defecto (segundos)</p>
+        <div class="d-prop">
+          <div class="d-prop-row"><label>Segundos</label><span class="d-prop-val" id="dpv-carrusel">5s</span></div>
+          <input type="range" min="2" max="30" step="1" value="5" id="dp-carrusel" oninput="document.getElementById('dpv-carrusel').textContent=this.value+'s'">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div id="preview-modal">
+  <div class="preview-modal-top">
+    <div class="preview-modal-title" id="preview-modal-title">Vista previa del evento</div>
+    <button class="preview-close" onclick="closePreview()">✕ Cerrar</button>
+  </div>
+  <div class="preview-frame" id="preview-frame">
+    <div class="preview-frame-bg" id="pf-bg"></div>
+    <div class="preview-frame-overlay" id="pf-overlay"></div>
+    <div class="preview-frame-salon" id="pf-salon">
+      <div class="pf-salon-lbl">Salón</div>
+      <div class="pf-salon-nm" id="pf-salon-nm"></div>
+    </div>
+    <div class="preview-frame-logo">
+      <div style="background:white;padding:6px 10px;border-radius:5px;">
+        <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:3vw;width:auto;display:block;">
+      </div>
+    </div>
+    <div class="preview-frame-clock" id="pf-clock"></div>
+    <div class="preview-frame-content" id="pf-content">
+      <div class="pf-tipo" id="pf-tipo"></div>
+      <div class="pf-nombre" id="pf-nombre"></div>
+      <div class="pf-divider" id="pf-divider"></div>
+      <div class="pf-sub" id="pf-sub"></div>
+      <div class="pf-hora" id="pf-hora">
+        <div class="pf-hora-lbl">Hasta las</div>
+        <div class="pf-hora-val" id="pf-hora-val"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPSELLING DESIGNER -->
+<div id="up-designer-overlay">
+  <div class="up-designer-topbar">
+    <div style="font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.06em" id="up-designer-title">Editor Visual — Upselling</div>
+    <div style="display:flex;gap:8px">
+      <button class="d-btn" onclick="closeUpDesigner()">✕ Cerrar sin guardar</button>
+      <button class="d-btn primary" onclick="saveUpDesign()">💾 Guardar diseño</button>
+    </div>
+  </div>
+  <div class="up-designer-body">
+    <div class="up-canvas-wrap" id="up-canvas-wrap">
+      <div class="up-canvas" id="up-designer-canvas">
+        <div class="up-canvas-bg" id="up-canvas-bg"></div>
+        <div class="up-canvas-overlay" id="up-canvas-overlay"></div>
+      </div>
+    </div>
+    <div class="up-designer-sidebar">
+      <div class="up-d-section">
+        <div class="up-d-section-title">Elementos</div>
+        <div class="up-el-list">
+          <div class="up-el-item" onclick="selectUpEl('logo')" id="up-eli-logo"><span>🏨</span> Logo del hotel</div>
+          <div class="up-el-item" onclick="selectUpEl('text')" id="up-eli-text"><span>📝</span> Texto promocional</div>
+          <div class="up-el-item" onclick="selectUpEl('qr')" id="up-eli-qr"><span>📱</span> Código QR</div>
+        </div>
+      </div>
+
+      <div class="up-d-section" id="up-props-logo" style="display:none">
+        <div class="up-d-section-title">Logo del hotel</div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño</label><span class="up-d-prop-val" id="up-dpv-logo">50px</span></div>
+          <input type="range" min="20" max="120" step="5" value="50" id="up-dp-logo" oninput="updateUpElement()">
+        </div>
+      </div>
+
+      <div class="up-d-section" id="up-props-text" style="display:none">
+        <div class="up-d-section-title">Texto promocional</div>
+        <div class="up-d-prop"><label>Título global de campaña</label><input type="text" id="up-dp-titulo-val" placeholder="Ej. ¡Celebra con nosotros!" oninput="updateUpElement()"></div>
+        <div class="up-d-prop"><label>Subtítulo global</label><input type="text" id="up-dp-sub-val" placeholder="Ej. Contáctanos hoy" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño título</label><span class="up-d-prop-val" id="up-dpv-titulo">3.5vw</span></div>
+          <input type="range" min="1.5" max="8" step="0.5" value="3.5" id="up-dp-titulo" oninput="updateUpElement()">
+        </div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño subtítulo</label><span class="up-d-prop-val" id="up-dpv-sub">1.3vw</span></div>
+          <input type="range" min="0.6" max="3" step="0.1" value="1.3" id="up-dp-sub" oninput="updateUpElement()">
+        </div>
+
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Overlay oscuridad</label><span class="up-d-prop-val" id="up-dpv-overlay">50%</span></div>
+          <input type="range" min="0" max="90" step="5" value="50" id="up-dp-overlay" oninput="updateUpOverlay()">
+        </div>
+      </div>
+      <div class="up-d-section">
+        <div class="up-d-section-title">Pantalla default (logo + salón)</div>
+        <p style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px">Tiempo que se muestra la pantalla con el logo y nombre del salón antes de pasar a los slides promocionales.</p>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Duración pantalla default</label><span class="up-d-prop-val" id="up-dpv-default-dur">8s</span></div>
+          <input type="range" min="2" max="60" step="1" value="8" id="up-dp-default-dur" oninput="document.getElementById('up-dpv-default-dur').textContent=this.value+'s';upDesign.default_dur=parseInt(this.value);">
+        </div>
+      </div>
+
+      <div class="up-d-section" id="up-props-qr" style="display:none">
+        <div class="up-d-section-title">Código QR</div>
+        <div class="up-d-prop"><label>URL o número de WhatsApp</label><input type="text" id="up-dp-qr-url" placeholder="https://wa.me/507XXXXXXXX" oninput="updateUpElement()"></div>
+        <div class="up-d-prop"><label>Texto bajo el QR</label><input type="text" id="up-dp-qr-text" placeholder="Ej. Contáctanos" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño QR</label><span class="up-d-prop-val" id="up-dpv-qr">100px</span></div>
+          <input type="range" min="60" max="200" step="10" value="100" id="up-dp-qr-size" oninput="updateUpElement()">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const BASE='/.netlify/functions';
+const SUPA_URL='https://gumnnqpaieooxkvhneqi.supabase.co';
+const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bW5ucXBhaWVvb3hrdmhuZXFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDUyMDUsImV4cCI6MjA5MjUyMTIwNX0.b1E-f1WLLSw8yZTtQ4yFcrdj_7ZjMhhNYXqnQsm-v0U';
+let TOKEN='',activeSalonId=null,activeSalonSlug='',allSalones=[],selectedColor='#B8962E',editingEventId=null,editingSalonId=null,activeEventMedias=[];
+let activeFilter='all';
+
+// ── AUTH ──
+async function doLogin(){
+  const pwd=document.getElementById('pwd-input').value;
+  const r=await fetch(`${BASE}/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+  const d=await r.json();
+  if(d.ok){TOKEN=d.token;sessionStorage.setItem('signage_token',TOKEN);document.getElementById('login-screen').style.display='none';document.getElementById('topbar').style.display='flex';showPanel('eventos');initApp();}
+  else document.getElementById('login-err').style.display='block';
+}
+function doLogout(){sessionStorage.removeItem('signage_token');location.reload();}
+
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).style.display='block';
+  const idx={eventos:0,agenda:1,salones:2,upselling:3};
+  const navBtns=document.querySelectorAll('.nav-btn');
+  if(idx[name]!==undefined)navBtns[idx[name]]?.classList.add('active');
+  if(name==='agenda')loadAgenda();
+  if(name==='salones')renderSalonesTable();
+  if(name==='upselling')loadCampaigns();
+}
+
+async function initApp(){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('fecha-filtro').value=today;
+  document.getElementById('agenda-fecha').value=today;
+  updateFechaLabel();updateAgendaFechaLabel();
+  await loadSalones();
+}
+
+async function loadSalones(){
+  const r=await fetch(`${BASE}/salones`);
+  allSalones=await r.json();
+  renderSidebar();renderSalonesTable();
+}
+
+function renderSidebar(){
+  document.getElementById('sidebar-salones').innerHTML=allSalones.map((s,i)=>`
+    <div class="salon-item ${s.id===activeSalonId?'sel':''}" onclick="selectSalonByIndex(${i})">
+      <span class="salon-nm">${s.nombre}</span>
+      <span class="salon-st ${s.activo?'st-on':'st-off'}">${s.activo?'Activo':'Inactivo'}</span>
+    </div>`).join('');
+}
+function selectSalonByIndex(i){const s=allSalones[i];selectSalon(s.id,s.slug,s.nombre);}
+async function selectSalon(id,slug,nombre){
+  activeSalonId=id;activeSalonSlug=slug;
+  document.getElementById('ev-salon-title').textContent=nombre;
+  document.getElementById('ev-salon-url').textContent=`${location.origin}/salon/${slug}`;
+  document.getElementById('new-ev-btn').style.display='inline-block';
+  document.getElementById('ev-form').style.display='none';
+  editingEventId=null;renderSidebar();loadEventos();
+}
+
+// ── EVENTS ──
+async function loadEventos(){
+  if(!activeSalonId)return;
+  const fecha=document.getElementById('fecha-filtro').value;
+  updateFechaLabel();
+  const r=await fetch(`${BASE}/eventos?salon_id=${activeSalonId}&fecha=${fecha}`,{headers:{'x-admin-token':TOKEN}});
+  renderEventos(await r.json());
+}
+
+function getEventStatus(e){
+  const now=new Date();
+  const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const today=now.toISOString().slice(0,10);
+  if(e.pausado)return 'paused';
+  if(e.fecha<today||(e.fecha===today&&e.hora_fin.slice(0,5)<cur))return 'done';
+  if(e.fecha===today&&e.hora_inicio.slice(0,5)<=cur&&e.hora_fin.slice(0,5)>=cur)return 'live';
+  return 'upcoming';
+}
+
+function setFilter(f){
+  activeFilter=f;
+  ['all','live','upcoming','done','paused'].forEach(k=>{
+    const b=document.getElementById('fb-'+k);
+    if(b)b.className=`filter-btn ${k==='paused'?'paused-f':k} ${f===k?'active':''}`;
+  });
+  // re-render with current data
+  loadEventos();
+}
+
+function renderEventos(evs){
+  const el=document.getElementById('ev-list');
+  if(!evs.length){el.innerHTML='<div class="empty-state">No hay eventos para este día.</div>';return;}
+
+  // Count per status for filter badges
+  const counts={all:evs.length,live:0,upcoming:0,done:0,paused:0};
+  evs.forEach(e=>{const s=getEventStatus(e);counts[s]=(counts[s]||0)+1;});
+
+  // Update filter button labels with counts
+  ['all','live','upcoming','done','paused'].forEach(k=>{
+    const b=document.getElementById('fb-'+k);
+    if(!b)return;
+    const labels={all:'Todos',live:'🔴 En ejecución',upcoming:'🟡 Por ejecutar',done:'⚫ Ejecutados',paused:'⏸ Pausados'};
+    const c=counts[k]||0;
+    b.textContent=`${labels[k]}${c>0?' ('+c+')':''}`; 
+  });
+
+  // Filter
+  let filtered=evs;
+  if(activeFilter!=='all')filtered=evs.filter(e=>getEventStatus(e)===activeFilter);
+
+  if(!filtered.length){
+    el.innerHTML='<div class="empty-state">No hay eventos con este estado.</div>';
+    return;
+  }
+
+  const statusConfig={
+    live:{label:'🔴 En ejecución',cls:'live'},
+    upcoming:{label:'🟡 Por ejecutar',cls:'upcoming'},
+    done:{label:'⚫ Ejecutado',cls:'done'},
+    paused:{label:'⏸ Pausado',cls:'paused'},
+  };
+
+  el.innerHTML=filtered.map(e=>{
+    const status=getEventStatus(e);
+    const sc=statusConfig[status];
+    const isDone=status==='done';
+    const isPaused=status==='paused';
+    return `<div class="ev-card ${isDone?'done':''} ${isPaused?'paused':''}" style="border-left:3px solid ${isDone?'#888780':isPaused?'#A0213F':status==='live'?'#3B6D11':'#B8962E'}">
+      <div>
+        <div class="ev-head">
+          <span class="ev-nm">${e.nombre}</span>
+          <span class="ev-badge">${e.tipo}</span>
+          <span class="ev-status ${sc.cls}">${sc.label}</span>
+        </div>
+        <div class="ev-meta">
+          <span>📅 ${formatFecha(e.fecha)}</span>
+          <span>🕐 ${e.hora_inicio.slice(0,5)} – ${e.hora_fin.slice(0,5)}</span>
+        </div>
+      </div>
+      <div class="ev-actions">
+        ${!isDone?`<button class="ic-btn pause-btn ${isPaused?'paused':''}" onclick="togglePause('${e.id}',${isPaused})">${isPaused?'▶ Reanudar':'⏸ Pausar'}</button>`:''}
+        ${!isDone?`<button class="ic-btn design-btn" onclick="openDesigner('${e.id}')" title="Editor visual">🎨 Diseñar</button>`:''}
+        ${isDone?`<button class="ic-btn" onclick="openPreview('${e.id}')" title="Vista previa">👁</button>`:`<button class="ic-btn" onclick="window.open('/salon/${activeSalonSlug}','_blank')" title="Ver tableta">👁</button>`}
+        ${!isDone?`<button class="ic-btn" onclick="openEventForm('${e.id}')" title="Editar">✎</button>`:''}
+        <button class="ic-btn del" onclick="deleteEvento('${e.id}')" title="Eliminar">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function togglePause(id,currentlyPaused){
+  const r=await fetch(`${BASE}/eventos?id=${id}`,{
+    method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+    body:JSON.stringify({pausado:!currentlyPaused})
+  });
+  if(r.ok){showToast(currentlyPaused?'Evento reanudado':'Evento pausado');loadEventos();}
+  else showToast('Error',true);
+}
+
+async function openEventForm(id=null){
+  editingEventId=id;activeEventMedias=[];
+  let ev=null;
+  if(id){
+    // Load full event data including medios
+    const [evR, medR] = await Promise.all([
+      fetch(`${BASE}/eventos?id=${id}`),
+      fetch(`${BASE}/medios?evento_id=${id}`)
+    ]);
+    ev=await evR.json();
+    activeEventMedias=await medR.json();
+    // Store original IDs to detect deletions on save
+    window._originalEventMediaIds=activeEventMedias.map(m=>m.id).filter(Boolean);
+  }
+  const colors=['#B8962E','#D4537E','#378ADD','#1D9E75','#9B59B6','#E74C3C','#FFFFFF'];
+  selectedColor=ev?.color_acento||'#B8962E';
+
+  document.getElementById('ev-form').innerHTML=`
+  <div class="form-card">
+    <div class="form-title">${id?'Editar datos del evento':'Nuevo evento'}</div>
+    <div class="form-row">
+      <div><label>Nombre del evento</label><input type="text" id="f-nombre" value="${ev?.nombre||''}" placeholder="Ej. Boda Pérez–González"></div>
+      <div><label>Tipo</label><select id="f-tipo">${['Boda','Corporativo','Social','Quinceañero','Congreso','Conferencia','Otro'].map(t=>`<option ${ev?.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-row s3">
+      <div><label>Fecha</label><input type="date" id="f-fecha" value="${ev?.fecha||new Date().toISOString().slice(0,10)}"></div>
+      <div><label>Hora inicio</label><input type="time" id="f-inicio" value="${ev?.hora_inicio?.slice(0,5)||''}"></div>
+      <div><label>Hora fin</label><input type="time" id="f-fin" value="${ev?.hora_fin?.slice(0,5)||''}"></div>
+    </div>
+    <div class="form-row s1"><div><label>Subtítulo</label><textarea id="f-sub" placeholder="Ej. Ceremonia y Recepción">${ev?.subtitulo||''}</textarea></div></div>
+    <div class="form-row s1"><div>
+      <label>Color de acento</label>
+      <div class="color-row">${colors.map(c=>`<div class="cswatch ${c===selectedColor?'sel':''}" style="background:${c};${c==='#FFFFFF'?'border:1px solid #ccc':''}" onclick="pickColor(this,'${c}')"></div>`).join('')}</div>
+    </div></div>
+  </div>
+  <div class="form-card">
+    <div class="form-title">Imágenes y videos (carrusel)</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Puedes definir la duración de cada imagen o video individualmente.</p>
+    <div class="media-grid" id="media-grid"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+        <input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this)">🖼 Agregar imágenes
+      </label>
+      <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+        <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="addVideo(this)">🎬 Subir video (MP4)
+      </label>
+    </div>
+    <div id="video-progress" style="display:none;margin-top:10px;font-size:12px;color:var(--muted)">⏳ Subiendo video... 0%</div>
+  </div>
+  <div class="form-card">
+    <div class="form-footer" style="padding-top:0;border-top:none;margin-top:0">
+      <button class="btn-sec" onclick="closeEventForm()">Cancelar</button>
+      <button class="btn-pri" id="save-ev-btn" onclick="saveEvento()">Guardar evento</button>
+    </div>
+  </div>`;
+
+  document.getElementById('ev-form').style.display='block';
+  renderMediaGrid();
+  document.getElementById('ev-form').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function renderMediaGrid(){
+  const grid=document.getElementById('media-grid');
+  if(!grid)return;
+  grid.innerHTML=activeEventMedias.map((m,i)=>`
+    <div class="media-item">
+      <div class="media-thumb">
+        ${m.tipo==='imagen'?`<img src="${m.url}" alt="img">`:
+          m.tipo==='video_archivo'?`<video src="${m.url}" muted></video>`:
+          `<div style="background:#111;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px">▶</div>`}
+        <button class="media-del" onclick="removeMedia(${i})">✕</button>
+        <div class="media-type">${m.tipo==='imagen'?'IMG':'VIDEO'}</div>
+      </div>
+      <div class="media-dur">
+        <label>Duración:</label>
+        <input type="number" min="1" max="300" value="${m.duracion_segundos||5}" onchange="setMediaDur(${i},this.value)" style="width:52px">
+        <span style="font-size:11px;color:var(--muted)">seg</span>
+      </div>
+    </div>`).join('');
+}
+
+function setMediaDur(i,val){activeEventMedias[i].duracion_segundos=parseInt(val)||5;}
+function removeMedia(i){activeEventMedias.splice(i,1);renderMediaGrid();}
+function pickColor(el,c){document.querySelectorAll('.cswatch').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');selectedColor=c;}
+
+async function addImages(input){
+  const files=Array.from(input.files);
+  for(const file of files){
+    await new Promise(resolve=>{
+      const reader=new FileReader();
+      reader.onload=e=>{activeEventMedias.push({tipo:'imagen',url:e.target.result,_file:file,_base64:e.target.result.split(',')[1],orden:activeEventMedias.length,_new:true,duracion_segundos:5});resolve();};
+      reader.readAsDataURL(file);
+    });
+  }
+  renderMediaGrid();
+}
+
+async function addVideo(input){
+  if(!input.files[0])return;
+  const file=input.files[0];
+  const prog=document.getElementById('video-progress');
+  if(prog){prog.style.display='block';prog.textContent='⏳ Subiendo video... 0%';}
+  try{
+    const filename=`${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const uploadUrl=`${SUPA_URL}/storage/v1/object/imagenes-eventos/${filename}`;
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',uploadUrl);
+    xhr.setRequestHeader('Authorization',`Bearer ${SUPA_ANON}`);
+    xhr.setRequestHeader('Content-Type',file.type||'video/mp4');
+    xhr.setRequestHeader('x-upsert','false');
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&prog)prog.textContent=`⏳ Subiendo video... ${Math.round(e.loaded/e.total*100)}%`;};
+    await new Promise((resolve,reject)=>{
+      xhr.onload=()=>{
+        if(xhr.status===200||xhr.status===201){
+          const publicUrl=`${SUPA_URL}/storage/v1/object/public/imagenes-eventos/${filename}`;
+          activeEventMedias.push({tipo:'video_archivo',url:publicUrl,orden:activeEventMedias.length,_new:true,_uploaded:true,duracion_segundos:15});
+          resolve();
+        } else reject(new Error(`${xhr.status} ${xhr.responseText}`));
+      };
+      xhr.onerror=()=>reject(new Error('Network error'));
+      xhr.send(file);
+    });
+    if(prog)prog.style.display='none';
+    renderMediaGrid();
+    showToast('Video subido correctamente');
+  }catch(err){
+    if(prog)prog.style.display='none';
+    showToast('Error subiendo video: '+err.message,true);
+  }
+}
+
+async function saveEvento(){
+  const btn=document.getElementById('save-ev-btn');
+  btn.disabled=true;btn.textContent='Guardando...';showSaving(true);
+
+  const nombre=document.getElementById('f-nombre').value;
+  const horaInicio=document.getElementById('f-inicio').value;
+  const horaFin=document.getElementById('f-fin').value;
+
+  if(!nombre||!horaInicio||!horaFin){
+    showToast('Completa nombre, hora inicio y hora fin',true);
+    btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;
+  }
+
+  const payload={
+    salon_id:activeSalonId,
+    nombre,
+    tipo:document.getElementById('f-tipo').value,
+    subtitulo:document.getElementById('f-sub').value,
+    fecha:document.getElementById('f-fecha').value,
+    hora_inicio:horaInicio,
+    hora_fin:horaFin,
+    color_acento:selectedColor,
+  };
+
+  const url=editingEventId?`${BASE}/eventos?id=${editingEventId}`:`${BASE}/eventos`;
+  const method=editingEventId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(!r.ok){showToast(d.error||'Error al guardar',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
+  const eventoId=d.id;
+
+  // Delete removed event medios
+  if(editingEventId&&window._originalEventMediaIds&&window._originalEventMediaIds.length){
+    const currentIds=activeEventMedias.filter(m=>m.id).map(m=>m.id);
+    const deletedIds=window._originalEventMediaIds.filter(id=>!currentIds.includes(id));
+    for(const id of deletedIds){
+      await fetch(`${BASE}/medios?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+    }
+  }
+  // Update duration of existing medios that changed
+  for(let i=0;i<activeEventMedias.length;i++){
+    const m=activeEventMedias[i];
+    if(m.id&&!m._new){
+      // Existing medio - update duration and order
+      await fetch(`${BASE}/medios?id=${m.id}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+        body:JSON.stringify({orden:i,duracion_segundos:m.duracion_segundos||5})
+      });
+    } else if(m._new){
+      // New medio - upload
+      const mp={evento_id:eventoId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||5};
+      if(m.tipo==='imagen'&&m._base64){
+        mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';
+      } else {
+        mp.url=m.url;
+      }
+      await fetch(`${BASE}/medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
+    }
+  }
+
+  window._originalEventMediaIds=null;
+  showSaving(false);showToast('Evento guardado correctamente');closeEventForm();loadEventos();
+}
+
+async function deleteEvento(id){
+  if(!confirm('¿Eliminar este evento?'))return;
+  const r=await fetch(`${BASE}/eventos?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+  if(r.ok){showToast('Evento eliminado');loadEventos();}else showToast('Error',true);
+}
+function closeEventForm(){document.getElementById('ev-form').style.display='none';editingEventId=null;activeEventMedias=[];}
+
+// ── PREVIEW ──
+async function openPreview(eventId){
+  const r=await fetch(`${BASE}/eventos?id=${eventId}`);
+  const ev=await r.json();
+  const d=ev.diseno||{};
+  const acento=ev.color_acento||d.acento||'#B8962E';
+  const salonNombre=allSalones.find(s=>s.id===activeSalonId)?.nombre||'Salón';
+
+  // Background - first image
+  const bg=document.getElementById('pf-bg');
+  const firstImg=ev.medios?.find(m=>m.tipo==='imagen');
+  if(firstImg)bg.style.backgroundImage=`url('${firstImg.url}')`;
+  else if(ev.imagen_url)bg.style.backgroundImage=`url('${ev.imagen_url}')`;
+  else{bg.style.backgroundImage='none';bg.style.background='#1A1A1A';}
+
+  // Overlay
+  const ov=(parseFloat(d.overlay||60))/100;
+  document.getElementById('pf-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.4}) 50%,rgba(0,0,0,${ov}) 100%)`;
+
+  // Salon
+  document.getElementById('pf-salon-nm').textContent=salonNombre;
+  document.getElementById('pf-salon-nm').style.fontSize=d.salon_nm_size||'1.8vw';
+  document.getElementById('pf-salon').style.display=d.salon_visible===false?'none':'block';
+  document.getElementById('pf-salon').style.top=d.salon_top||'3%';
+  document.getElementById('pf-salon').style.left=d.salon_left||'3%';
+
+  // Content positioning
+  const content=document.getElementById('pf-content');
+  content.style.left=d.content_x||'50%';
+  content.style.top=d.content_y||'50%';
+  content.style.transform=d.content_transform||'translate(-50%,-50%)';
+  content.style.width=d.content_w||'60%';
+  content.style.textAlign=d.content_align||'center';
+
+  // Text
+  document.getElementById('pf-tipo').textContent=ev.tipo||'';
+  document.getElementById('pf-tipo').style.fontSize=d.tipo_size||'1.1vw';
+  document.getElementById('pf-tipo').style.display=d.tipo_visible===false?'none':'block';
+
+  document.getElementById('pf-nombre').textContent=ev.nombre||'';
+  document.getElementById('pf-nombre').style.fontSize=d.titulo_size||'4vw';
+
+  document.getElementById('pf-sub').textContent=ev.subtitulo||'';
+  document.getElementById('pf-sub').style.fontSize=d.sub_size||'1.4vw';
+  document.getElementById('pf-sub').style.display=d.sub_visible===false?'none':'block';
+
+  document.getElementById('pf-divider').style.background=acento;
+  document.getElementById('pf-divider').style.width=d.divider_w||'52px';
+
+  document.getElementById('pf-hora').style.display=d.hora_visible===false?'none':'inline-flex';
+  document.getElementById('pf-hora-val').textContent=ev.hora_fin?ev.hora_fin.slice(0,5)+' hrs':'';
+  document.getElementById('pf-hora-val').style.color=acento;
+
+  // Clock
+  document.getElementById('pf-clock').textContent=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('preview-modal-title').textContent=`Vista previa — ${ev.nombre}`;
+  document.getElementById('preview-modal').style.display='flex';
+}
+
+function closePreview(){
+  document.getElementById('preview-modal').style.display='none';
+}
+
+// ── AGENDA ──
+async function loadAgenda(){
+  updateAgendaFechaLabel();
+  const r=await fetch(`${BASE}/eventos?fecha=${document.getElementById('agenda-fecha').value}`);
+  renderAgenda(await r.json());
+}
+function renderAgenda(evs){
+  if(!allSalones.length)return;
+  const hours=Array.from({length:14},(_,i)=>i+8);
+  const typeClass=t=>({Boda:'type-boda',Corporativo:'type-corp',Social:'type-soc'}[t]||'type-otro');
+  const cols=`60px ${allSalones.map(()=>'1fr').join(' ')}`;
+  let html=`<div style="display:grid;grid-template-columns:${cols};border:.5px solid var(--border);border-radius:10px;overflow:hidden;min-width:600px">`;
+  html+=`<div style="background:var(--dark);padding:10px 14px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55)">Hora</div>`;
+  allSalones.forEach(s=>html+=`<div style="background:var(--dark);padding:10px 14px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);border-left:.5px solid rgba(255,255,255,.08)">${s.nombre}</div>`);
+  hours.forEach(h=>{
+    html+=`<div class="ag-time">${String(h).padStart(2,'0')}:00</div>`;
+    allSalones.forEach(s=>{
+      const ev=evs.find(e=>e.salon_id===s.id&&e.hora_inicio.slice(0,2)===String(h).padStart(2,'0'));
+      html+=`<div class="ag-slot">${ev?`<div class="ag-ev ${typeClass(ev.tipo)}"><div class="ag-ev-nm">${ev.nombre}</div><div class="ag-ev-hr">${ev.hora_inicio.slice(0,5)}–${ev.hora_fin.slice(0,5)}</div></div>`:''}</div>`;
+    });
+  });
+  html+='</div>';
+  document.getElementById('agenda-grid').innerHTML=html;
+}
+
+// ── SALONES ──
+function renderSalonesTable(){
+  const tbody=document.getElementById('salones-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=allSalones.map(s=>`
+    <tr>
+      <td><strong style="font-weight:500">${s.nombre}</strong></td>
+      <td><span class="salon-url">${location.origin}/salon/${s.slug}</span></td>
+      <td><button class="toggle-sw ${s.activo?'on':''}" onclick="toggleSalon('${s.id}',${s.activo})"></button></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="ic-btn" onclick="window.open('/salon/${s.slug}','_blank')">👁</button>
+        <button class="ic-btn" onclick="editSalon('${s.id}')">✎</button>
+        <button class="ic-btn del" onclick="deleteSalon('${s.id}')">✕</button>
+      </div></td>
+    </tr>`).join('');
+}
+function openSalonForm(id=null){
+  editingSalonId=id;
+  const s=id?allSalones.find(x=>x.id===id):null;
+  const area=document.getElementById('salon-form-area');
+  if(!area)return;
+  area.style.display='block';
+  area.innerHTML=`<div class="form-card">
+    <div class="form-title">${id?'Editar salón':'Nuevo salón'}</div>
+    <div class="form-row">
+      <div><label>Nombre</label><input type="text" id="sf-nombre" value="${s?.nombre||''}" placeholder="Ej. Salón Imperial"></div>
+      <div><label>Slug (URL)</label><input type="text" id="sf-slug" value="${s?.slug||''}" placeholder="ej. imperial" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'-')"></div>
+    </div>
+    <div class="form-footer"><button class="btn-sec" onclick="document.getElementById('salon-form-area').style.display='none'">Cancelar</button><button class="btn-pri" onclick="saveSalon()">Guardar salón</button></div>
+  </div>`;
+  area.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function editSalon(id){showPanel('salones');openSalonForm(id);}
+async function saveSalon(){
+  const payload={nombre:document.getElementById('sf-nombre').value,slug:document.getElementById('sf-slug').value,activo:true};
+  const url=editingSalonId?`${BASE}/salones?id=${editingSalonId}`:`${BASE}/salones`;
+  const method=editingSalonId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  if(r.ok){showToast('Salón guardado');document.getElementById('salon-form-area').style.display='none';await loadSalones();}
+  else{const d=await r.json();showToast(d.error||'Error',true);}
+}
+async function toggleSalon(id,current){
+  await fetch(`${BASE}/salones?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({activo:!current})});
+  await loadSalones();
+}
+async function deleteSalon(id){
+  if(!confirm('¿Eliminar este salón?'))return;
+  const r=await fetch(`${BASE}/salones?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+  if(r.ok){showToast('Salón eliminado');loadSalones();}else showToast('Error',true);
+}
+
+// ══════════════════════════════════════════
+// VISUAL DESIGNER
+// ══════════════════════════════════════════
+let designerEventId=null;
+let designerEvent=null;
+let designerDesign={};
+let selectedEl=null;
+let dragState=null;
+let canvasScale=1;
+
+// Element default positions (% of canvas)
+const defaultDesign={
+  content_x:'50%',content_y:'50%',content_transform:'translate(-50%,-50%)',content_w:'60%',content_align:'center',
+  titulo_size:'4vw',sub_size:'1.4vw',tipo_size:'1.1vw',
+  tipo_visible:true,sub_visible:true,hora_visible:true,salon_visible:true,
+  salon_top:'3%',salon_left:'3%',
+  logo_top:'3%',logo_right:'3%',logo_left:'auto',
+  clock_bottom:'3%',clock_left:'3%',
+  logo_size:50,salon_nm_size:'1.8vw',
+  overlay:60,
+  acento:'#B8962E',
+  carrusel_intervalo:5,
+};
+
+async function openDesigner(eventId){
+  designerEventId=eventId;
+  const r=await fetch(`${BASE}/eventos?id=${eventId}`);
+  designerEvent=await r.json();
+  designerDesign=Object.assign({},defaultDesign,designerEvent.diseno||{});
+
+  document.getElementById('designer-event-title').textContent=`Editor Visual — ${designerEvent.nombre}`;
+  document.getElementById('designer-overlay').style.display='flex';
+
+  buildDesignerCanvas();
+  loadDesignerSidebar();
+}
+
+function buildDesignerCanvas(){
+  const wrap=document.getElementById('canvas-wrap');
+  const canvas=document.getElementById('designer-canvas');
+
+  // Size canvas to 16:9 ratio fitting the wrap
+  const ww=wrap.clientWidth-40;
+  const wh=wrap.clientHeight-40;
+  let cw=ww,ch=ww*9/16;
+  if(ch>wh){ch=wh;cw=wh*16/9;}
+  canvas.style.width=cw+'px';
+  canvas.style.height=ch+'px';
+  canvasScale=cw/1920;
+
+  // Background
+  const bg=document.getElementById('d-canvas-bg');
+  const firstImg=designerEvent.medios?.find(m=>m.tipo==='imagen');
+  if(firstImg)bg.style.backgroundImage=`url('${firstImg.url}')`;
+  else if(designerEvent.imagen_url)bg.style.backgroundImage=`url('${designerEvent.imagen_url}')`;
+  else bg.style.background='#2A2A2A';
+
+  // Overlay
+  const ov=parseFloat(designerDesign.overlay||60)/100;
+  document.getElementById('d-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.4}) 50%,rgba(0,0,0,${ov}) 100%)`;
+
+  // Remove old elements
+  canvas.querySelectorAll('.d-element').forEach(e=>e.remove());
+
+  // Build elements
+  buildElement('content');
+  buildElement('salon');
+  buildElement('logo');
+  buildElement('clock');
+}
+
+function buildElement(type){
+  const canvas=document.getElementById('designer-canvas');
+  const d=designerDesign;
+  const el=document.createElement('div');
+  el.className='d-element';
+  el.dataset.type=type;
+  el.id='d-el-'+type;
+
+  if(type==='content'){
+    el.style.cssText=`left:${d.content_x||'50%'};top:${d.content_y||'50%'};transform:${d.content_transform||'translate(-50%,-50%)'};width:${d.content_w||'60%'};text-align:${d.content_align||'center'};`;
+    el.innerHTML=`
+      <div class="d-handle"></div>
+      ${d.tipo_visible!==false?`<div class="d-el-tipo" style="font-size:${d.tipo_size||'1.1vw'}">${designerEvent.tipo||'Boda'}</div>`:''}
+      <div class="d-el-nombre" style="font-size:${d.titulo_size||'4vw'}">${designerEvent.nombre||'Nombre del evento'}</div>
+      <div class="d-el-divider" style="width:52px;margin:10px auto;background:${d.acento||'#B8962E'}"></div>
+      ${d.sub_visible!==false?`<div class="d-el-sub" style="font-size:${d.sub_size||'1.4vw'}">${designerEvent.subtitulo||'Subtítulo del evento'}</div>`:''}
+      ${d.hora_visible!==false?`<div class="d-el-hora" style="margin-top:12px;display:inline-flex;flex-direction:column;align-items:center;"><div class="d-el-hora-lbl">Hasta las</div><div class="d-el-hora-val" style="color:${d.acento||'#B8962E'}">${designerEvent.hora_fin?.slice(0,5)||'23:00'} hrs</div></div>`:''}
+    `;
+  } else if(type==='salon'){
+    el.style.cssText=`left:${d.salon_left||'3%'};top:${d.salon_top||'3%'};`;
+    el.style.display=d.salon_visible===false?'none':'block';
+    el.innerHTML=`<div class="d-handle"></div><div class="d-el-salon"><div class="d-el-salon-lbl">Salón</div><div class="d-el-salon-nm" style="font-size:${d.salon_nm_size||'1.8vw'}">${activeSalonId?allSalones.find(s=>s.id===activeSalonId)?.nombre||'Nombre Salón':'Nombre Salón'}</div></div>`;
+  } else if(type==='logo'){
+    const logoH=(d.logo_size||50)*canvasScale;
+    el.style.cssText=`top:${d.logo_top||'3%'};right:${d.logo_right||'3%'};left:${d.logo_left||'auto'};`;
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${6*canvasScale}px ${10*canvasScale}px;border-radius:${4*canvasScale}px;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${logoH}px;width:auto;display:block;"></div>`;
+  } else if(type==='clock'){
+    el.style.cssText=`bottom:${d.clock_bottom||'3%'};left:${d.clock_left||'3%'};`;
+    el.innerHTML=`<div class="d-handle"></div><div class="c-clock" style="font-size:${1.1*canvasScale}em;color:rgba(255,255,255,.5)">${new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'})}</div>`;
+  }
+
+  el.addEventListener('mousedown',startDrag);
+  el.addEventListener('click',()=>selectElement(type));
+  canvas.appendChild(el);
+}
+
+function selectElement(type){
+  selectedEl=type;
+  document.querySelectorAll('.d-element').forEach(e=>e.classList.remove('selected'));
+  document.querySelectorAll('.d-el-item').forEach(e=>e.classList.remove('active'));
+  const el=document.getElementById('d-el-'+type);
+  if(el)el.classList.add('selected');
+  const item=document.getElementById('deli-'+type);
+  if(item)item.classList.add('active');
+
+  // Show relevant props
+  ['content','salon','logo','clock'].forEach(t=>{
+    const p=document.getElementById('d-props-'+t);
+    if(p)p.style.display=t===type?'block':'none';
+  });
+}
+
+function loadDesignerSidebar(){
+  const d=designerDesign;
+  // Content
+  if(document.getElementById('dp-titulo'))document.getElementById('dp-titulo').value=parseFloat(d.titulo_size)||4;
+  if(document.getElementById('dp-sub'))document.getElementById('dp-sub').value=parseFloat(d.sub_size)||1.4;
+  if(document.getElementById('dp-tipo'))document.getElementById('dp-tipo').value=parseFloat(d.tipo_size)||1.1;
+  if(document.getElementById('dp-align'))document.getElementById('dp-align').value=d.content_align||'center';
+  if(document.getElementById('dp-vis-tipo'))document.getElementById('dp-vis-tipo').checked=d.tipo_visible!==false;
+  if(document.getElementById('dp-vis-sub'))document.getElementById('dp-vis-sub').checked=d.sub_visible!==false;
+  if(document.getElementById('dp-vis-hora'))document.getElementById('dp-vis-hora').checked=d.hora_visible!==false;
+  if(document.getElementById('dp-overlay'))document.getElementById('dp-overlay').value=d.overlay||60;
+  if(document.getElementById('dpv-overlay'))document.getElementById('dpv-overlay').textContent=(d.overlay||60)+'%';
+  // Salon
+  if(document.getElementById('dp-salon-size'))document.getElementById('dp-salon-size').value=parseFloat(d.salon_nm_size)||1.8;
+  if(document.getElementById('dp-vis-salon'))document.getElementById('dp-vis-salon').checked=d.salon_visible!==false;
+  // Logo
+  if(document.getElementById('dp-logo-size'))document.getElementById('dp-logo-size').value=d.logo_size||50;
+  if(document.getElementById('dpv-logo-size'))document.getElementById('dpv-logo-size').textContent=(d.logo_size||50)+'px';
+  // Carrusel
+  if(document.getElementById('dp-carrusel'))document.getElementById('dp-carrusel').value=d.carrusel_intervalo||5;
+  if(document.getElementById('dpv-carrusel'))document.getElementById('dpv-carrusel').textContent=(d.carrusel_intervalo||5)+'s';
+  // Update val labels
+  updateValLabels();
+}
+
+function updateValLabels(){
+  const d=document.getElementById('dp-titulo');if(d)document.getElementById('dpv-titulo').textContent=d.value+'vw';
+  const s=document.getElementById('dp-sub');if(s)document.getElementById('dpv-sub').textContent=s.value+'vw';
+  const t=document.getElementById('dp-tipo');if(t)document.getElementById('dpv-tipo').textContent=t.value+'vw';
+  const ss=document.getElementById('dp-salon-size');if(ss)document.getElementById('dpv-salon-size').textContent=ss.value+'vw';
+  const ls=document.getElementById('dp-logo-size');if(ls)document.getElementById('dpv-logo-size').textContent=ls.value+'px';
+}
+
+function updateElement(){
+  if(!selectedEl)return;
+  updateValLabels();
+  const d=designerDesign;
+
+  if(selectedEl==='content'){
+    d.titulo_size=document.getElementById('dp-titulo').value+'vw';
+    d.sub_size=document.getElementById('dp-sub').value+'vw';
+    d.tipo_size=document.getElementById('dp-tipo').value+'vw';
+    d.content_align=document.getElementById('dp-align').value;
+    d.tipo_visible=document.getElementById('dp-vis-tipo').checked;
+    d.sub_visible=document.getElementById('dp-vis-sub').checked;
+    d.hora_visible=document.getElementById('dp-vis-hora').checked;
+  } else if(selectedEl==='salon'){
+    d.salon_nm_size=document.getElementById('dp-salon-size').value+'vw';
+    d.salon_visible=document.getElementById('dp-vis-salon').checked;
+  } else if(selectedEl==='logo'){
+    d.logo_size=parseInt(document.getElementById('dp-logo-size').value);
+  } else if(selectedEl==='clock'){
+    // clock visibility handled via rebuild
+  }
+
+  // Rebuild element
+  const old=document.getElementById('d-el-'+selectedEl);
+  if(old)old.remove();
+  buildElement(selectedEl);
+  document.getElementById('d-el-'+selectedEl)?.classList.add('selected');
+}
+
+function updateOverlay(){
+  const val=document.getElementById('dp-overlay').value;
+  document.getElementById('dpv-overlay').textContent=val+'%';
+  designerDesign.overlay=parseInt(val);
+  const ov=parseInt(val)/100;
+  document.getElementById('d-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.4}) 50%,rgba(0,0,0,${ov}) 100%)`;
+}
+
+// ── DRAG & DROP ──
+function startDrag(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='BUTTON')return;
+  e.preventDefault();
+  const el=e.currentTarget;
+  const canvas=document.getElementById('designer-canvas');
+  const cr=canvas.getBoundingClientRect();
+  const er=el.getBoundingClientRect();
+
+  dragState={
+    el,type:el.dataset.type,
+    startX:e.clientX,startY:e.clientY,
+    origLeft:er.left-cr.left,origTop:er.top-cr.top,
+    cw:cr.width,ch:cr.height
+  };
+
+  document.addEventListener('mousemove',onDrag);
+  document.addEventListener('mouseup',endDrag);
+  selectElement(el.dataset.type);
+}
+
+function onDrag(e){
+  if(!dragState)return;
+  const dx=e.clientX-dragState.startX;
+  const dy=e.clientY-dragState.startY;
+  const newLeft=dragState.origLeft+dx;
+  const newTop=dragState.origTop+dy;
+  const el=dragState.el;
+
+  // Remove transform for absolute positioning
+  el.style.transform='none';
+  el.style.left=newLeft+'px';
+  el.style.top=newTop+'px';
+  el.style.right='auto';
+  el.style.bottom='auto';
+}
+
+function endDrag(e){
+  if(!dragState)return;
+  document.removeEventListener('mousemove',onDrag);
+  document.removeEventListener('mouseup',endDrag);
+
+  const el=dragState.el;
+  const canvas=document.getElementById('designer-canvas');
+  const cr=canvas.getBoundingClientRect();
+  const er=el.getBoundingClientRect();
+
+  // Convert to % for responsive positioning
+  const leftPct=((er.left-cr.left)/cr.width*100).toFixed(1)+'%';
+  const topPct=((er.top-cr.top)/cr.height*100).toFixed(1)+'%';
+
+  // Save to design
+  const type=dragState.type;
+  if(type==='content'){
+    designerDesign.content_x=leftPct;
+    designerDesign.content_y=topPct;
+    designerDesign.content_transform='none';
+    el.style.left=leftPct;el.style.top=topPct;el.style.transform='none';
+  } else if(type==='salon'){
+    designerDesign.salon_left=leftPct;designerDesign.salon_top=topPct;
+  } else if(type==='logo'){
+    designerDesign.logo_left=leftPct;designerDesign.logo_top=topPct;designerDesign.logo_right='auto';
+    el.style.right='auto';
+  } else if(type==='clock'){
+    designerDesign.clock_left=leftPct;designerDesign.clock_bottom='auto';
+    el.style.top=topPct;el.style.bottom='auto';
+  }
+
+  dragState=null;
+}
+
+async function saveDesign(){
+  designerDesign.carrusel_intervalo=parseInt(document.getElementById('dp-carrusel').value)||5;
+
+  const r=await fetch(`${BASE}/eventos?id=${designerEventId}`,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+    body:JSON.stringify({diseno:designerDesign})
+  });
+  if(r.ok){showToast('Diseño guardado. La tableta se actualiza en 30 segundos.');closeDesigner();loadEventos();}
+  else showToast('Error al guardar diseño',true);
+}
+
+function closeDesigner(){
+  document.getElementById('designer-overlay').style.display='none';
+  designerEventId=null;designerEvent=null;selectedEl=null;
+}
+
+// ══════════════════════════════════════════
+// UPSELLING
+// ══════════════════════════════════════════
+let upEditingId=null;
+let upMedias=[];
+const SUPA_URL_UP='https://gumnnqpaieooxkvhneqi.supabase.co';
+const SUPA_ANON_UP='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bW5ucXBhaWVvb3hrdmhuZXFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDUyMDUsImV4cCI6MjA5MjUyMTIwNX0.b1E-f1WLLSw8yZTtQ4yFcrdj_7ZjMhhNYXqnQsm-v0U';
+
+async function loadCampaigns(){
+  const r=await fetch(`${BASE}/upselling`,{headers:{'x-admin-token':TOKEN}});
+  const camps=await r.json();
+  renderCampaigns(camps);
+}
+
+function renderCampaigns(camps){
+  const grid=document.getElementById('up-campaigns-grid');
+  if(!camps||!camps.length){grid.innerHTML='<div class="empty-state">No hay campañas. Crea la primera.</div>';return;}
+  grid.innerHTML=camps.map(c=>{
+    const mediaCount=c.upselling_medios?.length||0;
+    const salonCount=c.upselling_salones?.length||0;
+    const badgeCls=c.activo?(c.aplica_todos?'up-badge-all':'up-badge-specific'):'up-badge-off';
+    const badgeTxt=c.activo?(c.aplica_todos?'Todos los salones':`${salonCount} salón(es)`):'Inactiva';
+    return `<div class="up-card">
+      <div class="up-card-head">
+        <div>
+          <div class="up-card-title">${c.nombre}</div>
+          <div class="up-card-meta">${mediaCount} slides · <span class="${badgeCls}">${badgeTxt}</span></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="ic-btn" onclick="toggleCampaign('${c.id}',${c.activo})" title="${c.activo?'Desactivar':'Activar'}">${c.activo?'⏸':'▶'}</button>
+          <button class="ic-btn" onclick="openUpsellingForm('${c.id}')" title="Editar">✎</button>
+          <button class="ic-btn del" onclick="deleteCampaign('${c.id}')" title="Eliminar">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openUpsellingForm(id=null){
+  upEditingId=id;upMedias=[];
+  let camp=null;
+  let selectedSalons=[];
+  window._currentUpDesign=null;
+  if(id){
+    const r=await fetch(`${BASE}/upselling?id=${id}`,{headers:{'x-admin-token':TOKEN}});
+    camp=await r.json();
+    upMedias=camp.upselling_medios||[];
+    // Store original IDs to detect deletions on save
+    window._originalUpMediaIds=upMedias.map(m=>m.id).filter(Boolean);
+    selectedSalons=camp.upselling_salones?.map(s=>s.salon_id)||[];
+    // Load saved design
+    window._currentUpDesign=camp.diseno||{};
+    if(camp.qr_url)window._currentUpDesign.qr_url=camp.qr_url;
+    if(camp.qr_texto)window._currentUpDesign.qr_texto=camp.qr_texto;
+  }
+  const aplica=camp?.aplica_todos!==false;
+
+  const area=document.getElementById('up-form-area');
+  area.style.display='block';
+  area.innerHTML=`
+  <div class="up-form-wrap">
+    <div class="form-title">${id?'Editar campaña':'Nueva campaña de upselling'}</div>
+    <div class="form-row">
+      <div><label>Nombre de la campaña</label><input type="text" id="up-nombre" value="${camp?.nombre||''}" placeholder="Ej. Promoción Bodas 2026"></div>
+      <div style="display:flex;align-items:flex-end;gap:10px">
+        <div class="toggle-check" style="margin-top:20px"><input type="checkbox" id="up-activo" ${camp?.activo!==false?'checked':''}><label for="up-activo">Campaña activa</label></div>
+      </div>
+    </div>
+    <div class="form-row s1">
+      <div>
+        <label>Aplicar a</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <div class="toggle-check"><input type="radio" name="up-aplica" id="up-todos" value="todos" ${aplica?'checked':''} onchange="toggleSalonSelector()"><label for="up-todos">Todos los salones</label></div>
+          <div class="toggle-check"><input type="radio" name="up-aplica" id="up-especificos" value="especificos" ${!aplica?'checked':''} onchange="toggleSalonSelector()"><label for="up-especificos">Salones específicos</label></div>
+        </div>
+        <div id="up-salon-selector" style="display:${aplica?'none':'block'};margin-top:12px">
+          <div class="up-salon-checks" id="up-salon-checks">
+            ${allSalones.map(s=>`
+              <div class="up-salon-check">
+                <input type="checkbox" id="ups-${s.id}" value="${s.id}" ${selectedSalons.includes(s.id)?'checked':''}>
+                <label for="ups-${s.id}">${s.nombre}</label>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row s1">
+      <div>
+        <label>Línea de tiempo (slides)</label>
+        <p style="font-size:12px;color:var(--muted);margin:6px 0 10px">Agrega fotos y videos en el orden que quieres que aparezcan. Define la duración de cada uno.</p>
+        <div class="up-timeline-list" id="up-timeline-list"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+          <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+            <input type="file" accept="image/*" multiple style="display:none" onchange="upAddImages(this)">🖼 Agregar imágenes
+          </label>
+          <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+            <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="upAddVideo(this)">🎬 Subir video (MP4)
+          </label>
+          <button class="btn-sec" style="display:flex;align-items:center;gap:6px" onclick="openUpDesigner()">🎨 Diseñar pantalla</button>
+        </div>
+        <div id="up-video-progress" style="display:none;margin-top:8px;font-size:12px;color:var(--muted)">⏳ Subiendo video... 0%</div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn-sec" onclick="closeUpsellingForm()">Cancelar</button>
+      <button class="btn-pri" onclick="saveCampaign()">Guardar campaña</button>
+    </div>
+  </div>`;
+
+  renderUpTimeline();
+  area.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function toggleSalonSelector(){
+  const todos=document.getElementById('up-todos').checked;
+  document.getElementById('up-salon-selector').style.display=todos?'none':'block';
+}
+
+function renderUpTimeline(){
+  const list=document.getElementById('up-timeline-list');
+  if(!list)return;
+  if(!upMedias.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">Sin slides. Agrega imágenes o videos.</div>';return;}
+  list.innerHTML=upMedias.map((m,i)=>`
+    <div class="up-tl-item" style="display:grid;grid-template-columns:56px 1fr auto auto auto;gap:8px;align-items:center;padding:10px;">
+      ${m.tipo==='imagen'?`<img class="up-tl-thumb" src="${m.url}" alt="slide">`:
+        `<div class="up-tl-thumb-vid">▶</div>`}
+      <div>
+        <div class="up-tl-name">${m._name||m.url.split('/').pop().slice(0,28)}</div>
+        <div class="up-tl-type">${m.tipo==='imagen'?'Imagen':'Video'}</div>
+      </div>
+      <div class="up-tl-dur">
+        <input type="number" min="1" max="600" value="${m.duracion_segundos||10}" onchange="upSetDur(${i},this.value)">
+        <span>seg</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},1)" ${i===upMedias.length-1?'disabled':''}>↓</button>
+      </div>
+      <button class="ic-btn del" onclick="upRemoveMedia(${i})" title="Quitar">✕</button>
+    </div>`).join('');
+}
+
+function upMoveMedia(i,dir){
+  const j=i+dir;
+  if(j<0||j>=upMedias.length)return;
+  [upMedias[i],upMedias[j]]=[upMedias[j],upMedias[i]];
+  renderUpTimeline();
+}
+
+function upSetDur(i,val){upMedias[i].duracion_segundos=parseInt(val)||10;}
+function upRemoveMedia(i){upMedias.splice(i,1);renderUpTimeline();}
+
+async function upAddImages(input){
+  const files=Array.from(input.files);
+  for(const file of files){
+    await new Promise(resolve=>{
+      const reader=new FileReader();
+      reader.onload=e=>{
+        upMedias.push({tipo:'imagen',url:e.target.result,_base64:e.target.result.split(',')[1],_file:file,_name:file.name,duracion_segundos:10,orden:upMedias.length,_new:true});
+        resolve();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  renderUpTimeline();
+}
+
+async function upAddVideo(input){
+  if(!input.files[0])return;
+  const file=input.files[0];
+  const prog=document.getElementById('up-video-progress');
+  if(prog){prog.style.display='block';prog.textContent='⏳ Subiendo video... 0%';}
+  try{
+    const filename=`upselling-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const uploadUrl=`${SUPA_URL_UP}/storage/v1/object/imagenes-eventos/${filename}`;
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',uploadUrl);
+    xhr.setRequestHeader('Authorization',`Bearer ${SUPA_ANON_UP}`);
+    xhr.setRequestHeader('Content-Type',file.type||'video/mp4');
+    xhr.setRequestHeader('x-upsert','false');
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&prog)prog.textContent=`⏳ Subiendo video... ${Math.round(e.loaded/e.total*100)}%`;};
+    await new Promise((resolve,reject)=>{
+      xhr.onload=()=>{
+        if(xhr.status===200||xhr.status===201){
+          const publicUrl=`${SUPA_URL_UP}/storage/v1/object/public/imagenes-eventos/${filename}`;
+          upMedias.push({tipo:'video_archivo',url:publicUrl,_name:file.name,duracion_segundos:15,orden:upMedias.length,_new:true,_uploaded:true});
+          resolve();
+        } else reject(new Error(`${xhr.status}`));
+      };
+      xhr.onerror=()=>reject(new Error('Network error'));
+      xhr.send(file);
+    });
+    if(prog)prog.style.display='none';
+    renderUpTimeline();
+    showToast('Video subido correctamente');
+  }catch(err){
+    if(prog)prog.style.display='none';
+    showToast('Error subiendo video: '+err.message,true);
+  }
+}
+
+async function saveCampaign(){
+  const nombre=document.getElementById('up-nombre').value.trim();
+  if(!nombre){showToast('Ingresa un nombre para la campaña',true);return;}
+  const aplica_todos=document.getElementById('up-todos').checked;
+  const activo=document.getElementById('up-activo').checked;
+  const salon_ids=aplica_todos?[]:Array.from(document.querySelectorAll('#up-salon-checks input:checked')).map(i=>i.value);
+
+  const design=window._currentUpDesign||{};
+  const payload={nombre,activo,aplica_todos,salon_ids,diseno:design,qr_url:design.qr_url||'',qr_texto:design.qr_texto||''};
+  const url=upEditingId?`${BASE}/upselling?id=${upEditingId}`:`${BASE}/upselling`;
+  const method=upEditingId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(!r.ok){showToast(d.error||'Error',true);return;}
+  const campId=d.id;
+
+  // Save medios
+  for(let i=0;i<upMedias.length;i++){
+    const m=upMedias[i];
+    if(m.id&&!m._new){
+      // Update existing
+      await fetch(`${BASE}/upselling-medios?id=${m.id}`,{
+        method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+        body:JSON.stringify({orden:i,duracion_segundos:m.duracion_segundos})
+      });
+    } else if(m._new){
+      const mp={upselling_id:campId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||10,titulo:m.titulo||'',subtitulo:m.subtitulo||''};
+      if(m.tipo==='imagen'&&m._base64){mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';}
+      else mp.url=m.url;
+      await fetch(`${BASE}/upselling-medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
+    }
+  }
+
+  showToast('Campaña guardada. Las tabletas se actualizan en 30 segundos.');
+  closeUpsellingForm();
+  loadCampaigns();
+}
+
+async function toggleCampaign(id,current){
+  await fetch(`${BASE}/upselling?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({activo:!current})});
+  showToast(current?'Campaña desactivada':'Campaña activada');
+  loadCampaigns();
+}
+
+async function deleteCampaign(id){
+  if(!confirm('¿Eliminar esta campaña de upselling?'))return;
+  const r=await fetch(`${BASE}/upselling?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+  if(r.ok){showToast('Campaña eliminada');loadCampaigns();}else showToast('Error',true);
+}
+
+function closeUpsellingForm(){
+  document.getElementById('up-form-area').style.display='none';
+  upEditingId=null;upMedias=[];
+}
+
+// ── UPSELLING DESIGNER ──
+let upDesign={};
+let upSelectedEl=null;
+let upDragState=null;
+let upCanvasScale=1;
+
+function openUpDesigner(){
+  const savedDesign=window._currentUpDesign||{};
+  upDesign=Object.assign({
+    logo_size:50,logo_top:'3%',logo_right:'3%',logo_left:'auto',
+    text_x:'10%',text_y:'65%',text_w:'75%',
+    titulo_size:'3.5vw',sub_size:'1.3vw',
+    titulo_global:'',subtitulo_global:'',
+    qr_url:'',qr_texto:'',qr_size:100,qr_x:'3%',qr_y_top:'auto',qr_y_bottom:'3%',
+    overlay:50,default_dur:8,
+  },savedDesign);
+
+  const titre=document.getElementById('up-nombre');
+  document.getElementById('up-designer-title').textContent='Editor Visual — '+(titre?titre.value:'Upselling');
+  document.getElementById('up-designer-overlay').style.display='flex';
+
+  // Use setTimeout to ensure overlay is rendered and has dimensions
+  setTimeout(()=>{
+    // Safe set helpers
+    const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+    const st=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    sv('up-dp-logo',upDesign.logo_size||50);          st('up-dpv-logo',(upDesign.logo_size||50)+'px');
+    sv('up-dp-titulo',parseFloat(upDesign.titulo_size)||3.5); st('up-dpv-titulo',upDesign.titulo_size||'3.5vw');
+    sv('up-dp-sub',parseFloat(upDesign.sub_size)||1.3);       st('up-dpv-sub',upDesign.sub_size||'1.3vw');
+    sv('up-dp-overlay',upDesign.overlay||50);          st('up-dpv-overlay',(upDesign.overlay||50)+'%');
+    sv('up-dp-default-dur',upDesign.default_dur||8);   st('up-dpv-default-dur',(upDesign.default_dur||8)+'s');
+    sv('up-dp-titulo-val',upDesign.titulo_global||'');
+    sv('up-dp-sub-val',upDesign.subtitulo_global||'');
+    sv('up-dp-qr-url',upDesign.qr_url||'');
+    sv('up-dp-qr-text',upDesign.qr_texto||'');
+    sv('up-dp-qr-size',upDesign.qr_size||100);         st('up-dpv-qr',(upDesign.qr_size||100)+'px');
+    buildUpCanvas();
+  }, 200);
+}
+
+function buildUpCanvas(){
+  const wrap=document.getElementById('up-canvas-wrap');
+  const canvas=document.getElementById('up-designer-canvas');
+  // Calculate canvas size based on available space
+  const availW=window.innerWidth-320-40; // minus sidebar (300) and padding
+  const availH=window.innerHeight-52-40; // minus topbar and padding
+  let cw=availW, ch=availW*9/16;
+  if(ch>availH){ch=availH;cw=availH*16/9;}
+  cw=Math.round(cw);ch=Math.round(ch);
+  canvas.style.width=cw+'px';
+  canvas.style.height=ch+'px';
+  upCanvasScale=cw/1920;
+
+  // Background - first media
+  const bg=document.getElementById('up-canvas-bg');
+  const firstImg=upMedias.find(m=>m.tipo==='imagen');
+  if(firstImg)bg.style.backgroundImage=`url('${firstImg.url}')`;
+  else bg.style.background='#2A2A2A';
+
+  // Overlay
+  const ov=upDesign.overlay/100;
+  document.getElementById('up-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%)`;
+
+  // Remove old elements
+  canvas.querySelectorAll('.up-d-element').forEach(e=>e.remove());
+  buildUpElement('logo');
+  buildUpElement('text');
+  buildUpElement('qr');
+}
+
+function buildUpElement(type){
+  const canvas=document.getElementById('up-designer-canvas');
+  const d=upDesign;
+  const el=document.createElement('div');
+  el.className='up-d-element';
+  el.dataset.type=type;
+  el.id='up-d-el-'+type;
+  const s=upCanvasScale;
+
+  if(type==='logo'){
+    const h=(d.logo_size||50)*s;
+    // Logo always uses % positions stored as left+top or right+top
+    const hasCustomPos=(d.logo_left&&d.logo_left!=='auto');
+    if(hasCustomPos){
+      el.style.cssText=`left:${d.logo_left};top:${d.logo_top||'3%'};right:auto;position:absolute;`;
+    } else {
+      el.style.cssText=`right:${d.logo_right||'3%'};top:${d.logo_top||'3%'};left:auto;position:absolute;`;
+    }
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px ${Math.round(10*s)}px;border-radius:${Math.round(4*s)}px;display:inline-block;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
+  } else if(type==='text'){
+    // Use direct left/top positioning, no transform
+    const tx=d.text_x||'10%';
+    const ty=d.text_y||'65%';
+    el.style.cssText=`left:${tx};top:${ty};width:${d.text_w||'75%'};position:absolute;transform:none;`;
+    const titulo=d.titulo_global||'Título de campaña';
+    const sub=d.subtitulo_global||'Subtítulo promocional';
+    el.innerHTML=`<div class="d-handle"></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;">${titulo}</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);margin-top:${Math.round(6*s)}px;">${sub}</div>`;
+  } else if(type==='qr'){
+    const qrS=Math.round((d.qr_size||100)*s);
+    el.style.cssText=`left:${d.qr_x||'3%'};top:${d.qr_y_top||'auto'};bottom:${d.qr_y_bottom||'3%'};position:absolute;`;
+    const qrUrl=d.qr_url||'https://marriott.com';
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px;border-radius:${Math.round(6*s)}px;display:inline-block;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}" style="width:${qrS}px;height:${qrS}px;display:block;">
+      ${d.qr_texto?`<div style="font-size:${Math.round(9*s)}px;text-align:center;color:#333;margin-top:${Math.round(3*s)}px;max-width:${qrS}px;">${d.qr_texto}</div>`:''}
+    </div>`;
+  }
+
+  el.addEventListener('mousedown',startUpDrag);
+  el.addEventListener('click',()=>selectUpEl(type));
+  canvas.appendChild(el);
+}
+
+function selectUpEl(type){
+  upSelectedEl=type;
+  document.querySelectorAll('.up-d-element').forEach(e=>e.classList.remove('selected'));
+  document.querySelectorAll('.up-el-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById('up-d-el-'+type)?.classList.add('selected');
+  document.getElementById('up-eli-'+type)?.classList.add('active');
+  ['logo','text','qr'].forEach(t=>{
+    const p=document.getElementById('up-props-'+t);
+    if(p)p.style.display=t===type?'block':'none';
+  });
+}
+
+function updateUpElement(){
+  const d=upDesign;
+  if(upSelectedEl==='logo'){
+    d.logo_size=parseInt(document.getElementById('up-dp-logo').value);
+    document.getElementById('up-dpv-logo').textContent=d.logo_size+'px';
+  } else if(upSelectedEl==='text'){
+    d.titulo_size=document.getElementById('up-dp-titulo').value+'vw';
+    document.getElementById('up-dpv-titulo').textContent=d.titulo_size;
+    d.sub_size=document.getElementById('up-dp-sub').value+'vw';
+    document.getElementById('up-dpv-sub').textContent=d.sub_size;
+    d.titulo_global=document.getElementById('up-dp-titulo-val').value;
+    d.subtitulo_global=document.getElementById('up-dp-sub-val').value;
+  } else if(upSelectedEl==='qr'){
+    d.qr_url=document.getElementById('up-dp-qr-url').value;
+    d.qr_texto=document.getElementById('up-dp-qr-text').value;
+    d.qr_size=parseInt(document.getElementById('up-dp-qr-size').value);
+    document.getElementById('up-dpv-qr').textContent=d.qr_size+'px';
+  }
+  const old=document.getElementById('up-d-el-'+upSelectedEl);
+  if(old)old.remove();
+  buildUpElement(upSelectedEl);
+  document.getElementById('up-d-el-'+upSelectedEl)?.classList.add('selected');
+}
+
+function updateUpOverlay(){
+  const val=document.getElementById('up-dp-overlay').value;
+  document.getElementById('up-dpv-overlay').textContent=val+'%';
+  upDesign.overlay=parseInt(val);
+  const ov=parseInt(val)/100;
+  document.getElementById('up-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%)`;
+}
+
+function startUpDrag(e){
+  e.preventDefault();
+  const el=e.currentTarget;
+  const canvas=document.getElementById('up-designer-canvas');
+  const cr=canvas.getBoundingClientRect();
+  const er=el.getBoundingClientRect();
+  upDragState={el,type:el.dataset.type,startX:e.clientX,startY:e.clientY,origLeft:er.left-cr.left,origTop:er.top-cr.top,cw:cr.width,ch:cr.height};
+  document.addEventListener('mousemove',onUpDrag);
+  document.addEventListener('mouseup',endUpDrag);
+  selectUpEl(el.dataset.type);
+}
+
+function onUpDrag(e){
+  if(!upDragState)return;
+  const dx=e.clientX-upDragState.startX;
+  const dy=e.clientY-upDragState.startY;
+  const el=upDragState.el;
+  // Move visually during drag using pixel offsets
+  el.style.position='absolute';
+  el.style.transform='none';
+  el.style.left=(upDragState.origLeft+dx)+'px';
+  el.style.top=(upDragState.origTop+dy)+'px';
+  el.style.right='auto';
+  el.style.bottom='auto';
+}
+
+function endUpDrag(e){
+  if(!upDragState)return;
+  document.removeEventListener('mousemove',onUpDrag);
+  document.removeEventListener('mouseup',endUpDrag);
+  const el=upDragState.el;
+  const canvas=document.getElementById('up-designer-canvas');
+  const cr=canvas.getBoundingClientRect();
+  const er=el.getBoundingClientRect();
+  // Always save as percentages of canvas size for responsive display
+  const lPct=((er.left-cr.left)/cr.width*100).toFixed(1)+'%';
+  const tPct=((er.top-cr.top)/cr.height*100).toFixed(1)+'%';
+  const type=upDragState.type;
+  if(type==='logo'){
+    upDesign.logo_left=lPct;
+    upDesign.logo_top=tPct;
+    upDesign.logo_right='auto';
+  } else if(type==='text'){
+    upDesign.text_x=lPct;
+    upDesign.text_y=tPct;
+  } else if(type==='qr'){
+    upDesign.qr_x=lPct;
+    upDesign.qr_y_top=tPct;
+    upDesign.qr_y_bottom='auto';
+  }
+  // Rebuild element with new position
+  el.remove();
+  buildUpElement(type);
+  document.getElementById('up-d-el-'+type)?.classList.add('selected');
+  upDragState=null;
+}
+
+async function saveUpDesign(){
+  // Always persist design to window._currentUpDesign so it survives re-open
+  window._currentUpDesign={...upDesign};
+  if(upEditingId){
+    const r=await fetch(`${BASE}/upselling?id=${upEditingId}`,{
+      method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},
+      body:JSON.stringify({diseno:upDesign,qr_url:upDesign.qr_url||'',qr_texto:upDesign.qr_texto||''})
+    });
+    if(r.ok)showToast('Diseño guardado. Tabletas se actualizan en 30 segundos.');
+    else showToast('Error al guardar diseño',true);
+  } else {
+    showToast('Diseño listo. Guarda la campaña para aplicarlo.');
+  }
+  closeUpDesigner();
+}
+
+function closeUpDesigner(){
+  document.getElementById('up-designer-overlay').style.display='none';
+  upSelectedEl=null;upDragState=null;
+}
+
+// ── DATE / UTILS ──
+function changeDate(d){const el=document.getElementById('fecha-filtro');const dt=new Date(el.value);dt.setDate(dt.getDate()+d);el.value=dt.toISOString().slice(0,10);loadEventos();}
+function changeAgendaDate(d){const el=document.getElementById('agenda-fecha');const dt=new Date(el.value);dt.setDate(dt.getDate()+d);el.value=dt.toISOString().slice(0,10);loadAgenda();}
+function updateFechaLabel(){document.getElementById('fecha-label').textContent=new Date(document.getElementById('fecha-filtro').value+'T12:00:00').toLocaleDateString('es-PA',{weekday:'long',day:'numeric',month:'long'});}
+function updateAgendaFechaLabel(){document.getElementById('agenda-fecha-label').textContent=new Date(document.getElementById('agenda-fecha').value+'T12:00:00').toLocaleDateString('es-PA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+function formatFecha(f){return new Date(f+'T12:00:00').toLocaleDateString('es-PA',{day:'numeric',month:'short',year:'numeric'});}
+function showToast(msg,error=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(error?' error':'');setTimeout(()=>t.className='toast',3500);}
+function showSaving(v){document.getElementById('saving-indicator').className='saving'+(v?' show':'');}
+
+window.addEventListener('load',()=>{
+  const saved=sessionStorage.getItem('signage_token');
+  if(saved){TOKEN=saved;document.getElementById('login-screen').style.display='none';document.getElementById('topbar').style.display='flex';showPanel('eventos');initApp();}
+});
+</script>
+</body>
+</html>
 
