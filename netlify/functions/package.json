@@ -1,1 +1,9 @@
+{
+  "name": "hotel-signage-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions para señalización digital de salones",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
 
