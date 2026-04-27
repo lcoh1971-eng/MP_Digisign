@@ -569,7 +569,8 @@ textarea{resize:none;height:58px}
         <div class="up-d-section-title">Elementos</div>
         <div class="up-el-list">
           <div class="up-el-item" onclick="selectUpEl('logo')" id="up-eli-logo"><span>🏨</span> Logo del hotel</div>
-          <div class="up-el-item" onclick="selectUpEl('text')" id="up-eli-text"><span>📝</span> Texto promocional</div>
+          <div class="up-el-item" onclick="selectUpEl('titulo')" id="up-eli-titulo"><span>📝</span> Título principal</div>
+          <div class="up-el-item" onclick="selectUpEl('subtitulo')" id="up-eli-subtitulo"><span>✍️</span> Subtítulo</div>
           <div class="up-el-item" onclick="selectUpEl('qr')" id="up-eli-qr"><span>📱</span> Código QR</div>
         </div>
       </div>
@@ -582,22 +583,25 @@ textarea{resize:none;height:58px}
         </div>
       </div>
 
-      <div class="up-d-section" id="up-props-text" style="display:none">
-        <div class="up-d-section-title">Texto promocional</div>
-        <div class="up-d-prop"><label>Título global de campaña</label><input type="text" id="up-dp-titulo-val" placeholder="Ej. ¡Celebra con nosotros!" oninput="updateUpElement()"></div>
-        <div class="up-d-prop"><label>Subtítulo global</label><input type="text" id="up-dp-sub-val" placeholder="Ej. Contáctanos hoy" oninput="updateUpElement()"></div>
+      <div class="up-d-section" id="up-props-titulo" style="display:none">
+        <div class="up-d-section-title">Título principal</div>
+        <div class="up-d-prop"><label>Texto</label><input type="text" id="up-dp-titulo-val" placeholder="Ej. ¡Celebra con nosotros!" oninput="updateUpElement()"></div>
         <div class="up-d-prop">
-          <div class="up-d-prop-row"><label>Tamaño título</label><span class="up-d-prop-val" id="up-dpv-titulo">3.5vw</span></div>
+          <div class="up-d-prop-row"><label>Tamaño</label><span class="up-d-prop-val" id="up-dpv-titulo">3.5vw</span></div>
           <input type="range" min="1.5" max="8" step="0.5" value="3.5" id="up-dp-titulo" oninput="updateUpElement()">
         </div>
         <div class="up-d-prop">
-          <div class="up-d-prop-row"><label>Tamaño subtítulo</label><span class="up-d-prop-val" id="up-dpv-sub">1.3vw</span></div>
-          <input type="range" min="0.6" max="3" step="0.1" value="1.3" id="up-dp-sub" oninput="updateUpElement()">
-        </div>
-
-        <div class="up-d-prop">
           <div class="up-d-prop-row"><label>Overlay oscuridad</label><span class="up-d-prop-val" id="up-dpv-overlay">50%</span></div>
           <input type="range" min="0" max="90" step="5" value="50" id="up-dp-overlay" oninput="updateUpOverlay()">
+        </div>
+      </div>
+
+      <div class="up-d-section" id="up-props-subtitulo" style="display:none">
+        <div class="up-d-section-title">Subtítulo</div>
+        <div class="up-d-prop"><label>Texto</label><input type="text" id="up-dp-sub-val" placeholder="Ej. Contáctanos hoy" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño</label><span class="up-d-prop-val" id="up-dpv-sub">1.3vw</span></div>
+          <input type="range" min="0.6" max="3" step="0.1" value="1.3" id="up-dp-sub" oninput="updateUpElement()">
         </div>
       </div>
       <div class="up-d-section">
@@ -1675,7 +1679,8 @@ function openUpDesigner(){
   const savedDesign=window._currentUpDesign||{};
   upDesign=Object.assign({
     logo_size:50,logo_top:'3%',logo_right:'3%',logo_left:'auto',
-    text_x:'10%',text_y:'60%',text_w:'78%',
+    titulo_x:'10%',titulo_y:'58%',titulo_w:'78%',
+    sub_x:'10%',sub_y:'72%',sub_w:'78%',
     titulo_size:'3.5vw',sub_size:'1.3vw',
     titulo_global:'',subtitulo_global:'',
     qr_url:'',qr_texto:'',qr_size:100,qr_x:'3%',qr_y_top:'auto',qr_y_bottom:'3%',
@@ -1693,11 +1698,11 @@ function openUpDesigner(){
     const st=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
     sv('up-dp-logo',upDesign.logo_size||50);          st('up-dpv-logo',(upDesign.logo_size||50)+'px');
     sv('up-dp-titulo',parseFloat(upDesign.titulo_size)||3.5); st('up-dpv-titulo',upDesign.titulo_size||'3.5vw');
+    sv('up-dp-titulo-val',upDesign.titulo_global||'');
     sv('up-dp-sub',parseFloat(upDesign.sub_size)||1.3);       st('up-dpv-sub',upDesign.sub_size||'1.3vw');
+    sv('up-dp-sub-val',upDesign.subtitulo_global||'');
     sv('up-dp-overlay',upDesign.overlay||50);          st('up-dpv-overlay',(upDesign.overlay||50)+'%');
     sv('up-dp-default-dur',upDesign.default_dur||8);   st('up-dpv-default-dur',(upDesign.default_dur||8)+'s');
-    sv('up-dp-titulo-val',upDesign.titulo_global||'');
-    sv('up-dp-sub-val',upDesign.subtitulo_global||'');
     sv('up-dp-qr-url',upDesign.qr_url||'');
     sv('up-dp-qr-text',upDesign.qr_texto||'');
     sv('up-dp-qr-size',upDesign.qr_size||100);         st('up-dpv-qr',(upDesign.qr_size||100)+'px');
@@ -1731,7 +1736,8 @@ function buildUpCanvas(){
   // Remove old elements
   canvas.querySelectorAll('.up-d-element').forEach(e=>e.remove());
   buildUpElement('logo');
-  buildUpElement('text');
+  buildUpElement('titulo');
+  buildUpElement('subtitulo');
   buildUpElement('qr');
 }
 
@@ -1754,25 +1760,16 @@ function buildUpElement(type){
       el.style.cssText=`right:${d.logo_right||'3%'};top:${d.logo_top||'3%'};left:auto;position:absolute;`;
     }
     el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px ${Math.round(10*s)}px;border-radius:${Math.round(4*s)}px;display:inline-block;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
-  } else if(type==='text'){
-    // Calculate pixel position from canvas dimensions for reliable placement
-    const canvas2=document.getElementById('up-designer-canvas');
-    const cw2=canvas2?parseInt(canvas2.style.width)||800:800;
-    const ch2=canvas2?parseInt(canvas2.style.height)||450:450;
-    // Convert % to px if stored as %, else use px directly
-    let txVal=d.text_x||'10%';
-    let tyVal=d.text_y||'60%';
-    // Always use % for positioning
-    if(!txVal.includes('%'))txVal=((parseFloat(txVal)/cw2)*100).toFixed(1)+'%';
-    if(!tyVal.includes('%'))tyVal=((parseFloat(tyVal)/ch2)*100).toFixed(1)+'%';
-    el.style.cssText=`left:${txVal};top:${tyVal};width:${d.text_w||'80%'};position:absolute;transform:none;max-width:80%;`;
-    const titulo=d.titulo_global||'Título de campaña';
-    const sub=d.subtitulo_global||'Subtítulo promocional';
-    const tsize=d.titulo_size||'3.5vw';
-    const ssize=d.sub_size||'1.3vw';
+  } else if(type==='titulo'){
+    el.style.cssText=`left:${d.titulo_x||'10%'};top:${d.titulo_y||'58%'};width:${d.titulo_w||'78%'};position:absolute;transform:none;`;
+    const txt=d.titulo_global||'Título de campaña';
     el.innerHTML=`<div class="d-handle"></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:${tsize};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:normal;">${titulo}</div>
-      <div style="font-family:'DM Sans',sans-serif;font-size:${ssize};color:rgba(255,255,255,.75);margin-top:${Math.round(6*s)}px;white-space:normal;">${sub}</div>`;
+      <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:normal;">${txt}</div>`;
+  } else if(type==='subtitulo'){
+    el.style.cssText=`left:${d.sub_x||'10%'};top:${d.sub_y||'72%'};width:${d.sub_w||'78%'};position:absolute;transform:none;`;
+    const stxt=d.subtitulo_global||'Subtítulo promocional';
+    el.innerHTML=`<div class="d-handle"></div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);white-space:normal;">${stxt}</div>`;
   } else if(type==='qr'){
     const qrS=Math.round((d.qr_size||100)*s);
     el.style.cssText=`left:${d.qr_x||'3%'};top:${d.qr_y_top||'auto'};bottom:${d.qr_y_bottom||'3%'};position:absolute;`;
@@ -1794,9 +1791,9 @@ function selectUpEl(type){
   document.querySelectorAll('.up-el-item').forEach(e=>e.classList.remove('active'));
   document.getElementById('up-d-el-'+type)?.classList.add('selected');
   document.getElementById('up-eli-'+type)?.classList.add('active');
-  ['logo','text','qr'].forEach(t=>{
-    const p=document.getElementById('up-props-'+t);
-    if(p)p.style.display=t===type?'block':'none';
+  ['logo','titulo','subtitulo','qr'].forEach(t=>{
+    const pp=document.getElementById('up-props-'+t);
+    if(pp)pp.style.display=t===type?'block':'none';
   });
 }
 
@@ -1805,12 +1802,13 @@ function updateUpElement(){
   if(upSelectedEl==='logo'){
     d.logo_size=parseInt(document.getElementById('up-dp-logo').value);
     document.getElementById('up-dpv-logo').textContent=d.logo_size+'px';
-  } else if(upSelectedEl==='text'){
+  } else if(upSelectedEl==='titulo'){
     d.titulo_size=document.getElementById('up-dp-titulo').value+'vw';
     document.getElementById('up-dpv-titulo').textContent=d.titulo_size;
+    d.titulo_global=document.getElementById('up-dp-titulo-val').value;
+  } else if(upSelectedEl==='subtitulo'){
     d.sub_size=document.getElementById('up-dp-sub').value+'vw';
     document.getElementById('up-dpv-sub').textContent=d.sub_size;
-    d.titulo_global=document.getElementById('up-dp-titulo-val').value;
     d.subtitulo_global=document.getElementById('up-dp-sub-val').value;
   } else if(upSelectedEl==='qr'){
     d.qr_url=document.getElementById('up-dp-qr-url').value;
@@ -1874,9 +1872,12 @@ function endUpDrag(e){
     upDesign.logo_left=lPct;
     upDesign.logo_top=tPct;
     upDesign.logo_right='auto';
-  } else if(type==='text'){
-    upDesign.text_x=lPct;
-    upDesign.text_y=tPct;
+  } else if(type==='titulo'){
+    upDesign.titulo_x=lPct;
+    upDesign.titulo_y=tPct;
+  } else if(type==='subtitulo'){
+    upDesign.sub_x=lPct;
+    upDesign.sub_y=tPct;
   } else if(type==='qr'){
     upDesign.qr_x=lPct;
     upDesign.qr_y_top=tPct;
