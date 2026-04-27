@@ -349,15 +349,13 @@ function showPromoSlide(idx){
   // ── Text ──
   const titulo=d.titulo_global||'';
   const subtitulo=d.subtitulo_global||'';
-  const textX=d.text_x||'10%';
-  const textY=d.text_y||'65%';
-  const textW=d.text_w||'75%';
-  const tituloSize=d.titulo_size||'3.5vw';
-  const subSize=d.sub_size||'1.3vw';
-  const textHtml=(titulo||subtitulo)?`<div style="position:absolute;left:${textX};top:${textY};transform:none;width:${textW};z-index:2;">
-    ${titulo?`<div style="font-family:'Cormorant Garamond',serif;font-size:${tituloSize};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;margin-bottom:8px;">${titulo}</div>`:''}
-    ${subtitulo?`<div style="font-family:'DM Sans',sans-serif;font-size:${subSize};color:rgba(255,255,255,.75);letter-spacing:.04em;">${subtitulo}</div>`:''}
+  const tituloHtml=titulo?`<div style="position:absolute;left:${d.titulo_x||'10%'};top:${d.titulo_y||'58%'};width:${d.titulo_w||'78%'};transform:none;z-index:2;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;">${titulo}</div>
   </div>`:'';
+  const subHtml=subtitulo?`<div style="position:absolute;left:${d.sub_x||'10%'};top:${d.sub_y||'72%'};width:${d.sub_w||'78%'};transform:none;z-index:2;">
+    <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);letter-spacing:.04em;">${subtitulo}</div>
+  </div>`:'';
+  const textHtml=tituloHtml+subHtml;
 
   // ── QR ──
   const qrUrl=d.qr_url||upCampaign.qr_url||'';
@@ -429,4 +427,3 @@ init();
 </script>
 </body>
 </html>
-
