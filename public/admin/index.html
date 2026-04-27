@@ -552,7 +552,8 @@ textarea{resize:none;height:58px}
 <div id="up-designer-overlay">
   <div class="up-designer-topbar">
     <div style="font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.06em" id="up-designer-title">Editor Visual — Upselling</div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="d-btn" id="up-grid-btn" onclick="toggleUpGrid()" style="display:flex;align-items:center;gap:5px;">⊞ Cuadrícula</button>
       <button class="d-btn" onclick="closeUpDesigner()">✕ Cerrar sin guardar</button>
       <button class="d-btn primary" onclick="saveUpDesign()">💾 Guardar diseño</button>
     </div>
@@ -562,6 +563,13 @@ textarea{resize:none;height:58px}
       <div class="up-canvas" id="up-designer-canvas">
         <div class="up-canvas-bg" id="up-canvas-bg"></div>
         <div class="up-canvas-overlay" id="up-canvas-overlay"></div>
+        <div id="up-grid-overlay" style="position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;
+          background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);
+          background-size:10% 10%,10% 10%,2% 2%,2% 2%;"></div>
+        <div id="up-center-guides" style="position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;z-index:11;">
+          <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,200,0,.5);"></div>
+          <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,200,0,.5);"></div>
+        </div>
       </div>
     </div>
     <div class="up-designer-sidebar">
@@ -1906,9 +1914,21 @@ async function saveUpDesign(){
   closeUpDesigner();
 }
 
+let _gridOn=false;
+function toggleUpGrid(){
+  _gridOn=!_gridOn;
+  document.getElementById('up-grid-overlay').style.opacity=_gridOn?'1':'0';
+  document.getElementById('up-center-guides').style.opacity=_gridOn?'1':'0';
+  const btn=document.getElementById('up-grid-btn');
+  if(btn){btn.style.background=_gridOn?'rgba(184,150,46,.3)':'transparent';btn.style.borderColor=_gridOn?'#B8962E':'rgba(255,255,255,.2)';}
+}
+
 function closeUpDesigner(){
   document.getElementById('up-designer-overlay').style.display='none';
   upSelectedEl=null;upDragState=null;
+  _gridOn=false;
+  const g=document.getElementById('up-grid-overlay');if(g)g.style.opacity='0';
+  const c=document.getElementById('up-center-guides');if(c)c.style.opacity='0';
 }
 
 // ── DATE / UTILS ──
