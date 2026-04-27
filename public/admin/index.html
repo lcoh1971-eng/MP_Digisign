@@ -1761,15 +1761,15 @@ function buildUpElement(type){
     }
     el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px ${Math.round(10*s)}px;border-radius:${Math.round(4*s)}px;display:inline-block;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
   } else if(type==='titulo'){
-    el.style.cssText=`left:${d.titulo_x||'10%'};top:${d.titulo_y||'58%'};width:${d.titulo_w||'78%'};position:absolute;transform:none;`;
+    el.style.cssText=`left:${d.titulo_x||'10%'};top:${d.titulo_y||'58%'};position:absolute;transform:none;display:inline-block;max-width:85%;`;
     const txt=d.titulo_global||'Título de campaña';
     el.innerHTML=`<div class="d-handle"></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:normal;">${txt}</div>`;
+      <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:nowrap;text-align:center;">${txt}</div>`;
   } else if(type==='subtitulo'){
-    el.style.cssText=`left:${d.sub_x||'10%'};top:${d.sub_y||'72%'};width:${d.sub_w||'78%'};position:absolute;transform:none;`;
+    el.style.cssText=`left:${d.sub_x||'10%'};top:${d.sub_y||'72%'};position:absolute;transform:none;display:inline-block;max-width:85%;`;
     const stxt=d.subtitulo_global||'Subtítulo promocional';
     el.innerHTML=`<div class="d-handle"></div>
-      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);white-space:normal;">${stxt}</div>`;
+      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);white-space:nowrap;text-align:center;">${stxt}</div>`;
   } else if(type==='qr'){
     const qrS=Math.round((d.qr_size||100)*s);
     el.style.cssText=`left:${d.qr_x||'3%'};top:${d.qr_y_top||'auto'};bottom:${d.qr_y_bottom||'3%'};position:absolute;`;
