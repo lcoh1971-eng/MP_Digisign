@@ -291,11 +291,21 @@ let showingPromo=false;
 let idleTimer=null;
 const IDLE_SHOW_SECONDS=8; // seconds on default screen before showing promo
 
+let _lastUpHash='';
+
 async function loadUpselling(){
   try{
     const r=await fetch(`${BASE}/upselling?salon_slug=${slug}`);
-    if(r.ok) upCampaign=await r.json();
-    else upCampaign=null;
+    if(r.ok){
+      const camp=await r.json();
+      const newHash=JSON.stringify(camp?.diseno||'');
+      if(_lastUpHash&&newHash&&newHash!==_lastUpHash){
+        window.location.reload();
+        return;
+      }
+      _lastUpHash=newHash;
+      upCampaign=camp;
+    } else upCampaign=null;
   }catch(e){upCampaign=null;}
 }
 
