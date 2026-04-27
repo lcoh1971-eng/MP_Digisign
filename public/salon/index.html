@@ -298,14 +298,21 @@ async function loadUpselling(){
     const r=await fetch(`${BASE}/upselling?salon_slug=${slug}`);
     if(r.ok){
       const camp=await r.json();
-      const newHash=JSON.stringify(camp?.diseno||'');
-      if(_lastUpHash&&newHash&&newHash!==_lastUpHash){
+      // Hash includes design and medios
+      const d=camp?.diseno?JSON.stringify(camp.diseno):'';
+      const m=camp?.upselling_medios?camp.upselling_medios.map(x=>x.id+'-'+x.duracion_segundos+'-'+x.orden).join(','):'';
+      const newHash=camp?`${camp.id}|${camp.activo}|${d}|${m}`:'__none__';
+      if(_lastUpHash!==''&&newHash!==_lastUpHash){
         window.location.reload();
         return;
       }
       _lastUpHash=newHash;
       upCampaign=camp;
-    } else upCampaign=null;
+    } else {
+      if(_lastUpHash!==''&&_lastUpHash!=='__none__'){window.location.reload();return;}
+      _lastUpHash='__none__';
+      upCampaign=null;
+    }
   }catch(e){upCampaign=null;}
 }
 
