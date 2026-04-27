@@ -1675,7 +1675,7 @@ function openUpDesigner(){
   const savedDesign=window._currentUpDesign||{};
   upDesign=Object.assign({
     logo_size:50,logo_top:'3%',logo_right:'3%',logo_left:'auto',
-    text_x:'10%',text_y:'65%',text_w:'75%',
+    text_x:'10%',text_y:'60%',text_w:'78%',
     titulo_size:'3.5vw',sub_size:'1.3vw',
     titulo_global:'',subtitulo_global:'',
     qr_url:'',qr_texto:'',qr_size:100,qr_x:'3%',qr_y_top:'auto',qr_y_bottom:'3%',
@@ -1755,15 +1755,24 @@ function buildUpElement(type){
     }
     el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px ${Math.round(10*s)}px;border-radius:${Math.round(4*s)}px;display:inline-block;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
   } else if(type==='text'){
-    // Use direct left/top positioning, no transform
-    const tx=d.text_x||'10%';
-    const ty=d.text_y||'65%';
-    el.style.cssText=`left:${tx};top:${ty};width:${d.text_w||'75%'};position:absolute;transform:none;`;
+    // Calculate pixel position from canvas dimensions for reliable placement
+    const canvas2=document.getElementById('up-designer-canvas');
+    const cw2=canvas2?parseInt(canvas2.style.width)||800:800;
+    const ch2=canvas2?parseInt(canvas2.style.height)||450:450;
+    // Convert % to px if stored as %, else use px directly
+    let txVal=d.text_x||'10%';
+    let tyVal=d.text_y||'60%';
+    // Always use % for positioning
+    if(!txVal.includes('%'))txVal=((parseFloat(txVal)/cw2)*100).toFixed(1)+'%';
+    if(!tyVal.includes('%'))tyVal=((parseFloat(tyVal)/ch2)*100).toFixed(1)+'%';
+    el.style.cssText=`left:${txVal};top:${tyVal};width:${d.text_w||'80%'};position:absolute;transform:none;max-width:80%;`;
     const titulo=d.titulo_global||'Título de campaña';
     const sub=d.subtitulo_global||'Subtítulo promocional';
+    const tsize=d.titulo_size||'3.5vw';
+    const ssize=d.sub_size||'1.3vw';
     el.innerHTML=`<div class="d-handle"></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;">${titulo}</div>
-      <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);margin-top:${Math.round(6*s)}px;">${sub}</div>`;
+      <div style="font-family:'Cormorant Garamond',serif;font-size:${tsize};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:normal;">${titulo}</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:${ssize};color:rgba(255,255,255,.75);margin-top:${Math.round(6*s)}px;white-space:normal;">${sub}</div>`;
   } else if(type==='qr'){
     const qrS=Math.round((d.qr_size||100)*s);
     el.style.cssText=`left:${d.qr_x||'3%'};top:${d.qr_y_top||'auto'};bottom:${d.qr_y_bottom||'3%'};position:absolute;`;
@@ -1917,4 +1926,3 @@ window.addEventListener('load',()=>{
 </script>
 </body>
 </html>
-
