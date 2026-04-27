@@ -102,6 +102,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
 
 <script>
 const BASE='/.netlify/functions';
+var _lastDesignHash='';
+var _lastUpHash='';
 const slug=location.pathname.split('/').filter(Boolean).pop();
 let config={};
 let carouselSlides=[];
@@ -290,8 +292,6 @@ let upSlideTimer=null;
 let showingPromo=false;
 let idleTimer=null;
 const IDLE_SHOW_SECONDS=8; // seconds on default screen before showing promo
-
-let _lastUpHash='';
 
 async function loadUpselling(){
   try{
