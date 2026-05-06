@@ -759,15 +759,15 @@ async function initApp(){
 }
 
 async function loadSalones(){
-  const r=await fetch(`${BASE}/salones`);
+  const r=await fetch(`${BASE}/salones`,{headers:{'x-admin-token':TOKEN}});
   allSalones=await r.json();
   renderSidebar();renderSalonesTable();
 }
 
 function renderSidebar(){
   document.getElementById('sidebar-salones').innerHTML=allSalones.map((s,i)=>`
-    <div class="salon-item ${s.id===activeSalonId?'sel':''}" onclick="selectSalonByIndex(${i})">
-      <span class="salon-nm">${s.nombre}</span>
+    <div class="salon-item ${s.id===activeSalonId?'sel':''}" onclick="selectSalonByIndex(${i})" style="${!s.activo?'opacity:0.5':''}">
+      <span class="salon-nm">${s.nombre}${!s.activo?' <span style="font-size:9px;color:#888">(inactivo)</span>':''}</span>
       <span class="salon-st ${s.activo?'st-on':'st-off'}">${s.activo?'Activo':'Inactivo'}</span>
     </div>`).join('');
 }
