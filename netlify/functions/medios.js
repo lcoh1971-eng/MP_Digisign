@@ -16,8 +16,12 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hotel2024';
 const crypto = require('crypto');
 
 function parseUserToken(token) {
-  try { return JSON.parse(Buffer.from(token, 'base64').toString('utf8')); }
-  catch { return null; }
+  try {
+    const padded = token.replace(/-/g, '+').replace(/_/g, '/');
+    const padLen = (4 - padded.length % 4) % 4;
+    const normalized = padded + '='.repeat(padLen);
+    return JSON.parse(Buffer.from(normalized, 'base64').toString('utf8'));
+  } catch { return null; }
 }
 
 function authorized(event) {
@@ -25,7 +29,8 @@ function authorized(event) {
   if (!token) return false;
   if (token === ADMIN_PASSWORD) return true;
   const user = parseUserToken(token);
-  return user && (user.rol === 'admin' || user.rol === 'operador');
+  if (!user) return false;
+  return user.rol === 'admin' || user.rol === 'operador';
 }
 
 exports.handler = async (event) => {
