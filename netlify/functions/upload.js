@@ -20,7 +20,11 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
   const _tok = event.headers['x-admin-token'] || event.headers['x-user-token'];
-  const _user = _tok ? (() => { try { return JSON.parse(Buffer.from(_tok, 'base64').toString('utf8')); } catch { return null; } })() : null;
+  const _user = _tok ? (() => { try {
+    const p=_tok.replace(/-/g,'+').replace(/_/g,'/');
+    const n=p+'='.repeat((4-p.length%4)%4);
+    return JSON.parse(Buffer.from(n,'base64').toString('utf8'));
+  } catch { return null; } })() : null;
   const _auth = _tok === ADMIN_PASSWORD || (_user && (_user.rol === 'admin' || _user.rol === 'operador'));
   if (!_auth) {
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'No autorizado' }) };
