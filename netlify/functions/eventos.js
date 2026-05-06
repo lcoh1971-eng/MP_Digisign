@@ -8,8 +8,19 @@ const supabase = createClient(
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hotel2024';
 
+const crypto = require('crypto');
+
+function parseUserToken(token) {
+  try { return JSON.parse(Buffer.from(token, 'base64').toString('utf8')); }
+  catch { return null; }
+}
+
 function authorized(event) {
-  return event.headers['x-admin-token'] === ADMIN_PASSWORD;
+  const token = event.headers['x-admin-token'] || event.headers['x-user-token'];
+  if (!token) return false;
+  if (token === ADMIN_PASSWORD) return true;
+  const user = parseUserToken(token);
+  return user && (user.rol === 'admin' || user.rol === 'operador');
 }
 
 function nowPanama() {
