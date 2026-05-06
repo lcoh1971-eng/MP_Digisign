@@ -660,7 +660,7 @@ textarea{resize:none;height:58px}
 const BASE='/.netlify/functions';
 const SUPA_URL='https://gumnnqpaieooxkvhneqi.supabase.co';
 const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bW5ucXBhaWVvb3hrdmhuZXFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDUyMDUsImV4cCI6MjA5MjUyMTIwNX0.b1E-f1WLLSw8yZTtQ4yFcrdj_7ZjMhhNYXqnQsm-v0U';
-let TOKEN='',activeSalonId=null,activeSalonSlug='',allSalones=[],selectedColor='#B8962E',editingEventId=null,editingSalonId=null,activeEventMedias=[];
+let TOKEN='',ADMIN_PASSWORD_TOKEN='',activeSalonId=null,activeSalonSlug='',allSalones=[],selectedColor='#B8962E',editingEventId=null,editingSalonId=null,activeEventMedias=[];
 let activeFilter='all';
 
 // ── AUTH ──
@@ -676,7 +676,8 @@ async function doLogin(){
     const r=await fetch(`${BASE}/auth-users`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
     const d=await r.json();
     if(d.ok){
-      TOKEN=d.user.rol==='admin'?ADMIN_PASSWORD:'';
+      // For admin role use master token behavior, for others store user token
+      TOKEN=d.user.rol==='admin'?d.token:d.token;
       currentUser=d.user;
       sessionStorage.setItem('signage_token',TOKEN);
       sessionStorage.setItem('user_token',d.token);
