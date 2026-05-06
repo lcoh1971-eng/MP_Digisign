@@ -154,4 +154,3 @@ exports.handler = async (event) => {
   // POST medios: /api/upselling?medio=1
   return { statusCode: 405, headers, body: JSON.stringify({ error: 'Método no permitido' }) };
 };
-
