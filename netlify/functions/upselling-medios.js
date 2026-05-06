@@ -21,7 +21,10 @@ exports.handler = async (event) => {
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  if (event.headers['x-admin-token'] !== ADMIN_PASSWORD) {
+  const _tok = event.headers['x-admin-token'] || event.headers['x-user-token'];
+  const _user = _tok ? (() => { try { return JSON.parse(Buffer.from(_tok, 'base64').toString('utf8')); } catch { return null; } })() : null;
+  const _auth = _tok === ADMIN_PASSWORD || (_user && (_user.rol === 'admin' || _user.rol === 'operador'));
+  if (!_auth) {
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'No autorizado' }) };
   }
 
@@ -71,4 +74,3 @@ exports.handler = async (event) => {
 
   return { statusCode: 405, headers, body: JSON.stringify({ error: 'Método no permitido' }) };
 };
-
