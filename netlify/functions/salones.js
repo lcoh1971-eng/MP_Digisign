@@ -42,11 +42,12 @@ exports.handler = async (event) => {
 
   // GET — público
   if (event.httpMethod === 'GET') {
-    const { data, error } = await supabase
-      .from('salones')
-      .select('*')
-      .eq('activo', true)
-      .order('nombre');
+    const params = event.queryStringParameters || {};
+    // Admin panel requests all salones; tablet/public requests only active ones
+    const isAdmin = event.headers['x-admin-token'];
+    let query = supabase.from('salones').select('*').order('nombre');
+    if (!isAdmin) query = query.eq('activo', true);
+    const { data, error } = await query;
     if (error) return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
     return { statusCode: 200, headers, body: JSON.stringify(data) };
   }
