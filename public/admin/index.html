@@ -15,7 +15,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 #login-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:999}
 .login-box{background:#222;border:1px solid var(--border);border-radius:14px;padding:48px 40px;width:360px;text-align:center}
 .login-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:28px;margin-top:8px}
-.login-box input{width:100%;padding:11px 14px;background:#2A2A2A;border:1px solid rgba(184,150,46,.3);border-radius:7px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px}
+.login-box input{width:100%;padding:11px 14px;background:#2A2A2A;border:1px solid rgba(184,150,46,.3);border-radius:7px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px}.login-box input:focus{border-color:var(--gold)}
 .login-box input:focus{border-color:var(--gold)}
 .login-btn{width:100%;padding:11px;background:var(--marriott);border:none;border-radius:7px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
 .login-btn:hover{background:#c02850}
@@ -307,9 +307,10 @@ textarea{resize:none;height:58px}
       <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:70px;width:auto;display:block;">
     </div>
     <div class="login-sub">Gestión de Señalización DigiSign</div>
-    <input type="password" id="pwd-input" placeholder="Contraseña de administrador" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="email" id="email-input" placeholder="Correo electrónico" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" id="pwd-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">Ingresar</button>
-    <div class="login-err" id="login-err">Contraseña incorrecta</div>
+    <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
   </div>
 </div>
 
@@ -325,6 +326,7 @@ textarea{resize:none;height:58px}
     <button class="nav-btn" onclick="showPanel('agenda')">Agenda</button>
     <button class="nav-btn" onclick="showPanel('salones')">Salones</button>
     <button class="nav-btn" onclick="showPanel('upselling')">🎯 Upselling</button>
+    <button class="nav-btn" id="nav-usuarios" onclick="showPanel('usuarios')" style="display:none">👥 Usuarios</button>
     <a href="/bi" class="nav-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">📊 BI</a>
   </div>
   <button class="logout-btn" onclick="doLogout()">Salir</button>
@@ -395,6 +397,24 @@ textarea{resize:none;height:58px}
       <tbody id="salones-tbody"></tbody>
     </table>
     <div id="salon-form-area" style="margin-top:20px;display:none"></div>
+  </div>
+</div>
+
+<!-- ══ USUARIOS PANEL ══ -->
+<div id="panel-usuarios" class="panel" style="display:none">
+  <div class="main">
+    <div class="sec-hdr">
+      <div>
+        <div class="sec-title">Gestión de Usuarios</div>
+        <div class="sec-sub">Acceso al panel de administración</div>
+      </div>
+      <button class="btn-pri" onclick="openUserForm()">+ Nuevo usuario</button>
+    </div>
+    <div id="user-form-area" style="display:none"></div>
+    <table class="salones-tbl" id="users-table">
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody id="users-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Cargando...</td></tr></tbody>
+    </table>
   </div>
 </div>
 
@@ -644,25 +664,90 @@ let TOKEN='',activeSalonId=null,activeSalonSlug='',allSalones=[],selectedColor='
 let activeFilter='all';
 
 // ── AUTH ──
+let currentUser=null;
+
 async function doLogin(){
+  const email=document.getElementById('email-input')?.value||'';
   const pwd=document.getElementById('pwd-input').value;
-  const r=await fetch(`${BASE}/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
-  const d=await r.json();
-  if(d.ok){TOKEN=d.token;sessionStorage.setItem('signage_token',TOKEN);document.getElementById('login-screen').style.display='none';document.getElementById('topbar').style.display='flex';showPanel('eventos');initApp();}
-  else document.getElementById('login-err').style.display='block';
+  const err=document.getElementById('login-err');
+
+  // Try user login first
+  if(email){
+    const r=await fetch(`${BASE}/auth-users`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+    const d=await r.json();
+    if(d.ok){
+      TOKEN=d.user.rol==='admin'?ADMIN_PASSWORD:'';
+      currentUser=d.user;
+      sessionStorage.setItem('signage_token',TOKEN);
+      sessionStorage.setItem('user_token',d.token);
+      sessionStorage.setItem('current_user',JSON.stringify(d.user));
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('topbar').style.display='flex';
+      applyRoleUI();
+      showPanel('eventos');
+      initApp();
+      return;
+    }
+  }
+
+  // Fallback: master admin password
+  const r2=await fetch(`${BASE}/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+  const d2=await r2.json();
+  if(d2.ok){
+    TOKEN=d2.token;
+    currentUser={nombre:'Administrador',rol:'admin',email:'admin'};
+    sessionStorage.setItem('signage_token',TOKEN);
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('topbar').style.display='flex';
+    applyRoleUI();
+    showPanel('eventos');
+    initApp();
+  } else {
+    if(err)err.style.display='block';
+  }
 }
-function doLogout(){sessionStorage.removeItem('signage_token');location.reload();}
+
+function applyRoleUI(){
+  const rol=currentUser?.rol||'readonly';
+  // Show usuarios panel only for admin
+  const navU=document.getElementById('nav-usuarios');
+  if(navU)navU.style.display=rol==='admin'?'inline-block':'none';
+  // Show/hide new event button based on role
+  const newEvBtn=document.getElementById('new-ev-btn');
+  if(newEvBtn&&rol==='readonly')newEvBtn.style.display='none';
+  // Show user info in topbar
+  const topbar=document.getElementById('topbar');
+  if(topbar&&currentUser){
+    let badge=document.getElementById('user-badge');
+    if(!badge){
+      badge=document.createElement('div');
+      badge.id='user-badge';
+      badge.style.cssText='font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:8px;';
+      topbar.insertBefore(badge,topbar.querySelector('.logout-btn'));
+    }
+    const rolLabel={admin:'Admin',operador:'Operador',readonly:'Solo lectura'};
+    badge.innerHTML=`<span style="color:var(--gold-l)">${currentUser.nombre}</span><span style="background:rgba(255,255,255,.1);padding:2px 8px;border-radius:10px;font-size:10px;">${rolLabel[rol]||rol}</span>`;
+  }
+}
+function doLogout(){sessionStorage.removeItem('signage_token');sessionStorage.removeItem('user_token');sessionStorage.removeItem('current_user');location.reload();}
 
 function showPanel(name){
+  // Check role permissions
+  const rol=currentUser?.rol||'admin';
+  if(name==='salones'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+  if(name==='upselling'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+  if(name==='usuarios'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+name).style.display='block';
-  const idx={eventos:0,agenda:1,salones:2,upselling:3};
+  const idx={eventos:0,agenda:1,salones:2,upselling:3,usuarios:4};
   const navBtns=document.querySelectorAll('.nav-btn');
   if(idx[name]!==undefined)navBtns[idx[name]]?.classList.add('active');
   if(name==='agenda')loadAgenda();
   if(name==='salones')renderSalonesTable();
   if(name==='upselling')loadCampaigns();
+  if(name==='usuarios')loadUsuarios();
 }
 
 async function initApp(){
@@ -1931,6 +2016,108 @@ function closeUpDesigner(){
   const c=document.getElementById('up-center-guides');if(c)c.style.opacity='0';
 }
 
+// ══════════════════════════════════════════
+// USUARIOS
+// ══════════════════════════════════════════
+async function loadUsuarios(){
+  const r=await fetch(`${BASE}/auth-users?action=list`,{headers:{'x-admin-token':TOKEN}});
+  const users=await r.json();
+  renderUsuarios(users);
+}
+
+function renderUsuarios(users){
+  const tbody=document.getElementById('users-tbody');
+  if(!users||!users.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No hay usuarios registrados.</td></tr>';return;}
+  const rolLabel={admin:'👑 Admin',operador:'✏️ Operador',readonly:'👁 Solo lectura'};
+  tbody.innerHTML=users.map(u=>`
+    <tr>
+      <td><strong style="font-weight:500">${u.nombre}</strong></td>
+      <td style="font-size:12px;color:var(--muted)">${u.email}</td>
+      <td><span style="font-size:11px;padding:2px 10px;border-radius:10px;background:${u.rol==='admin'?'rgba(160,33,63,.12)':u.rol==='operador'?'rgba(184,150,46,.12)':'rgba(136,135,128,.12)'};color:${u.rol==='admin'?'var(--marriott)':u.rol==='operador'?'#7A6115':'var(--muted)'}">${rolLabel[u.rol]||u.rol}</span></td>
+      <td><button class="toggle-sw ${u.activo?'on':''}" onclick="toggleUsuario('${u.id}',${u.activo})"></button></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="ic-btn" onclick="openUserForm('${u.id}')">✎</button>
+        <button class="ic-btn del" onclick="deleteUsuario('${u.id}','${u.nombre}')">✕</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function openUserForm(id=null){
+  const area=document.getElementById('user-form-area');
+  area.style.display='block';
+  area.innerHTML=`<div class="form-card">
+    <div class="form-title">${id?'Editar usuario':'Nuevo usuario'}</div>
+    <div class="form-row">
+      <div><label>Nombre completo</label><input type="text" id="uf-nombre" placeholder="Ej. María González"></div>
+      <div><label>Correo electrónico</label><input type="email" id="uf-email" placeholder="usuario@marriottpanama.com"></div>
+    </div>
+    <div class="form-row">
+      <div><label>${id?'Nueva contraseña (dejar vacío para no cambiar)':'Contraseña'}</label><input type="password" id="uf-password" placeholder="${id?'Dejar vacío para mantener':'Mínimo 6 caracteres'}"></div>
+      <div><label>Rol</label>
+        <select id="uf-rol">
+          <option value="operador">✏️ Operador — Gestiona eventos</option>
+          <option value="admin">👑 Admin — Acceso total</option>
+          <option value="readonly">👁 Solo lectura — Ver agenda</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-sec" onclick="document.getElementById('user-form-area').style.display='none'">Cancelar</button>
+      <button class="btn-pri" onclick="saveUsuario('${id||''}')">Guardar usuario</button>
+    </div>
+  </div>`;
+
+  // Load data if editing
+  if(id){
+    fetch(`${BASE}/auth-users?action=list`,{headers:{'x-admin-token':TOKEN}})
+      .then(r=>r.json())
+      .then(users=>{
+        const u=users.find(x=>x.id===id);
+        if(u){
+          document.getElementById('uf-nombre').value=u.nombre;
+          document.getElementById('uf-email').value=u.email;
+          document.getElementById('uf-rol').value=u.rol;
+        }
+      });
+  }
+  area.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function saveUsuario(id){
+  const nombre=document.getElementById('uf-nombre').value.trim();
+  const email=document.getElementById('uf-email').value.trim();
+  const password=document.getElementById('uf-password').value;
+  const rol=document.getElementById('uf-rol').value;
+
+  if(!nombre||!email){showToast('Nombre y correo son requeridos',true);return;}
+  if(!id&&!password){showToast('La contraseña es requerida para nuevos usuarios',true);return;}
+  if(password&&password.length<6){showToast('La contraseña debe tener al menos 6 caracteres',true);return;}
+
+  const payload={nombre,email,rol};
+  if(password)payload.password=password;
+
+  const url=id?`${BASE}/auth-users?id=${id}`:`${BASE}/auth-users?action=create`;
+  const method=id?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(!r.ok){showToast(d.error||'Error al guardar',true);return;}
+  showToast(id?'Usuario actualizado':'Usuario creado correctamente');
+  document.getElementById('user-form-area').style.display='none';
+  loadUsuarios();
+}
+
+async function toggleUsuario(id,current){
+  await fetch(`${BASE}/auth-users?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({activo:!current})});
+  loadUsuarios();
+}
+
+async function deleteUsuario(id,nombre){
+  if(!confirm(`¿Eliminar al usuario "${nombre}"?`))return;
+  const r=await fetch(`${BASE}/auth-users?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+  if(r.ok){showToast('Usuario eliminado');loadUsuarios();}
+  else showToast('Error al eliminar',true);
+}
+
 // ── DATE / UTILS ──
 function changeDate(d){const el=document.getElementById('fecha-filtro');const dt=new Date(el.value);dt.setDate(dt.getDate()+d);el.value=dt.toISOString().slice(0,10);loadEventos();}
 function changeAgendaDate(d){const el=document.getElementById('agenda-fecha');const dt=new Date(el.value);dt.setDate(dt.getDate()+d);el.value=dt.toISOString().slice(0,10);loadAgenda();}
@@ -1942,7 +2129,16 @@ function showSaving(v){document.getElementById('saving-indicator').className='sa
 
 window.addEventListener('load',()=>{
   const saved=sessionStorage.getItem('signage_token');
-  if(saved){TOKEN=saved;document.getElementById('login-screen').style.display='none';document.getElementById('topbar').style.display='flex';showPanel('eventos');initApp();}
+  const savedUser=sessionStorage.getItem('current_user');
+  if(saved){
+    TOKEN=saved;
+    currentUser=savedUser?JSON.parse(savedUser):{nombre:'Administrador',rol:'admin'};
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('topbar').style.display='flex';
+    applyRoleUI();
+    showPanel('eventos');
+    initApp();
+  }
 });
 </script>
 </body>
