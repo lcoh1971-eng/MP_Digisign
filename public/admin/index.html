@@ -676,8 +676,7 @@ async function doLogin(){
     const r=await fetch(`${BASE}/auth-users`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
     const d=await r.json();
     if(d.ok){
-      // For admin role use master token behavior, for others store user token
-      TOKEN=d.user.rol==='admin'?d.token:d.token;
+      TOKEN=d.token;
       currentUser=d.user;
       sessionStorage.setItem('signage_token',TOKEN);
       sessionStorage.setItem('user_token',d.token);
