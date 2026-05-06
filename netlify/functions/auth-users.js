@@ -79,8 +79,10 @@ exports.handler = async (event) => {
   let isAdmin = adminToken === ADMIN_PASSWORD;
   let currentUser = null;
 
-  if (!isAdmin && userToken) {
-    currentUser = parseToken(userToken);
+  // Also accept user token from logged-in admin users
+  const tokenToCheck = userToken || adminToken;
+  if (!isAdmin && tokenToCheck) {
+    currentUser = parseToken(tokenToCheck);
     if (currentUser && currentUser.rol === 'admin') isAdmin = true;
   }
 
