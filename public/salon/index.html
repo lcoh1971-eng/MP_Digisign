@@ -332,9 +332,69 @@ async function loadWeather() {
   }
 }
 
-// ── CONFIG ──
+// ── CONFIG + IDLE DESIGN ──
 async function loadConfig() {
-  try { const r = await fetch(`${BASE}/configuracion`); config = await r.json(); } catch(e) { config = {}; }
+  try {
+    const r = await fetch(`${BASE}/configuracion`);
+    config = await r.json();
+    if (config.idle_design) {
+      try { applyIdleDesignToScreen(JSON.parse(config.idle_design)); } catch(e) {}
+    }
+  } catch(e) { config = {}; }
+}
+
+// ── APPLY IDLE DESIGN ──
+function applyIdleDesignToScreen(d) {
+  if (!d) return;
+  // Background
+  const si = document.getElementById('screen-idle');
+  if (d.bg_color) si.style.background = d.bg_color;
+
+  // Logo
+  const logoWrap = document.querySelector('.idle-logo-wrap');
+  const logoImg = logoWrap?.querySelector('img');
+  if (logoWrap) logoWrap.style.display = d.logo_vis === false ? 'none' : '';
+  if (logoImg && d.logo_size) logoImg.style.height = d.logo_size + 'px';
+  // Logo position via CSS on idle-header — no custom positioning needed (it's flex)
+
+  // Clock
+  const clockEl = document.getElementById('idle-time');
+  const dateEl  = document.getElementById('idle-date');
+  const clockBlock = clockEl?.closest('.idle-clock-top');
+  if (clockBlock) clockBlock.style.display = d.clock_vis === false ? 'none' : '';
+  if (clockEl && d.clock_color) { clockEl.style.color = d.clock_color; }
+  if (clockEl && d.clock_size)  { clockEl.style.fontSize = d.clock_size; }
+
+  // Welcome text
+  const welcomeEl = document.querySelector('.idle-salon-label');
+  if (welcomeEl) {
+    welcomeEl.style.display = d.welcome_vis === false ? 'none' : '';
+    if (d.welcome_txt)   welcomeEl.textContent = d.welcome_txt;
+    if (d.welcome_color) welcomeEl.style.color = d.welcome_color;
+    if (d.welcome_size)  welcomeEl.style.fontSize = d.welcome_size;
+    if (d.welcome_font)  welcomeEl.style.fontFamily = d.welcome_font;
+  }
+
+  // Ornament
+  const ornEl = document.querySelector('.idle-ornament');
+  if (ornEl) ornEl.style.display = d.ornament_vis === false ? 'none' : '';
+
+  // Salon name
+  const salonEl = document.getElementById('idle-salon-name');
+  if (salonEl) {
+    if (d.salon_color) salonEl.style.color = d.salon_color;
+    if (d.salon_size)  salonEl.style.fontSize = d.salon_size;
+    if (d.salon_font)  salonEl.style.fontFamily = d.salon_font;
+  }
+
+  // Weather
+  const wxContainer = document.getElementById('weather-container');
+  if (wxContainer && d.wx_vis === false) wxContainer.style.display = 'none';
+  else if (wxContainer) wxContainer.style.display = '';
+  const wxTemp = document.getElementById('w-temp');
+  const wxIcon = document.getElementById('w-icon');
+  if (wxTemp && d.wx_size)  { wxTemp.style.fontSize = d.wx_size; wxTemp.style.color = d.wx_color || ''; }
+  if (wxIcon && d.wx_icon)  { wxIcon.style.fontSize = d.wx_icon; }
 }
 
 // ── APPLY DESIGN (3-zone aware) ──
