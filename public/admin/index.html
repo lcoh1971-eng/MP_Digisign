@@ -298,6 +298,28 @@ textarea{resize:none;height:58px}
 .up-el-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.8);}
 .up-el-item.active{background:rgba(160,33,63,.2);color:#fff;border-left:2px solid var(--marriott);}
 
+/* ══ IDLE DESIGNER ══ */
+.idle-designer-wrap{display:grid;grid-template-columns:1fr 300px;height:calc(100vh - 54px);}
+.idle-canvas-area{background:#0D0D0B;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden;}
+.idle-canvas{position:relative;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+/* 3 zones inside idle canvas */
+.ic-zone{position:absolute;left:0;right:0;}
+.ic-zone-header{top:0;height:20%;border-bottom:1.5px dashed rgba(184,150,46,.4);}
+.ic-zone-body{top:20%;height:60%;}
+.ic-zone-footer{top:80%;height:20%;border-top:1.5px dashed rgba(184,150,46,.4);}
+.ic-zone-label{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(184,150,46,.4);pointer-events:none;}
+/* Draggable idle elements */
+.ic-el{position:absolute;cursor:move;user-select:none;}
+.ic-el .ic-handle{position:absolute;inset:-5px;border:1.5px dashed rgba(255,255,255,.0);border-radius:4px;pointer-events:none;transition:border-color .15s;}
+.ic-el:hover .ic-handle,.ic-el.sel .ic-handle{border-color:rgba(255,255,255,.7);}
+/* Idle sidebar */
+.idle-sidebar{background:#161616;border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:16px;}
+.idle-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.idle-tab{flex:1;padding:7px 4px;text-align:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.1);border-radius:5px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .15s;}
+.idle-tab.active{background:rgba(160,33,63,.25);border-color:var(--marriott);color:#fff;}
+.idle-tab:hover:not(.active){background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);}
+.idle-save-bar{background:#111;border-top:1px solid rgba(255,255,255,.1);padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;}
+
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;border-left:3px solid var(--marriott);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s}
 .toast.show{transform:translateY(0);opacity:1}
@@ -334,6 +356,7 @@ textarea{resize:none;height:58px}
     <button class="nav-btn" onclick="showPanel('salones')">Salones</button>
     <button class="nav-btn" onclick="showPanel('upselling')">🎯 Upselling</button>
     <button class="nav-btn" id="nav-usuarios" onclick="showPanel('usuarios')" style="display:none">👥 Usuarios</button>
+    <button class="nav-btn" id="nav-idle" onclick="showPanel('idle')" style="display:none">🖥 Pantalla Idle</button>
     <a href="/bi" class="nav-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">📊 BI</a>
   </div>
   <button class="logout-btn" onclick="doLogout()">Salir</button>
@@ -431,6 +454,199 @@ textarea{resize:none;height:58px}
     </div>
     <div id="up-form-area" style="display:none"></div>
     <div id="up-campaigns-grid" class="up-grid"><div class="empty-state">Cargando campañas...</div></div>
+  </div>
+</div>
+
+<!-- ══ PANEL IDLE ══ -->
+<div id="panel-idle" class="panel" style="display:none">
+  <div class="idle-designer-wrap">
+    <div class="idle-canvas-area" id="idle-canvas-area">
+      <div class="idle-canvas" id="idle-canvas">
+        <div id="ic-bg" style="position:absolute;inset:0;background:#0D0D0B;"></div>
+        <div class="ic-zone ic-zone-header"><div class="ic-zone-label">HEADER</div></div>
+        <div class="ic-zone ic-zone-body"><div class="ic-zone-label">BODY</div></div>
+        <div class="ic-zone ic-zone-footer"><div class="ic-zone-label">FOOTER</div></div>
+        <!-- LOGO -->
+        <div class="ic-el" id="ic-el-logo" style="top:3%;left:2%;">
+          <div class="ic-handle"></div>
+          <div id="ic-logo-inner" style="background:white;padding:8px 16px;border-radius:6px;display:inline-block;">
+            <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" id="ic-logo-img" style="height:44px;width:auto;display:block;">
+          </div>
+        </div>
+        <!-- RELOJ -->
+        <div class="ic-el" id="ic-el-clock" style="top:3%;right:2%;text-align:right;">
+          <div class="ic-handle"></div>
+          <div id="ic-clock-time" style="font-size:2.5vw;color:rgba(255,255,255,.6);font-weight:300;letter-spacing:.05em;">11:10</div>
+          <div id="ic-clock-date" style="font-size:1vw;color:rgba(255,255,255,.3);letter-spacing:.12em;margin-top:2px;">Jueves, 7 de mayo</div>
+        </div>
+        <!-- BIENVENIDO -->
+        <div class="ic-el" id="ic-el-welcome" style="left:50%;top:32%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div id="ic-welcome-txt" style="font-size:1vw;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);text-align:center;white-space:nowrap;font-family:'DM Sans',sans-serif;">BIENVENIDO A · WELCOME TO</div>
+        </div>
+        <!-- ORNAMENTO -->
+        <div class="ic-el" id="ic-el-ornament" style="left:50%;top:38%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div id="ic-ornament-line" style="width:64px;height:1px;background:linear-gradient(to right,transparent,#B8962E,transparent);"></div>
+        </div>
+        <!-- NOMBRE SALÓN -->
+        <div class="ic-el" id="ic-el-salon" style="left:50%;top:50%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div id="ic-salon-nm" style="font-family:'Cormorant Garamond',serif;font-size:3.5vw;color:rgba(255,255,255,.8);font-weight:300;letter-spacing:.06em;text-align:center;white-space:nowrap;">Nombre del Salón</div>
+        </div>
+        <!-- CLIMA -->
+        <div class="ic-el" id="ic-el-weather" style="left:50%;top:90%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="ic-wx-icon" style="font-size:4vw;line-height:1;">⛈️</div>
+            <div>
+              <div id="ic-wx-temp" style="font-size:3vw;color:rgba(255,255,255,.75);font-weight:300;">30°C</div>
+              <div id="ic-wx-desc" style="font-size:1vw;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;">TORMENTA</div>
+              <div id="ic-wx-feels" style="font-size:0.85vw;color:rgba(255,255,255,.25);">Sensación 37°C</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="idle-sidebar">
+      <div class="idle-tabs">
+        <div class="idle-tab active" id="itab-fondo" onclick="selectIdleTab('fondo')">🎨 Fondo</div>
+        <div class="idle-tab" id="itab-header" onclick="selectIdleTab('header')">🔝 Header</div>
+        <div class="idle-tab" id="itab-body" onclick="selectIdleTab('body')">📋 Body</div>
+        <div class="idle-tab" id="itab-footer" onclick="selectIdleTab('footer')">🔻 Footer</div>
+      </div>
+
+      <!-- FONDO -->
+      <div id="iprops-fondo">
+        <div class="d-section">
+          <div class="d-section-title">Color de fondo</div>
+          <div class="d-prop">
+            <label>Color</label>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+              <input type="color" id="ip-bg-color" value="#0D0D0B" oninput="updateIdleBg()" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;background:none;">
+              <input type="text" id="ip-bg-hex" value="#0D0D0B" oninput="syncBgHex()" style="flex:1;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:monospace;font-size:12px;outline:none;">
+              <button onclick="resetIdleBg()" style="padding:5px 8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:11px;cursor:pointer;">Reset</button>
+            </div>
+          </div>
+          <div class="d-prop" style="margin-top:8px;">
+            <label>Colores rápidos</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+              <div onclick="setIdleBgColor('#0D0D0B')" style="width:28px;height:28px;border-radius:50%;background:#0D0D0B;cursor:pointer;border:2px solid rgba(255,255,255,.3);" title="Negro (default)"></div>
+              <div onclick="setIdleBgColor('#0A1628')" style="width:28px;height:28px;border-radius:50%;background:#0A1628;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Azul marino"></div>
+              <div onclick="setIdleBgColor('#1A0A0A')" style="width:28px;height:28px;border-radius:50%;background:#1A0A0A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Rojo oscuro"></div>
+              <div onclick="setIdleBgColor('#0A1A0A')" style="width:28px;height:28px;border-radius:50%;background:#0A1A0A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Verde oscuro"></div>
+              <div onclick="setIdleBgColor('#1A1A0A')" style="width:28px;height:28px;border-radius:50%;background:#1A1A0A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Oliva"></div>
+              <div onclick="setIdleBgColor('#14100A')" style="width:28px;height:28px;border-radius:50%;background:#14100A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Café oscuro"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HEADER -->
+      <div id="iprops-header" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Logo del hotel</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-logo-vis" checked onchange="updateIdleEl('logo')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño (alto)</label><span class="d-prop-val" id="ipv-logo-size">44px</span></div>
+            <input type="range" min="20" max="100" step="4" value="44" id="ip-logo-size" oninput="updateIdleEl('logo')">
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el logo en el canvas para reposicionarlo.</p>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Reloj</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-clock-vis" checked onchange="updateIdleEl('clock')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <label>Color</label>
+            <input type="color" id="ip-clock-color" value="#999999" oninput="updateIdleEl('clock')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño hora</label><span class="d-prop-val" id="ipv-clock-size">2.5vw</span></div>
+            <input type="range" min="1" max="5" step="0.5" value="2.5" id="ip-clock-size" oninput="updateIdleEl('clock')">
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el reloj en el canvas para reposicionarlo.</p>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div id="iprops-body" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Texto "Bienvenido a"</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-welcome-vis" checked onchange="updateIdleEl('welcome')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <label>Texto</label>
+            <input type="text" id="ip-welcome-txt" value="BIENVENIDO A · WELCOME TO" oninput="updateIdleEl('welcome')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;">
+          </div>
+          <div class="d-prop">
+            <label>Color</label>
+            <input type="color" id="ip-welcome-color" value="#595957" oninput="updateIdleEl('welcome')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño</label><span class="d-prop-val" id="ipv-welcome-size">1vw</span></div>
+            <input type="range" min="0.5" max="2.5" step="0.1" value="1" id="ip-welcome-size" oninput="updateIdleEl('welcome')">
+          </div>
+          <div class="d-prop">
+            <label>Fuente</label>
+            <select id="ip-welcome-font" onchange="updateIdleEl('welcome')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;">
+              <option value="'DM Sans',sans-serif">DM Sans (moderna)</option>
+              <option value="'Cormorant Garamond',serif">Cormorant (elegante)</option>
+            </select>
+          </div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Ornamento dorado</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-ornament-vis" checked onchange="updateIdleEl('ornament')"><label>Visible</label></div></div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Nombre del salón</div>
+          <div class="d-prop">
+            <label>Color</label>
+            <input type="color" id="ip-salon-color" value="#cccccc" oninput="updateIdleEl('salon')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño</label><span class="d-prop-val" id="ipv-salon-size">3.5vw</span></div>
+            <input type="range" min="1.5" max="7" step="0.5" value="3.5" id="ip-salon-size" oninput="updateIdleEl('salon')">
+          </div>
+          <div class="d-prop">
+            <label>Fuente</label>
+            <select id="ip-salon-font" onchange="updateIdleEl('salon')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;">
+              <option value="'Cormorant Garamond',serif">Cormorant (elegante)</option>
+              <option value="'DM Sans',sans-serif">DM Sans (moderna)</option>
+            </select>
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el nombre en el canvas para reposicionarlo.</p>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div id="iprops-footer" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Widget del clima</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-wx-vis" checked onchange="updateIdleEl('weather')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño temperatura</label><span class="d-prop-val" id="ipv-wx-size">3vw</span></div>
+            <input type="range" min="1.5" max="5" step="0.5" value="3" id="ip-wx-size" oninput="updateIdleEl('weather')">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño ícono</label><span class="d-prop-val" id="ipv-wx-icon">4vw</span></div>
+            <input type="range" min="2" max="7" step="0.5" value="4" id="ip-wx-icon" oninput="updateIdleEl('weather')">
+          </div>
+          <div class="d-prop">
+            <label>Color temperatura</label>
+            <input type="color" id="ip-wx-color" value="#cccccc" oninput="updateIdleEl('weather')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el clima en el canvas para reposicionarlo.</p>
+        </div>
+      </div>
+
+      <!-- SAVE BAR -->
+      <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="d-btn" onclick="resetIdleDesign()">↺ Defaults</button>
+        <button class="d-btn primary" onclick="saveIdleDesign()">💾 Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -771,6 +987,7 @@ async function doLogin(){
 function applyRoleUI(){
   const rol=currentUser?.rol||'readonly';
   const navU=document.getElementById('nav-usuarios');if(navU)navU.style.display=rol==='admin'?'inline-block':'none';
+  const navI=document.getElementById('nav-idle');if(navI)navI.style.display=rol==='admin'?'inline-block':'none';
   const newEvBtn=document.getElementById('new-ev-btn');if(newEvBtn&&rol==='readonly')newEvBtn.style.display='none';
   const topbar=document.getElementById('topbar');
   if(topbar&&currentUser){
@@ -787,16 +1004,18 @@ function showPanel(name){
   if(name==='salones'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
   if(name==='upselling'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
   if(name==='usuarios'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+  if(name==='idle'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('panel-'+name).style.display='block';
-  const idx={eventos:0,agenda:1,salones:2,upselling:3,usuarios:4};
+  const idx={eventos:0,agenda:1,salones:2,upselling:3,usuarios:4,idle:5};
   const navBtns=document.querySelectorAll('.nav-btn');
   if(idx[name]!==undefined)navBtns[idx[name]]?.classList.add('active');
   if(name==='agenda')loadAgenda();
   if(name==='salones')renderSalonesTable();
   if(name==='upselling')loadCampaigns();
   if(name==='usuarios')loadUsuarios();
+  if(name==='idle')initIdleDesigner();
 }
 
 async function initApp(){
@@ -1742,6 +1961,303 @@ function updateAgendaFechaLabel(){document.getElementById('agenda-fecha-label').
 function formatFecha(f){return new Date(f+'T12:00:00').toLocaleDateString('es-PA',{day:'numeric',month:'short',year:'numeric'});}
 function showToast(msg,error=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(error?' error':'');setTimeout(()=>t.className='toast',3500);}
 function showSaving(v){document.getElementById('saving-indicator').className='saving'+(v?' show':'');}
+
+// ══════════════════════════════════════════
+// IDLE DESIGNER — Pantalla sin evento
+// ══════════════════════════════════════════
+const IDLE_DEFAULTS = {
+  bg_color:'#0D0D0B',
+  logo_vis:true, logo_size:44, logo_x:'2%', logo_y:'3%',
+  clock_vis:true, clock_color:'#999999', clock_size:'2.5vw', clock_x:'right:2%', clock_y:'3%',
+  welcome_vis:true, welcome_txt:'BIENVENIDO A · WELCOME TO', welcome_color:'#595957', welcome_size:'1vw', welcome_font:"'DM Sans',sans-serif", welcome_x:'50%', welcome_y:'32%',
+  ornament_vis:true, ornament_x:'50%', ornament_y:'38%',
+  salon_color:'#cccccc', salon_size:'3.5vw', salon_font:"'Cormorant Garamond',serif", salon_x:'50%', salon_y:'50%',
+  wx_vis:true, wx_size:'3vw', wx_icon:'4vw', wx_color:'#cccccc', wx_x:'50%', wx_y:'90%',
+};
+let idleDesign = {...IDLE_DEFAULTS};
+let idleDragState = null;
+let idleCanvasW = 0, idleCanvasH = 0;
+let idleInitDone = false;
+
+async function initIdleDesigner() {
+  // Load saved config from server
+  try {
+    const r = await fetch(`${BASE}/configuracion`, {headers:{'x-admin-token':TOKEN}});
+    const cfg = await r.json();
+    if (cfg.idle_design) {
+      idleDesign = Object.assign({...IDLE_DEFAULTS}, JSON.parse(cfg.idle_design));
+    }
+  } catch(e) {}
+
+  // Setup canvas size
+  const area = document.getElementById('idle-canvas-area');
+  const canvas = document.getElementById('idle-canvas');
+  const aw = area.clientWidth - 40, ah = area.clientHeight - 40;
+  let cw = aw, ch = aw * 9 / 16;
+  if (ch > ah) { ch = ah; cw = ah * 16 / 9; }
+  canvas.style.width = Math.round(cw) + 'px';
+  canvas.style.height = Math.round(ch) + 'px';
+  idleCanvasW = cw; idleCanvasH = ch;
+
+  applyIdleDesignToCanvas();
+  loadIdleControls();
+  setupIdleDrag();
+  idleInitDone = true;
+}
+
+function applyIdleDesignToCanvas() {
+  const d = idleDesign;
+
+  // Background
+  document.getElementById('ic-bg').style.background = d.bg_color;
+
+  // Logo
+  const elLogo = document.getElementById('ic-el-logo');
+  elLogo.style.display = d.logo_vis ? 'block' : 'none';
+  elLogo.style.left = d.logo_x; elLogo.style.top = d.logo_y;
+  elLogo.style.right = 'auto'; elLogo.style.transform = 'none';
+  document.getElementById('ic-logo-img').style.height = d.logo_size + 'px';
+
+  // Clock
+  const elClock = document.getElementById('ic-el-clock');
+  elClock.style.display = d.clock_vis ? 'block' : 'none';
+  // Handle clock x — supports "right:X%" format for initial right-align
+  if (d.clock_x && d.clock_x.startsWith('right:')) {
+    elClock.style.right = d.clock_x.replace('right:','');
+    elClock.style.left = 'auto';
+  } else {
+    elClock.style.left = d.clock_x || 'auto';
+    elClock.style.right = 'auto';
+  }
+  elClock.style.top = d.clock_y;
+  elClock.style.transform = 'none';
+  document.getElementById('ic-clock-time').style.color = d.clock_color;
+  document.getElementById('ic-clock-time').style.fontSize = d.clock_size;
+  document.getElementById('ic-clock-date').style.color = d.clock_color;
+
+  // Welcome
+  const elWelcome = document.getElementById('ic-el-welcome');
+  elWelcome.style.display = d.welcome_vis ? 'block' : 'none';
+  elWelcome.style.left = d.welcome_x; elWelcome.style.top = d.welcome_y;
+  elWelcome.style.transform = (d.welcome_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+  const wt = document.getElementById('ic-welcome-txt');
+  wt.textContent = d.welcome_txt;
+  wt.style.color = d.welcome_color;
+  wt.style.fontSize = d.welcome_size;
+  wt.style.fontFamily = d.welcome_font;
+
+  // Ornament
+  const elOrn = document.getElementById('ic-el-ornament');
+  elOrn.style.display = d.ornament_vis ? 'block' : 'none';
+  elOrn.style.left = d.ornament_x; elOrn.style.top = d.ornament_y;
+  elOrn.style.transform = (d.ornament_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+
+  // Salon name
+  const elSalon = document.getElementById('ic-el-salon');
+  elSalon.style.left = d.salon_x; elSalon.style.top = d.salon_y;
+  elSalon.style.transform = (d.salon_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+  const sn = document.getElementById('ic-salon-nm');
+  sn.style.color = d.salon_color;
+  sn.style.fontSize = d.salon_size;
+  sn.style.fontFamily = d.salon_font;
+
+  // Weather
+  const elWx = document.getElementById('ic-el-weather');
+  elWx.style.display = d.wx_vis ? 'block' : 'none';
+  elWx.style.left = d.wx_x; elWx.style.top = d.wx_y;
+  elWx.style.transform = (d.wx_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+  document.getElementById('ic-wx-temp').style.fontSize = d.wx_size;
+  document.getElementById('ic-wx-temp').style.color = d.wx_color;
+  document.getElementById('ic-wx-icon').style.fontSize = d.wx_icon;
+  document.getElementById('ic-wx-desc').style.fontSize = `calc(${d.wx_size} * 0.33)`;
+  document.getElementById('ic-wx-feels').style.fontSize = `calc(${d.wx_size} * 0.28)`;
+}
+
+function loadIdleControls() {
+  const d = idleDesign;
+  const sv = (id,v) => { const e=document.getElementById(id); if(e)e.value=v; };
+  const sc = (id,v) => { const e=document.getElementById(id); if(e)e.checked=!!v; };
+  sv('ip-bg-color', d.bg_color); sv('ip-bg-hex', d.bg_color);
+  sc('ip-logo-vis', d.logo_vis); _sv_range('ip-logo-size', parseFloat(d.logo_size), 'ipv-logo-size', 'px');
+  sc('ip-clock-vis', d.clock_vis); sv('ip-clock-color', d.clock_color);
+  _sv_range('ip-clock-size', parseFloat(d.clock_size), 'ipv-clock-size', 'vw');
+  sc('ip-welcome-vis', d.welcome_vis); sv('ip-welcome-txt', d.welcome_txt);
+  sv('ip-welcome-color', d.welcome_color);
+  _sv_range('ip-welcome-size', parseFloat(d.welcome_size), 'ipv-welcome-size', 'vw');
+  sv('ip-welcome-font', d.welcome_font);
+  sc('ip-ornament-vis', d.ornament_vis);
+  sv('ip-salon-color', d.salon_color);
+  _sv_range('ip-salon-size', parseFloat(d.salon_size), 'ipv-salon-size', 'vw');
+  sv('ip-salon-font', d.salon_font);
+  sc('ip-wx-vis', d.wx_vis);
+  _sv_range('ip-wx-size', parseFloat(d.wx_size), 'ipv-wx-size', 'vw');
+  _sv_range('ip-wx-icon', parseFloat(d.wx_icon), 'ipv-wx-icon', 'vw');
+  sv('ip-wx-color', d.wx_color);
+}
+
+function _sv_range(id, val, labelId, unit) {
+  const e = document.getElementById(id); if(e) e.value = val;
+  const l = document.getElementById(labelId); if(l) l.textContent = val + unit;
+}
+
+// Updaters
+function updateIdleBg() {
+  const v = document.getElementById('ip-bg-color').value;
+  idleDesign.bg_color = v;
+  document.getElementById('ip-bg-hex').value = v;
+  document.getElementById('ic-bg').style.background = v;
+}
+function syncBgHex() {
+  const v = document.getElementById('ip-bg-hex').value.trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+    idleDesign.bg_color = v;
+    document.getElementById('ip-bg-color').value = v;
+    document.getElementById('ic-bg').style.background = v;
+  }
+}
+function setIdleBgColor(c) {
+  idleDesign.bg_color = c;
+  document.getElementById('ip-bg-color').value = c;
+  document.getElementById('ip-bg-hex').value = c;
+  document.getElementById('ic-bg').style.background = c;
+}
+function resetIdleBg() { setIdleBgColor('#0D0D0B'); }
+
+function updateIdleEl(type) {
+  const d = idleDesign;
+  if (type === 'logo') {
+    d.logo_vis = document.getElementById('ip-logo-vis').checked;
+    d.logo_size = parseInt(document.getElementById('ip-logo-size').value);
+    document.getElementById('ipv-logo-size').textContent = d.logo_size + 'px';
+  } else if (type === 'clock') {
+    d.clock_vis = document.getElementById('ip-clock-vis').checked;
+    d.clock_color = document.getElementById('ip-clock-color').value;
+    d.clock_size = parseFloat(document.getElementById('ip-clock-size').value) + 'vw';
+    document.getElementById('ipv-clock-size').textContent = document.getElementById('ip-clock-size').value + 'vw';
+  } else if (type === 'welcome') {
+    d.welcome_vis = document.getElementById('ip-welcome-vis').checked;
+    d.welcome_txt = document.getElementById('ip-welcome-txt').value;
+    d.welcome_color = document.getElementById('ip-welcome-color').value;
+    d.welcome_size = parseFloat(document.getElementById('ip-welcome-size').value) + 'vw';
+    document.getElementById('ipv-welcome-size').textContent = document.getElementById('ip-welcome-size').value + 'vw';
+    d.welcome_font = document.getElementById('ip-welcome-font').value;
+  } else if (type === 'ornament') {
+    d.ornament_vis = document.getElementById('ip-ornament-vis').checked;
+  } else if (type === 'salon') {
+    d.salon_color = document.getElementById('ip-salon-color').value;
+    d.salon_size = parseFloat(document.getElementById('ip-salon-size').value) + 'vw';
+    document.getElementById('ipv-salon-size').textContent = document.getElementById('ip-salon-size').value + 'vw';
+    d.salon_font = document.getElementById('ip-salon-font').value;
+  } else if (type === 'weather') {
+    d.wx_vis = document.getElementById('ip-wx-vis').checked;
+    d.wx_size = parseFloat(document.getElementById('ip-wx-size').value) + 'vw';
+    document.getElementById('ipv-wx-size').textContent = document.getElementById('ip-wx-size').value + 'vw';
+    d.wx_icon = parseFloat(document.getElementById('ip-wx-icon').value) + 'vw';
+    document.getElementById('ipv-wx-icon').textContent = document.getElementById('ip-wx-icon').value + 'vw';
+    d.wx_color = document.getElementById('ip-wx-color').value;
+  }
+  applyIdleDesignToCanvas();
+}
+
+// Tab selector
+function selectIdleTab(tab) {
+  ['fondo','header','body','footer'].forEach(t => {
+    document.getElementById('itab-'+t)?.classList.toggle('active', t===tab);
+    const p = document.getElementById('iprops-'+t);
+    if (p) p.style.display = t===tab ? 'block' : 'none';
+  });
+}
+
+// Drag & drop for idle elements
+function setupIdleDrag() {
+  ['logo','clock','welcome','ornament','salon','weather'].forEach(type => {
+    const el = document.getElementById('ic-el-'+type);
+    if (!el) return;
+    el.addEventListener('mousedown', e => startIdleDrag(e, type));
+    el.addEventListener('click', () => {
+      // Activate relevant tab on click
+      const tabMap = {logo:'header',clock:'header',welcome:'body',ornament:'body',salon:'body',weather:'footer'};
+      selectIdleTab(tabMap[type]||'body');
+    });
+  });
+}
+
+function startIdleDrag(e, type) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  e.preventDefault();
+  const el = document.getElementById('ic-el-'+type);
+  const canvas = document.getElementById('idle-canvas');
+  const cr = canvas.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  idleDragState = {
+    type, el,
+    startX: e.clientX, startY: e.clientY,
+    origLeft: er.left - cr.left, origTop: er.top - cr.top,
+    cw: cr.width, ch: cr.height
+  };
+  document.addEventListener('mousemove', onIdleDrag);
+  document.addEventListener('mouseup', endIdleDrag);
+  // Highlight
+  document.querySelectorAll('.ic-el').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function onIdleDrag(e) {
+  if (!idleDragState) return;
+  const dx = e.clientX - idleDragState.startX;
+  const dy = e.clientY - idleDragState.startY;
+  const el = idleDragState.el;
+  el.style.transform = 'none';
+  el.style.left = (idleDragState.origLeft + dx) + 'px';
+  el.style.top  = (idleDragState.origTop  + dy) + 'px';
+  el.style.right  = 'auto';
+  el.style.bottom = 'auto';
+}
+
+function endIdleDrag(e) {
+  if (!idleDragState) return;
+  document.removeEventListener('mousemove', onIdleDrag);
+  document.removeEventListener('mouseup', endIdleDrag);
+  const { type, el } = idleDragState;
+  const canvas = document.getElementById('idle-canvas');
+  const cr = canvas.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  const xPct = ((er.left - cr.left) / cr.width * 100).toFixed(1) + '%';
+  const yPct = ((er.top  - cr.top)  / cr.height * 100).toFixed(1) + '%';
+  // Save position back to design
+  const posMap = {
+    logo:    ['logo_x','logo_y'],
+    clock:   ['clock_x','clock_y'],
+    welcome: ['welcome_x','welcome_y'],
+    ornament:['ornament_x','ornament_y'],
+    salon:   ['salon_x','salon_y'],
+    weather: ['wx_x','wx_y'],
+  };
+  if (posMap[type]) {
+    idleDesign[posMap[type][0]] = xPct;
+    idleDesign[posMap[type][1]] = yPct;
+  }
+  idleDragState = null;
+}
+
+async function saveIdleDesign() {
+  try {
+    const r = await fetch(`${BASE}/configuracion`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json','x-admin-token':TOKEN},
+      body: JSON.stringify({idle_design: JSON.stringify(idleDesign)})
+    });
+    if (r.ok) showToast('Diseño idle guardado. Tabletas se actualizan en 30 segundos.');
+    else showToast('Error al guardar', true);
+  } catch(e) { showToast('Error de conexión', true); }
+}
+
+function resetIdleDesign() {
+  if (!confirm('¿Restablecer todos los valores por defecto?')) return;
+  idleDesign = {...IDLE_DEFAULTS};
+  applyIdleDesignToCanvas();
+  loadIdleControls();
+}
 
 window.addEventListener('load',()=>{
   const saved=sessionStorage.getItem('signage_token');const savedUser=sessionStorage.getItem('current_user');
