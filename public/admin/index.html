@@ -2243,7 +2243,7 @@ function endIdleDrag(e) {
 async function saveIdleDesign() {
   try {
     const r = await fetch(`${BASE}/configuracion`, {
-      method: 'PUT',
+      method: 'POST',
       headers: {'Content-Type':'application/json','x-admin-token':TOKEN},
       body: JSON.stringify({idle_design: JSON.stringify(idleDesign)})
     });
