@@ -9,437 +9,694 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:'DM Sans',sans-serif}
-#screen-idle{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0D0D0B;}
+
+/* ══════════════════════════════════════════
+   ESTRUCTURA DE 3 ZONAS — BASE
+   Header: 20% | Body: 60% | Footer: 20%
+   ══════════════════════════════════════════ */
+.screen-zones {
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  z-index:2;pointer-events:none;
+}
+.zone-header {
+  height:20%;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(16px,2.5vw,40px);
+  flex-shrink:0;
+}
+.zone-body {
+  height:60%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+}
+.zone-footer {
+  height:20%;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 clamp(16px,2.5vw,40px);
+  flex-shrink:0;
+}
+
+/* ══ PANTALLA IDLE ══ */
+#screen-idle{position:fixed;inset:0;display:flex;flex-direction:column;background:#0D0D0B;}
+
+/* Header idle */
+.idle-header {
+  height:20%;display:flex;align-items:center;justify-content:space-between;
+  padding:0 clamp(16px,2.5vw,40px);flex-shrink:0;
+  border-bottom:1px solid rgba(184,150,46,0.15);
+}
+.idle-logo-wrap{background:white;padding:8px 16px;border-radius:6px;}
+.idle-logo-wrap img{height:clamp(30px,4vh,55px);width:auto;display:block;}
+.idle-clock-top{text-align:right;}
+.idle-time{font-size:clamp(18px,2.5vw,36px);color:rgba(255,255,255,.6);letter-spacing:.05em;font-weight:300;}
+.idle-date{font-size:clamp(9px,1vw,13px);color:rgba(255,255,255,.3);letter-spacing:.12em;margin-top:2px;}
+
+/* Body idle */
+.idle-body {
+  height:60%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
 .idle-ornament{width:64px;height:1px;background:linear-gradient(to right,transparent,#B8962E,transparent);margin:14px 0}
-.idle-divider{height:30px}
-.idle-salon-label{font-size:clamp(9px,1vw,11px);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.35);}
-.idle-salon-name{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,3vw,48px);color:rgba(255,255,255,.75);font-weight:300;letter-spacing:.06em;margin-top:6px;}
-.idle-clock{font-size:clamp(11px,1.2vw,14px);color:rgba(255,255,255,.25);letter-spacing:.14em;margin-top:20px;}
+.idle-salon-label{font-size:clamp(9px,1vw,12px);letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);}
+.idle-salon-name{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,3.5vw,56px);color:rgba(255,255,255,.8);font-weight:300;letter-spacing:.06em;margin-top:8px;text-align:center;}
+
+/* Footer idle — clima */
+.idle-footer {
+  height:20%;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  border-top:1px solid rgba(184,150,46,0.15);
+}
+.weather-widget {
+  display:flex;align-items:center;gap:clamp(12px,2vw,28px);
+}
+.weather-icon{font-size:clamp(28px,4vw,52px);line-height:1;}
+.weather-info{}
+.weather-temp{font-size:clamp(22px,3vw,44px);color:rgba(255,255,255,.75);font-weight:300;letter-spacing:.02em;}
+.weather-desc{font-size:clamp(9px,1vw,13px);color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
+.weather-feels{font-size:clamp(8px,0.85vw,11px);color:rgba(255,255,255,.25);margin-top:2px;}
+.weather-loading{font-size:clamp(9px,1vw,12px);color:rgba(255,255,255,.2);letter-spacing:.1em;}
+
+/* ══ PANTALLA PAUSED ══ */
 #screen-paused{position:fixed;inset:0;display:none;background-size:cover;background-position:center;}
 #screen-paused::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.5);}
+
+/* ══ PANTALLA PROMO (upselling) ══ */
+#screen-promo{position:fixed;inset:0;display:none;opacity:0;transition:opacity .6s ease;z-index:2;background:#000;}
+
+/* ══ PANTALLA EVENTO — estructura de 3 zonas ══ */
 #screen-event{position:fixed;inset:0;display:none;}
 .carousel-container{position:absolute;inset:0;overflow:hidden;}
 .carousel-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease;}
 .carousel-slide.active{opacity:1;}
 .carousel-slide video{width:100%;height:100%;object-fit:cover;}
 .ev-overlay{position:absolute;inset:0;z-index:1;}
-.ev-content{position:absolute;z-index:2;}
+
+/* Zonas del evento */
+.ev-zone-header {
+  position:absolute;top:0;left:0;right:0;height:20%;
+  z-index:3;display:flex;align-items:center;
+  justify-content:space-between;
+  padding:0 clamp(16px,2.5vw,40px);
+}
+.ev-zone-body {
+  position:absolute;
+  top:20%;left:0;right:0;height:60%;
+  z-index:3;
+  display:flex;align-items:center;justify-content:center;
+}
+.ev-zone-footer {
+  position:absolute;bottom:0;left:0;right:0;height:20%;
+  z-index:3;display:flex;align-items:center;justify-content:center;
+  padding:0 clamp(16px,2.5vw,40px);
+}
+
+/* Separadores de zona (opcionales, visibles en diseñador) */
+.ev-zone-divider-top{
+  position:absolute;top:20%;left:0;right:0;height:1px;
+  background:rgba(184,150,46,0);z-index:2;pointer-events:none;
+  transition:background .3s;
+}
+.ev-zone-divider-bottom{
+  position:absolute;top:80%;left:0;right:0;height:1px;
+  background:rgba(184,150,46,0);z-index:2;pointer-events:none;
+  transition:background .3s;
+}
+
+/* Header del evento */
+.ev-header-salon{}
+.c-salon-lbl{font-size:clamp(7px,0.75vw,10px);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.c-salon-nm{font-family:'Cormorant Garamond',serif;font-size:clamp(13px,1.7vw,26px);color:rgba(255,255,255,.9);font-weight:400;margin-top:2px}
+.ev-header-logo{}
+.ev-header-logo-inner{background:white;padding:7px 14px;border-radius:6px;}
+.ev-header-logo-inner img{display:block;width:auto;}
+
+/* Body del evento */
+.ev-body-content{
+  width:100%;max-width:80%;
+  text-align:center;
+  padding:0 20px;
+}
 .ev-type{letter-spacing:.28em;text-transform:uppercase;color:#D4AF5A;margin-bottom:8px;opacity:.9;}
-.ev-divider{height:1px;margin:10px 0;opacity:.6}
+.ev-divider{height:1px;margin:10px auto;opacity:.6}
 .ev-name{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 40px rgba(0,0,0,.6);}
 .ev-sub{color:rgba(255,255,255,.6);margin-top:10px;letter-spacing:.05em;}
 .ev-time-pill{margin-top:16px;padding:6px 20px;border-radius:30px;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.15);display:inline-flex;flex-direction:column;align-items:center;}
 .ev-time-pill-label{font-size:clamp(8px,0.85vw,11px);letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.45)}
 .ev-time-pill-val{font-size:clamp(13px,1.5vw,20px);font-weight:500}
-.corner-salon{position:absolute;z-index:3;}
-.corner-logo{position:absolute;z-index:3;}
-.corner-clock{position:absolute;z-index:3;}
-.c-salon-lbl{font-size:clamp(8px,0.85vw,11px);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45)}
-.c-salon-nm{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,26px);color:rgba(255,255,255,.9);font-weight:400;margin-top:2px}
-.c-clock{font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;}
-.carousel-dots{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3;}
+
+/* Footer del evento */
+.ev-footer-content{
+  width:100%;display:flex;align-items:center;justify-content:center;
+}
+.ev-footer-clock{
+  font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.4);letter-spacing:.1em;
+}
+.ev-footer-text{
+  font-size:clamp(10px,1.1vw,15px);color:rgba(255,255,255,.5);letter-spacing:.06em;text-align:center;
+}
+
+/* Dots */
+.carousel-dots{position:absolute;bottom:10%;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:4;}
 .carousel-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .3s;}
 .carousel-dot.active{background:#fff;}
+
+/* ══ LOADER ══ */
 #loading{position:fixed;inset:0;background:#0D0D0B;display:flex;align-items:center;justify-content:center;z-index:99;transition:opacity .5s ease;}
 .spinner{width:32px;height:32px;border:2px solid rgba(184,150,46,.2);border-top-color:#B8962E;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
 .offline-badge{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(163,45,45,.8);color:#fff;font-size:11px;padding:4px 14px;border-radius:20px;display:none;z-index:999;letter-spacing:.05em;}
 </style>
 </head>
 <body>
+
 <div id="loading"><div class="spinner"></div></div>
 
-<!-- IDLE -->
+<!-- ══════════════════════════════════════
+     PANTALLA IDLE — 3 ZONAS
+     ══════════════════════════════════════ -->
 <div id="screen-idle" style="transition:opacity .6s ease;">
-  <div style="background:white;padding:16px 28px;border-radius:8px;margin-bottom:8px;">
-    <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:120px;width:auto;display:block;">
+
+  <!-- HEADER: Logo hotel (izq) + Reloj (der) -->
+  <div class="idle-header">
+    <div class="idle-logo-wrap">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama">
+    </div>
+    <div class="idle-clock-top">
+      <div class="idle-time" id="idle-time">—</div>
+      <div class="idle-date" id="idle-date">—</div>
+    </div>
   </div>
-  <div class="idle-ornament"></div>
-  <div class="idle-divider"></div>
-  <div class="idle-salon-label">Salón</div>
-  <div class="idle-salon-name" id="idle-salon-name">—</div>
-  <div class="idle-clock" id="idle-clock"></div>
+
+  <!-- BODY: Nombre del salón centrado -->
+  <div class="idle-body">
+    <div class="idle-salon-label">Bienvenido a · Welcome to</div>
+    <div class="idle-ornament"></div>
+    <div class="idle-salon-name" id="idle-salon-name">—</div>
+  </div>
+
+  <!-- FOOTER: Widget del clima -->
+  <div class="idle-footer">
+    <div id="weather-container">
+      <div class="weather-loading" id="weather-loading">Cargando clima…</div>
+      <div class="weather-widget" id="weather-widget" style="display:none;">
+        <div class="weather-icon" id="w-icon">☁️</div>
+        <div class="weather-info">
+          <div class="weather-temp" id="w-temp">—°</div>
+          <div class="weather-desc" id="w-desc">—</div>
+          <div class="weather-feels" id="w-feels">Sensación —°</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- PAUSED -->
+<!-- ══════════════════════════════════════
+     PANTALLA PAUSED
+     ══════════════════════════════════════ -->
 <div id="screen-paused"></div>
 
-<!-- PROMO (upselling) -->
-<div id="screen-promo" style="position:fixed;inset:0;display:none;opacity:0;transition:opacity .6s ease;z-index:2;background:#000;"></div>
+<!-- ══════════════════════════════════════
+     PANTALLA PROMO (upselling)
+     ══════════════════════════════════════ -->
+<div id="screen-promo"></div>
 
-<!-- EVENT -->
+<!-- ══════════════════════════════════════
+     PANTALLA EVENTO — 3 ZONAS
+     ══════════════════════════════════════ -->
 <div id="screen-event">
+
+  <!-- Carrusel de fondo -->
   <div class="carousel-container" id="carousel-container"></div>
+
+  <!-- Overlay de oscurecimiento -->
   <div class="ev-overlay" id="ev-overlay"></div>
+
+  <!-- Líneas divisoras de zonas (transparentes por defecto) -->
+  <div class="ev-zone-divider-top" id="ev-divider-top"></div>
+  <div class="ev-zone-divider-bottom" id="ev-divider-bottom"></div>
+
+  <!-- ZONA HEADER: Nombre salón (izq) + Logo (der) -->
+  <div class="ev-zone-header" id="ev-zone-header">
+    <div class="ev-header-salon" id="ev-header-salon">
+      <div class="c-salon-lbl">Salón</div>
+      <div class="c-salon-nm" id="ev-salon-name">—</div>
+    </div>
+    <div class="ev-header-logo" id="ev-header-logo">
+      <div class="ev-header-logo-inner">
+        <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" id="ev-logo-img">
+      </div>
+    </div>
+  </div>
+
+  <!-- ZONA BODY: Contenido del evento -->
+  <div class="ev-zone-body" id="ev-zone-body">
+    <div class="ev-body-content" id="ev-body-content">
+      <div class="ev-type" id="ev-type"></div>
+      <div class="ev-name" id="ev-name"></div>
+      <div class="ev-divider" id="ev-divider-line"></div>
+      <div class="ev-sub" id="ev-sub"></div>
+      <div class="ev-time-pill" id="ev-time-pill">
+        <div class="ev-time-pill-label">Hasta las</div>
+        <div class="ev-time-pill-val" id="ev-until">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ZONA FOOTER: Texto configurable / reloj -->
+  <div class="ev-zone-footer" id="ev-zone-footer">
+    <div class="ev-footer-content" id="ev-footer-content">
+      <div class="ev-footer-clock" id="ev-clock"></div>
+      <div class="ev-footer-text" id="ev-footer-text" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Dots del carrusel -->
   <div class="carousel-dots" id="carousel-dots"></div>
 
-  <div class="corner-salon" id="corner-salon">
-    <div class="c-salon-lbl">Salón</div>
-    <div class="c-salon-nm" id="ev-salon-name">—</div>
-  </div>
-  <div class="corner-logo" id="corner-logo">
-    <div style="background:white;padding:8px 14px;border-radius:6px;">
-      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:50px;width:auto;display:block;">
-    </div>
-  </div>
-  <div class="corner-clock" id="corner-clock">
-    <div class="c-clock" id="ev-clock"></div>
-  </div>
-
-  <div class="ev-content" id="ev-content">
-    <div class="ev-type" id="ev-type"></div>
-    <div class="ev-name" id="ev-name"></div>
-    <div class="ev-divider" id="ev-divider"></div>
-    <div class="ev-sub" id="ev-sub"></div>
-    <div class="ev-time-pill" id="ev-time-pill">
-      <div class="ev-time-pill-label">Hasta las</div>
-      <div class="ev-time-pill-val" id="ev-until">—</div>
-    </div>
-  </div>
 </div>
 
 <div class="offline-badge" id="offline-badge">Sin conexión · reintentando…</div>
 
 <script>
-const BASE='/.netlify/functions';
-var _lastDesignHash='';
-var _lastUpHash='';
-const slug=location.pathname.split('/').filter(Boolean).pop();
-let config={};
-let carouselSlides=[];
-let carouselIndex=0;
-let carouselTimer=null;
-let mediaDurations=[];
+const BASE = '/.netlify/functions';
+var _lastDesignHash = '';
+var _lastUpHash = '';
+const slug = location.pathname.split('/').filter(Boolean).pop();
+let config = {};
+let carouselSlides = [];
+let carouselIndex = 0;
+let carouselTimer = null;
+let mediaDurations = [];
 
-async function loadConfig(){
-  try{const r=await fetch(`${BASE}/configuracion`);config=await r.json();}catch(e){config={};}
+// ── WEATHER ──
+const WX_ICONS = {
+  0:'☀️',1:'🌤',2:'⛅',3:'☁️',
+  45:'🌫',48:'🌫',
+  51:'🌦',53:'🌦',55:'🌧',
+  61:'🌧',63:'🌧',65:'🌧',
+  71:'🌨',73:'🌨',75:'❄️',
+  80:'🌦',81:'🌧',82:'⛈',
+  95:'⛈',96:'⛈',99:'⛈'
+};
+const WX_DESC = {
+  0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',
+  45:'Niebla',48:'Niebla con escarcha',
+  51:'Llovizna ligera',53:'Llovizna moderada',55:'Llovizna densa',
+  61:'Lluvia ligera',63:'Lluvia moderada',65:'Lluvia intensa',
+  71:'Nevada ligera',73:'Nevada moderada',75:'Nevada intensa',
+  80:'Chubascos ligeros',81:'Chubascos moderados',82:'Chubascos violentos',
+  95:'Tormenta',96:'Tormenta con granizo',99:'Tormenta fuerte'
+};
+
+async function loadWeather() {
+  try {
+    // Panama City coordinates
+    const lat = 8.9936, lon = -79.5197;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code&timezone=America%2FPanama&temperature_unit=celsius`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('wx');
+    const d = await r.json();
+    const cur = d.current;
+    const code = cur.weather_code;
+    document.getElementById('w-icon').textContent = WX_ICONS[code] || '🌡️';
+    document.getElementById('w-temp').textContent = `${Math.round(cur.temperature_2m)}°C`;
+    document.getElementById('w-desc').textContent = WX_DESC[code] || 'Clima actual';
+    document.getElementById('w-feels').textContent = `Sensación ${Math.round(cur.apparent_temperature)}°C`;
+    document.getElementById('weather-loading').style.display = 'none';
+    document.getElementById('weather-widget').style.display = 'flex';
+  } catch(e) {
+    document.getElementById('weather-loading').textContent = '—';
+  }
 }
 
-function applyDesign(diseno){
-  const d=diseno||{};
-  // Content positioning
-  const content=document.getElementById('ev-content');
-  content.style.left=d.content_x||'50%';
-  content.style.top=d.content_y||'50%';
-  content.style.transform=d.content_transform||'translate(-50%,-50%)';
-  content.style.width=d.content_w||'60%';
-  content.style.textAlign=d.content_align||'center';
-
-  // Text sizes
-  document.getElementById('ev-name').style.fontSize=d.titulo_size||(config.titulo_tamano||'4vw');
-  document.getElementById('ev-sub').style.fontSize=d.sub_size||(config.subtitulo_tamano||'1.4vw');
-  document.getElementById('ev-type').style.fontSize=d.tipo_size||(config.tipo_tamano||'1.1vw');
-
-  // Visibility
-  document.getElementById('ev-type').style.display=(d.tipo_visible===false||config.tipo_visible==='false')?'none':'block';
-  document.getElementById('ev-sub').style.display=(d.sub_visible===false||config.subtitulo_visible==='false')?'none':'block';
-  document.getElementById('ev-time-pill').style.display=(d.hora_visible===false||config.hora_visible==='false')?'none':'inline-flex';
-  document.getElementById('corner-salon').style.display=(d.salon_visible===false||config.salon_visible==='false')?'none':'block';
-
-  // Corner positions
-  const cs=document.getElementById('corner-salon');
-  cs.style.top=d.salon_top||'clamp(16px,2.5vw,36px)';
-  cs.style.left=d.salon_left||'clamp(20px,3vw,44px)';
-
-  const cl=document.getElementById('corner-logo');
-  cl.style.top=d.logo_top||'clamp(16px,2.5vw,36px)';
-  cl.style.right=d.logo_right||'clamp(20px,3vw,44px)';
-  cl.style.left=d.logo_left||'auto';
-
-  const ck=document.getElementById('corner-clock');
-  ck.style.bottom=d.clock_bottom||'clamp(16px,2.5vw,36px)';
-  ck.style.left=d.clock_left||'clamp(20px,3vw,44px)';
-
-  // Divider color
-  const acento=d.acento||'#B8962E';
-  document.getElementById('ev-divider').style.background=acento;
-  document.getElementById('ev-divider').style.width=d.divider_w||'52px';
-  document.getElementById('ev-until').style.color=acento;
+// ── CONFIG ──
+async function loadConfig() {
+  try { const r = await fetch(`${BASE}/configuracion`); config = await r.json(); } catch(e) { config = {}; }
 }
 
-function buildCarousel(ev,medios){
-  const container=document.getElementById('carousel-container');
-  const dotsEl=document.getElementById('carousel-dots');
-  container.innerHTML='';dotsEl.innerHTML='';
-  carouselSlides=[];mediaDurations=[];
+// ── APPLY DESIGN (3-zone aware) ──
+function applyDesign(d) {
+  d = d || {};
 
-  let slides=medios&&medios.length>0?medios:(ev.imagen_url?[{tipo:'imagen',url:ev.imagen_url,duracion_segundos:5}]:[]);
-  if(!slides.length){container.style.background='#1A1A1A';dotsEl.style.display='none';return;}
+  // ── HEADER ──
+  const headerSalon = document.getElementById('ev-header-salon');
+  const headerLogo  = document.getElementById('ev-header-logo');
 
-  slides.forEach((m,i)=>{
-    const slide=document.createElement('div');
-    slide.className='carousel-slide'+(i===0?' active':'');
-    if(m.tipo==='imagen'){
-      slide.style.backgroundImage=`url('${m.url}')`;
-      slide.style.backgroundSize='cover';
-      slide.style.backgroundPosition='center';
-    } else if(m.tipo==='video_archivo'){
-      const vid=document.createElement('video');
-      vid.src=m.url;vid.autoplay=true;vid.muted=true;vid.loop=true;vid.playsInline=true;
+  // Nombre del salón
+  if (d.salon_visible === false) {
+    headerSalon.style.display = 'none';
+  } else {
+    headerSalon.style.display = 'block';
+    const nm = headerSalon.querySelector('.c-salon-nm');
+    if (nm) nm.style.fontSize = d.salon_size || 'clamp(13px,1.7vw,26px)';
+  }
+
+  // Logo
+  const logoImg = document.getElementById('ev-logo-img');
+  if (d.logo_visible === false) {
+    headerLogo.style.display = 'none';
+  } else {
+    headerLogo.style.display = 'block';
+    if (logoImg) logoImg.style.height = (d.logo_size || 50) + 'px';
+  }
+
+  // Header posición del logo (izq o der)
+  const zh = document.getElementById('ev-zone-header');
+  if (d.logo_position === 'left') {
+    zh.style.flexDirection = 'row-reverse';
+  } else {
+    zh.style.flexDirection = 'row';
+  }
+
+  // ── BODY ──
+  const bodyContent = document.getElementById('ev-body-content');
+  bodyContent.style.textAlign = d.content_align || 'center';
+  bodyContent.style.maxWidth = d.content_maxw || '80%';
+
+  // Alineación del body (izq, centro, der)
+  const zb = document.getElementById('ev-zone-body');
+  const align = d.content_align || 'center';
+  zb.style.justifyContent = align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
+  if (align === 'left') bodyContent.style.paddingLeft = 'clamp(20px,4vw,60px)';
+  else if (align === 'right') bodyContent.style.paddingRight = 'clamp(20px,4vw,60px)';
+  else { bodyContent.style.paddingLeft = '20px'; bodyContent.style.paddingRight = '20px'; }
+
+  // Tamaños de texto
+  document.getElementById('ev-name').style.fontSize = d.titulo_size || (config.titulo_tamano || '4vw');
+  document.getElementById('ev-sub').style.fontSize  = d.sub_size   || (config.subtitulo_tamano || '1.4vw');
+  document.getElementById('ev-type').style.fontSize = d.tipo_size  || (config.tipo_tamano || '1.1vw');
+
+  // Visibilidad elementos del body
+  document.getElementById('ev-type').style.display      = d.tipo_visible === false ? 'none' : 'block';
+  document.getElementById('ev-sub').style.display       = d.sub_visible  === false ? 'none' : 'block';
+  document.getElementById('ev-time-pill').style.display = d.hora_visible === false ? 'none' : 'inline-flex';
+
+  // Color acento
+  const acento = d.acento || '#B8962E';
+  document.getElementById('ev-divider-line').style.background = acento;
+  document.getElementById('ev-divider-line').style.width = d.divider_w || '52px';
+  document.getElementById('ev-until').style.color = acento;
+
+  // ── FOOTER ──
+  const footerClock = document.getElementById('ev-clock');
+  const footerText  = document.getElementById('ev-footer-text');
+  const zf          = document.getElementById('ev-zone-footer');
+
+  if (d.footer_visible === false) {
+    zf.style.opacity = '0';
+  } else {
+    zf.style.opacity = '1';
+    if (d.footer_content && d.footer_content.trim()) {
+      footerClock.style.display = 'none';
+      footerText.textContent    = d.footer_content;
+      footerText.style.display  = 'block';
+      footerText.style.fontSize = d.footer_size || '1vw';
+    } else {
+      footerText.style.display  = 'none';
+      footerClock.style.display = 'block';
+    }
+  }
+
+  // ── OVERLAY ──
+  const opacity = parseFloat(d.overlay_opacity !== undefined ? d.overlay_opacity : (config.overlay_opacidad || '0.6'));
+  document.getElementById('ev-overlay').style.background =
+    `linear-gradient(135deg,rgba(0,0,0,${opacity}) 0%,rgba(0,0,0,${opacity * 0.4}) 50%,rgba(0,0,0,${opacity}) 100%)`;
+}
+
+// ── CAROUSEL ──
+function buildCarousel(ev, medios) {
+  const container = document.getElementById('carousel-container');
+  const dotsEl    = document.getElementById('carousel-dots');
+  container.innerHTML = ''; dotsEl.innerHTML = '';
+  carouselSlides = []; mediaDurations = [];
+
+  let slides = medios && medios.length > 0 ? medios
+    : (ev.imagen_url ? [{ tipo: 'imagen', url: ev.imagen_url, duracion_segundos: 5 }] : []);
+
+  if (!slides.length) { container.style.background = '#1A1A1A'; dotsEl.style.display = 'none'; return; }
+
+  slides.forEach((m, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'carousel-slide' + (i === 0 ? ' active' : '');
+    if (m.tipo === 'imagen') {
+      slide.style.backgroundImage = `url('${m.url}')`;
+      slide.style.backgroundSize  = 'cover';
+      slide.style.backgroundPosition = 'center';
+    } else if (m.tipo === 'video_archivo') {
+      const vid = document.createElement('video');
+      vid.src = m.url; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
       slide.appendChild(vid);
     }
     container.appendChild(slide);
     carouselSlides.push(slide);
-    const durSec=m.duracion_segundos||parseInt(config.carrusel_intervalo||'5');
-    mediaDurations.push(durSec*1000);
-
-    if(slides.length>1){
-      const dot=document.createElement('div');
-      dot.className='carousel-dot'+(i===0?' active':'');
+    const dur = m.duracion_segundos || parseInt(config.carrusel_intervalo || '5');
+    mediaDurations.push(dur * 1000);
+    if (slides.length > 1) {
+      const dot = document.createElement('div');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
       dotsEl.appendChild(dot);
     }
   });
 
-  dotsEl.style.display=slides.length>1?'flex':'none';
-  if(slides.length>1)scheduleNext(0);
+  dotsEl.style.display = slides.length > 1 ? 'flex' : 'none';
+  if (slides.length > 1) scheduleNext(0);
 }
 
-function scheduleNext(idx){
-  if(carouselTimer)clearTimeout(carouselTimer);
-  if(carouselSlides.length<=1)return;
-  // Use individual duration for this slide, fallback to global config
-  const dur=mediaDurations[idx]||parseInt(config.carrusel_intervalo||'5')*1000;
-  carouselTimer=setTimeout(()=>{
+function scheduleNext(idx) {
+  if (carouselTimer) clearTimeout(carouselTimer);
+  if (carouselSlides.length <= 1) return;
+  const dur = mediaDurations[idx] || parseInt(config.carrusel_intervalo || '5') * 1000;
+  carouselTimer = setTimeout(() => {
     carouselSlides[carouselIndex].classList.remove('active');
     document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.remove('active');
-    carouselIndex=(carouselIndex+1)%carouselSlides.length;
+    carouselIndex = (carouselIndex + 1) % carouselSlides.length;
     carouselSlides[carouselIndex].classList.add('active');
     document.querySelectorAll('.carousel-dot')[carouselIndex]?.classList.add('active');
     scheduleNext(carouselIndex);
-  },dur);
+  }, dur);
 }
 
-async function fetchStatus(){
-  try{
-    const r=await fetch(`${BASE}/eventos?salon_slug=${slug}`);
-    if(!r.ok)throw new Error('API error');
-    const d=await r.json();
-    document.getElementById('offline-badge').style.display='none';
+// ── FETCH STATUS ──
+async function fetchStatus() {
+  try {
+    const r = await fetch(`${BASE}/eventos?salon_slug=${slug}`);
+    if (!r.ok) throw new Error('API error');
+    const d = await r.json();
+    document.getElementById('offline-badge').style.display = 'none';
     renderState(d);
-  }catch(e){
-    document.getElementById('offline-badge').style.display='block';
+  } catch(e) {
+    document.getElementById('offline-badge').style.display = 'block';
     hideLoader();
   }
 }
 
-function hideLoader(){
-  const l=document.getElementById('loading');
-  l.style.opacity='0';
-  setTimeout(()=>l.style.display='none',500);
+function hideLoader() {
+  const l = document.getElementById('loading');
+  l.style.opacity = '0';
+  setTimeout(() => l.style.display = 'none', 500);
 }
 
-function renderState(d){
-  const ev=d.evento;
-  const salonName=d.salon||slug;
-  document.getElementById('idle-salon-name').textContent=salonName;
-  document.getElementById('ev-salon-name').textContent=salonName;
+function renderState(d) {
+  const ev         = d.evento;
+  const salonName  = d.salon || slug;
 
-  if(ev){
-    // Paused mode
-    if(ev.pausado){
-      document.getElementById('screen-idle').style.display='none';
-      document.getElementById('screen-event').style.display='none';
-      const paused=document.getElementById('screen-paused');
-      paused.style.display='block';
-      // Show first media as frozen background
-      const firstImg=ev.medios?.find(m=>m.tipo==='imagen');
-      if(firstImg)paused.style.backgroundImage=`url('${firstImg.url}')`;
-      else if(ev.imagen_url)paused.style.backgroundImage=`url('${ev.imagen_url}')`;
-      if(carouselTimer)clearTimeout(carouselTimer);
+  document.getElementById('idle-salon-name').textContent = salonName;
+  document.getElementById('ev-salon-name').textContent   = salonName;
+
+  if (ev) {
+    if (ev.pausado) {
+      // PAUSED
+      document.getElementById('screen-idle').style.display  = 'none';
+      document.getElementById('screen-event').style.display = 'none';
+      const paused = document.getElementById('screen-paused');
+      paused.style.display = 'block';
+      const firstImg = ev.medios?.find(m => m.tipo === 'imagen');
+      if (firstImg) paused.style.backgroundImage = `url('${firstImg.url}')`;
+      else if (ev.imagen_url) paused.style.backgroundImage = `url('${ev.imagen_url}')`;
+      if (carouselTimer) clearTimeout(carouselTimer);
     } else {
-      document.getElementById('screen-paused').style.display='none';
-      document.getElementById('screen-idle').style.display='none';
-      document.getElementById('screen-event').style.display='block';
+      // ACTIVE EVENT
+      document.getElementById('screen-paused').style.display = 'none';
+      document.getElementById('screen-idle').style.display   = 'none';
+      document.getElementById('screen-event').style.display  = 'block';
       stopIdleCarousel();
 
-      const opacity=parseFloat(config.overlay_opacidad||'0.6');
-      document.getElementById('ev-overlay').style.background=
-        `linear-gradient(135deg,rgba(0,0,0,${opacity}) 0%,rgba(0,0,0,${opacity*0.4}) 50%,rgba(0,0,0,${opacity}) 100%)`;
+      document.getElementById('ev-type').textContent  = ev.tipo || '';
+      document.getElementById('ev-name').textContent  = ev.nombre || '';
+      document.getElementById('ev-sub').textContent   = ev.subtitulo || '';
+      document.getElementById('ev-until').textContent = ev.hora_fin ? ev.hora_fin.slice(0, 5) + ' hrs' : '';
 
-      document.getElementById('ev-type').textContent=ev.tipo||'';
-      document.getElementById('ev-name').textContent=ev.nombre||'';
-      document.getElementById('ev-sub').textContent=ev.subtitulo||'';
-      document.getElementById('ev-until').textContent=ev.hora_fin?ev.hora_fin.slice(0,5)+' hrs':'';
-
-      applyDesign(ev.diseno||{});
-
-      carouselIndex=0;
-      if(carouselTimer)clearTimeout(carouselTimer);
-      buildCarousel(ev,ev.medios||[]);
+      applyDesign(ev.diseno || {});
+      carouselIndex = 0;
+      if (carouselTimer) clearTimeout(carouselTimer);
+      buildCarousel(ev, ev.medios || []);
     }
   } else {
-    document.getElementById('screen-event').style.display='none';
-    document.getElementById('screen-paused').style.display='none';
-    document.getElementById('screen-idle').style.display='flex';
-    if(carouselTimer)clearTimeout(carouselTimer);
-    // Start upselling carousel when idle
+    // IDLE / NO EVENT
+    document.getElementById('screen-event').style.display  = 'none';
+    document.getElementById('screen-paused').style.display = 'none';
+    document.getElementById('screen-idle').style.display   = 'flex';
+    if (carouselTimer) clearTimeout(carouselTimer);
     startIdleCarousel();
   }
+
   hideLoader();
 }
 
-function updateClock(){
-  const t=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
-  const ic=document.getElementById('idle-clock');
-  const ec=document.getElementById('ev-clock');
-  if(ic)ic.textContent=t;
-  if(ec)ec.textContent=t;
+// ── CLOCK ──
+function updateClock() {
+  const now  = new Date();
+  const time = now.toLocaleTimeString('es-PA', { hour: '2-digit', minute: '2-digit' });
+  const date = now.toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const it = document.getElementById('idle-time');
+  const id = document.getElementById('idle-date');
+  const ec = document.getElementById('ev-clock');
+  if (it) it.textContent = time;
+  if (id) id.textContent = date.charAt(0).toUpperCase() + date.slice(1);
+  if (ec) ec.textContent = time;
+
+  // Update promo clock if visible
+  const pc = document.getElementById('promo-clock');
+  if (pc) pc.textContent = time;
 }
 
-let upCampaign=null;
-let upSlideIndex=0;
-let upSlideTimer=null;
-let showingPromo=false;
-let idleTimer=null;
-const IDLE_SHOW_SECONDS=8; // seconds on default screen before showing promo
+// ── UPSELLING ──
+let upCampaign  = null;
+let upSlideIndex = 0;
+let upSlideTimer = null;
+let showingPromo = false;
 
-async function loadUpselling(){
-  try{
-    const r=await fetch(`${BASE}/upselling?salon_slug=${slug}`);
-    if(r.ok){
-      const camp=await r.json();
-      // Hash includes design and medios
-      const d=camp?.diseno?JSON.stringify(camp.diseno):'';
-      const m=camp?.upselling_medios?camp.upselling_medios.map(x=>x.id+'-'+x.duracion_segundos+'-'+x.orden).join(','):'';
-      const newHash=camp?`${camp.id}|${camp.activo}|${d}|${m}`:'__none__';
-      if(_lastUpHash!==''&&newHash!==_lastUpHash){
-        window.location.reload();
-        return;
-      }
-      _lastUpHash=newHash;
-      upCampaign=camp;
+async function loadUpselling() {
+  try {
+    const r = await fetch(`${BASE}/upselling?salon_slug=${slug}`);
+    if (r.ok) {
+      const camp = await r.json();
+      const d = camp?.diseno ? JSON.stringify(camp.diseno) : '';
+      const m = camp?.upselling_medios ? camp.upselling_medios.map(x => x.id + '-' + x.duracion_segundos + '-' + x.orden).join(',') : '';
+      const newHash = camp ? `${camp.id}|${camp.activo}|${d}|${m}` : '__none__';
+      if (_lastUpHash !== '' && newHash !== _lastUpHash) { window.location.reload(); return; }
+      _lastUpHash = newHash;
+      upCampaign = camp;
     } else {
-      if(_lastUpHash!==''&&_lastUpHash!=='__none__'){window.location.reload();return;}
-      _lastUpHash='__none__';
-      upCampaign=null;
+      if (_lastUpHash !== '' && _lastUpHash !== '__none__') { window.location.reload(); return; }
+      _lastUpHash = '__none__';
+      upCampaign = null;
     }
-  }catch(e){upCampaign=null;}
+  } catch(e) { upCampaign = null; }
 }
 
-function startIdleCarousel(){
-  if(!upCampaign||!upCampaign.upselling_medios||!upCampaign.upselling_medios.length)return;
-  if(upSlideTimer)clearTimeout(upSlideTimer);
-  // Get default duration from design config
-  const d=upCampaign.diseno||{};
-  const defaultDur=(parseInt(d.default_dur)||8)*1000;
-  // Show default screen first, then start promo cycle
-  upSlideTimer=setTimeout(()=>showPromoSlide(0), defaultDur);
+function startIdleCarousel() {
+  if (!upCampaign || !upCampaign.upselling_medios || !upCampaign.upselling_medios.length) return;
+  if (upSlideTimer) clearTimeout(upSlideTimer);
+  const d = upCampaign.diseno || {};
+  const defaultDur = (parseInt(d.default_dur) || 8) * 1000;
+  upSlideTimer = setTimeout(() => showPromoSlide(0), defaultDur);
 }
 
-function buildQR(url,size=120){
+function buildQR(url, size = 120) {
   return `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}" style="width:${size}px;height:${size}px;display:block;border-radius:4px;">`;
 }
 
-function showPromoSlide(idx){
-  if(!upCampaign||!upCampaign.upselling_medios||!upCampaign.upselling_medios.length)return;
-  const medios=upCampaign.upselling_medios;
-  const m=medios[idx];
-  const d=upCampaign.diseno||{};
-  showingPromo=true;
+function showPromoSlide(idx) {
+  if (!upCampaign || !upCampaign.upselling_medios || !upCampaign.upselling_medios.length) return;
+  const medios = upCampaign.upselling_medios;
+  const m = medios[idx];
+  const d = upCampaign.diseno || {};
+  showingPromo = true;
 
-  const idle=document.getElementById('screen-idle');
-  const promo=document.getElementById('screen-promo');
+  const idle  = document.getElementById('screen-idle');
+  const promo = document.getElementById('screen-promo');
 
-  // ── Background ──
-  let bgHtml='';
-  if(m.tipo==='imagen'){
-    bgHtml=`<div style="position:absolute;inset:0;background:url('${m.url}') center/cover no-repeat;"></div>`;
-  } else if(m.tipo==='video_archivo'){
-    bgHtml=`<video src="${m.url}" autoplay muted playsinline loop style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"></video>`;
+  let bgHtml = '';
+  if (m.tipo === 'imagen') {
+    bgHtml = `<div style="position:absolute;inset:0;background:url('${m.url}') center/cover no-repeat;"></div>`;
+  } else if (m.tipo === 'video_archivo') {
+    bgHtml = `<video src="${m.url}" autoplay muted playsinline loop style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"></video>`;
   }
 
-  // ── Overlay ──
-  const ov=parseFloat(d.overlay||50)/100;
-  const overlayHtml=`<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%);z-index:1;pointer-events:none;"></div>`;
+  const ov = parseFloat(d.overlay || 50) / 100;
+  const overlayHtml = `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%);z-index:1;pointer-events:none;"></div>`;
 
-  // ── Logo ──
-  const logoTop=d.logo_top||'3%';
-  const logoLeft=d.logo_left&&d.logo_left!=='auto'?d.logo_left:'auto';
-  const logoRight=logoLeft==='auto'?(d.logo_right||'3%'):'auto';
-  const logoSize=d.logo_size||50;
-  const logoHtml=`<div style="position:absolute;top:${logoTop};right:${logoRight};left:${logoLeft};z-index:3;">
+  const logoLeft  = d.logo_left && d.logo_left !== 'auto' ? d.logo_left : 'auto';
+  const logoRight = logoLeft === 'auto' ? (d.logo_right || '3%') : 'auto';
+  const logoSize  = d.logo_size || 50;
+  const logoHtml  = `<div style="position:absolute;top:${d.logo_top||'3%'};right:${logoRight};left:${logoLeft};z-index:3;">
     <div style="background:white;padding:8px 14px;border-radius:6px;display:inline-block;">
       <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${logoSize}px;width:auto;display:block;">
-    </div>
-  </div>`;
+    </div></div>`;
 
-  // ── Text ──
-  const titulo=d.titulo_global||'';
-  const subtitulo=d.subtitulo_global||'';
-  const tituloHtml=titulo?`<div style="position:absolute;left:${d.titulo_x||'10%'};top:${d.titulo_y||'58%'};transform:none;z-index:2;display:inline-block;max-width:85%;">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:nowrap;text-align:center;">${titulo}</div>
-  </div>`:'';
-  const subHtml=subtitulo?`<div style="position:absolute;left:${d.sub_x||'10%'};top:${d.sub_y||'72%'};transform:none;z-index:2;display:inline-block;max-width:85%;">
-    <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);letter-spacing:.04em;white-space:nowrap;text-align:center;">${subtitulo}</div>
-  </div>`:'';
-  const textHtml=tituloHtml+subHtml;
+  const titulo  = d.titulo_global || '';
+  const subtitle = d.subtitulo_global || '';
+  const tituloHtml = titulo ? `<div style="position:absolute;left:${d.titulo_x||'10%'};top:${d.titulo_y||'58%'};z-index:2;display:inline-block;max-width:85%;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:nowrap;">${titulo}</div>
+  </div>` : '';
+  const subHtml = subtitle ? `<div style="position:absolute;left:${d.sub_x||'10%'};top:${d.sub_y||'72%'};z-index:2;display:inline-block;max-width:85%;">
+    <div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);letter-spacing:.04em;white-space:nowrap;">${subtitle}</div>
+  </div>` : '';
 
-  // ── QR ──
-  const qrUrl=d.qr_url||upCampaign.qr_url||'';
-  const qrTxt=d.qr_texto||upCampaign.qr_texto||'';
-  const qrSize=d.qr_size||100;
-  const qrX=d.qr_x||'3%';
-  const qrTop=d.qr_y_top||'auto';
-  const qrBottom=d.qr_y_bottom||'3%';
-  const qrHtml=qrUrl?`<div style="position:absolute;left:${qrX};top:${qrTop};bottom:${qrBottom};z-index:3;">
+  const qrUrl  = d.qr_url || upCampaign.qr_url || '';
+  const qrTxt  = d.qr_texto || upCampaign.qr_texto || '';
+  const qrSize = d.qr_size || 100;
+  const qrHtml = qrUrl ? `<div style="position:absolute;left:${d.qr_x||'3%'};top:${d.qr_y_top||'auto'};bottom:${d.qr_y_bottom||'3%'};z-index:3;">
     <div style="background:white;padding:8px;border-radius:8px;display:inline-block;">
-      ${buildQR(qrUrl,qrSize)}
-      ${qrTxt?`<div style="font-size:9px;text-align:center;color:#333;margin-top:4px;font-family:sans-serif;max-width:${qrSize}px;">${qrTxt}</div>`:''}
-    </div>
-  </div>`:'';
+      ${buildQR(qrUrl, qrSize)}
+      ${qrTxt ? `<div style="font-size:9px;text-align:center;color:#333;margin-top:4px;max-width:${qrSize}px;">${qrTxt}</div>` : ''}
+    </div></div>` : '';
 
-  // ── Clock ──
-  const clockHtml=`<div id="promo-clock" style="position:absolute;bottom:3%;left:3%;z-index:3;font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;"></div>`;
+  const clockHtml = `<div id="promo-clock" style="position:absolute;bottom:3%;left:3%;z-index:3;font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.5);letter-spacing:.1em;"></div>`;
 
-  promo.innerHTML=bgHtml+overlayHtml+logoHtml+textHtml+qrHtml+clockHtml;
-  const pc=document.getElementById('promo-clock');
-  if(pc)pc.textContent=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});
+  promo.innerHTML = bgHtml + overlayHtml + logoHtml + tituloHtml + subHtml + qrHtml + clockHtml;
+  const pc = document.getElementById('promo-clock');
+  if (pc) pc.textContent = new Date().toLocaleTimeString('es-PA', { hour: '2-digit', minute: '2-digit' });
 
-  // Transition
-  idle.style.opacity='0';
-  promo.style.display='block';
-  setTimeout(()=>{promo.style.opacity='1';},50);
+  idle.style.opacity = '0';
+  promo.style.display = 'block';
+  setTimeout(() => { promo.style.opacity = '1'; }, 50);
 
-  // Schedule next
-  const dur=(m.duracion_segundos||10)*1000;
-  upSlideTimer=setTimeout(()=>{
-    const next=(idx+1)%medios.length;
-    if(next===0){
-      // Finished all slides — back to default
-      showingPromo=false;
-      promo.style.opacity='0';
-      setTimeout(()=>{
-        promo.style.display='none';
-        promo.innerHTML='';
-        idle.style.opacity='1';
-        // Restart cycle after default duration
+  const dur = (m.duracion_segundos || 10) * 1000;
+  upSlideTimer = setTimeout(() => {
+    const next = (idx + 1) % medios.length;
+    if (next === 0) {
+      showingPromo = false;
+      promo.style.opacity = '0';
+      setTimeout(() => {
+        promo.style.display = 'none';
+        promo.innerHTML = '';
+        idle.style.opacity = '1';
         startIdleCarousel();
-      },600);
+      }, 600);
     } else {
       showPromoSlide(next);
     }
-  },dur);
+  }, dur);
 }
 
-function stopIdleCarousel(){
-  if(upSlideTimer)clearTimeout(upSlideTimer);
-  upSlideTimer=null;showingPromo=false;
-  const promo=document.getElementById('screen-promo');
-  if(promo){promo.style.opacity='0';promo.style.display='none';promo.innerHTML='';}
-  const idle=document.getElementById('screen-idle');
-  if(idle)idle.style.opacity='1';
+function stopIdleCarousel() {
+  if (upSlideTimer) clearTimeout(upSlideTimer);
+  upSlideTimer = null; showingPromo = false;
+  const promo = document.getElementById('screen-promo');
+  if (promo) { promo.style.opacity = '0'; promo.style.display = 'none'; promo.innerHTML = ''; }
+  const idle = document.getElementById('screen-idle');
+  if (idle) idle.style.opacity = '1';
 }
 
-async function init(){
+// ── INIT ──
+async function init() {
   await loadConfig();
   await loadUpselling();
   updateClock();
-  setInterval(updateClock,15000);
+  setInterval(updateClock, 15000);
+  loadWeather();
+  setInterval(loadWeather, 10 * 60 * 1000); // refresh weather every 10 min
   fetchStatus();
-  setInterval(fetchStatus,30000);
-  // Reload upselling every 5 minutes
+  setInterval(fetchStatus, 30000);
   setInterval(loadUpselling, 300000);
 }
+
 init();
 </script>
 </body>
