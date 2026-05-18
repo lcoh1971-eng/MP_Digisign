@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administración — Marriott Panama Signage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Raleway:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Josefin+Sans:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--gold:#B8962E;--gold-l:#D4AF5A;--gold-pale:#F5EDD6;--dark:#1A1A1A;--surface:#F8F6F1;--border:rgba(184,150,46,0.25);--text:#2C2C2A;--muted:#888780;--white:#fff;--danger:#A32D2D;--success:#3B6D11;--marriott:#A0213F;}
@@ -592,7 +592,20 @@ textarea{resize:none;height:58px}
             <select id="ip-welcome-font" onchange="updateIdleEl('welcome')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;">
               <option value="'DM Sans',sans-serif">DM Sans (moderna)</option>
               <option value="'Cormorant Garamond',serif">Cormorant (elegante)</option>
+              <option value="'Playfair Display',serif">Playfair Display (clásica)</option>
+              <option value="'Libre Baskerville',serif">Libre Baskerville (serif)</option>
+              <option value="'Montserrat',sans-serif">Montserrat (geométrica)</option>
+              <option value="'Raleway',sans-serif">Raleway (ligera)</option>
+              <option value="'Lato',sans-serif">Lato (neutra)</option>
+              <option value="'Josefin Sans',sans-serif">Josefin Sans (minimalista)</option>
             </select>
+          </div>
+          <div class="d-prop">
+            <label>Estilo</label>
+            <div style="display:flex;gap:6px;margin-top:4px;">
+              <button id="ip-welcome-bold-btn" onclick="toggleIdleStyle('welcome','bold')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-weight:bold;cursor:pointer;">B</button>
+              <button id="ip-welcome-italic-btn" onclick="toggleIdleStyle('welcome','italic')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-style:italic;cursor:pointer;">I</button>
+            </div>
           </div>
         </div>
         <div class="d-section">
@@ -613,8 +626,21 @@ textarea{resize:none;height:58px}
             <label>Fuente</label>
             <select id="ip-salon-font" onchange="updateIdleEl('salon')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;">
               <option value="'Cormorant Garamond',serif">Cormorant (elegante)</option>
+              <option value="'Playfair Display',serif">Playfair Display (clásica)</option>
+              <option value="'Libre Baskerville',serif">Libre Baskerville (serif)</option>
               <option value="'DM Sans',sans-serif">DM Sans (moderna)</option>
+              <option value="'Montserrat',sans-serif">Montserrat (geométrica)</option>
+              <option value="'Raleway',sans-serif">Raleway (ligera)</option>
+              <option value="'Lato',sans-serif">Lato (neutra)</option>
+              <option value="'Josefin Sans',sans-serif">Josefin Sans (minimalista)</option>
             </select>
+          </div>
+          <div class="d-prop">
+            <label>Estilo</label>
+            <div style="display:flex;gap:6px;margin-top:4px;">
+              <button id="ip-salon-bold-btn" onclick="toggleIdleStyle('salon','bold')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-weight:bold;cursor:pointer;">B</button>
+              <button id="ip-salon-italic-btn" onclick="toggleIdleStyle('salon','italic')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-style:italic;cursor:pointer;">I</button>
+            </div>
           </div>
           <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el nombre en el canvas para reposicionarlo.</p>
         </div>
@@ -1673,6 +1699,17 @@ async function openUpsellingForm(id=null){
           <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="upAddVideo(this)">🎬 Subir video (MP4)
         </label>
         <button class="btn-sec" style="display:flex;align-items:center;gap:6px" onclick="openUpDesigner()">🎨 Diseñar pantalla</button>
+        <button class="btn-sec" style="display:flex;align-items:center;gap:6px" onclick="toggleUpUrlForm()">🔗 Agregar por URL</button>
+      </div>
+      <div id="up-url-form" style="display:none;margin-top:12px;background:var(--surface);border:.5px solid var(--border);border-radius:8px;padding:14px;">
+        <label style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;">URL del video (MP4, Vimeo, OneDrive)</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="url" id="up-url-input" placeholder="https://..." style="flex:1;padding:8px 12px;border:.5px solid rgba(136,135,128,.4);border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--white);outline:none;">
+          <input type="number" id="up-url-dur" value="15" min="1" max="600" style="width:70px;padding:8px 10px;border:.5px solid rgba(136,135,128,.4);border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--white);outline:none;text-align:center;">
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap;">seg</span>
+          <button class="btn-pri" onclick="upAddByUrl()" style="white-space:nowrap;">+ Agregar</button>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px;">Compatible con links directos a MP4, Vimeo (link directo) o OneDrive. YouTube no es compatible.</p>
       </div>
       <div id="up-video-progress" style="display:none;margin-top:8px;font-size:12px;color:var(--muted)">⏳ Subiendo video... 0%</div>
     </div></div>
@@ -1700,6 +1737,30 @@ function renderUpTimeline(){
       </div>
       <button class="ic-btn del" onclick="upRemoveMedia(${i})">✕</button>
     </div>`).join('');
+}
+
+function toggleUpUrlForm() {
+  const f = document.getElementById('up-url-form');
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function upAddByUrl() {
+  const url = document.getElementById('up-url-input')?.value.trim();
+  const dur = parseInt(document.getElementById('up-url-dur')?.value) || 15;
+  if (!url) { showToast('Ingresa una URL válida', true); return; }
+  upMedias.push({
+    tipo: 'video_archivo',
+    url,
+    _name: url.split('/').pop().slice(0, 40) || 'video-url',
+    duracion_segundos: dur,
+    orden: upMedias.length,
+    _new: true,
+    _uploaded: true
+  });
+  document.getElementById('up-url-input').value = '';
+  document.getElementById('up-url-form').style.display = 'none';
+  renderUpTimeline();
+  showToast('Video agregado por URL');
 }
 
 function upMoveMedia(i,dir){const j=i+dir;if(j<0||j>=upMedias.length)return;[upMedias[i],upMedias[j]]=[upMedias[j],upMedias[i]];renderUpTimeline();}
@@ -1969,9 +2030,9 @@ const IDLE_DEFAULTS = {
   bg_color:'#0D0D0B',
   logo_vis:true, logo_size:44, logo_x:'2%', logo_y:'3%',
   clock_vis:true, clock_color:'#999999', clock_size:'2.5vw', clock_x:'right:2%', clock_y:'3%',
-  welcome_vis:true, welcome_txt:'BIENVENIDO A · WELCOME TO', welcome_color:'#595957', welcome_size:'1vw', welcome_font:"'DM Sans',sans-serif", welcome_x:'50%', welcome_y:'32%',
+  welcome_vis:true, welcome_txt:'BIENVENIDO A · WELCOME TO', welcome_color:'#595957', welcome_size:'1vw', welcome_font:"'DM Sans',sans-serif", welcome_bold:false, welcome_italic:false, welcome_x:'50%', welcome_y:'32%',
   ornament_vis:true, ornament_x:'50%', ornament_y:'38%',
-  salon_color:'#cccccc', salon_size:'3.5vw', salon_font:"'Cormorant Garamond',serif", salon_x:'50%', salon_y:'50%',
+  salon_color:'#cccccc', salon_size:'3.5vw', salon_font:"'Cormorant Garamond',serif", salon_bold:false, salon_italic:false, salon_x:'50%', salon_y:'50%',
   wx_vis:true, wx_size:'3vw', wx_icon:'4vw', wx_color:'#cccccc', wx_x:'50%', wx_y:'90%',
 };
 let idleDesign = {...IDLE_DEFAULTS};
@@ -2003,6 +2064,31 @@ async function initIdleDesigner() {
   loadIdleControls();
   setupIdleDrag();
   idleInitDone = true;
+}
+
+function toggleIdleStyle(el, style) {
+  if (el === 'welcome') {
+    if (style === 'bold')   idleDesign.welcome_bold   = !idleDesign.welcome_bold;
+    if (style === 'italic') idleDesign.welcome_italic = !idleDesign.welcome_italic;
+  } else if (el === 'salon') {
+    if (style === 'bold')   idleDesign.salon_bold   = !idleDesign.salon_bold;
+    if (style === 'italic') idleDesign.salon_italic = !idleDesign.salon_italic;
+  }
+  _updateStyleButtons();
+  applyIdleDesignToCanvas();
+}
+
+function _updateStyleButtons() {
+  const wb = document.getElementById('ip-welcome-bold-btn');
+  const wi = document.getElementById('ip-welcome-italic-btn');
+  const sb = document.getElementById('ip-salon-bold-btn');
+  const si = document.getElementById('ip-salon-italic-btn');
+  const on  = 'background:rgba(160,33,63,.4);border-color:var(--marriott);color:#fff;';
+  const off = 'background:#222;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);';
+  if (wb) wb.style.cssText = wb.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.welcome_bold   ? on : off);
+  if (wi) wi.style.cssText = wi.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.welcome_italic ? on : off);
+  if (sb) sb.style.cssText = sb.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.salon_bold     ? on : off);
+  if (si) si.style.cssText = si.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.salon_italic   ? on : off);
 }
 
 function applyIdleDesignToCanvas() {
@@ -2045,6 +2131,8 @@ function applyIdleDesignToCanvas() {
   wt.style.color = d.welcome_color;
   wt.style.fontSize = d.welcome_size;
   wt.style.fontFamily = d.welcome_font;
+  wt.style.fontWeight = d.welcome_bold ? 'bold' : 'normal';
+  wt.style.fontStyle  = d.welcome_italic ? 'italic' : 'normal';
 
   // Ornament
   const elOrn = document.getElementById('ic-el-ornament');
@@ -2060,6 +2148,8 @@ function applyIdleDesignToCanvas() {
   sn.style.color = d.salon_color;
   sn.style.fontSize = d.salon_size;
   sn.style.fontFamily = d.salon_font;
+  sn.style.fontWeight = d.salon_bold ? 'bold' : '300';
+  sn.style.fontStyle  = d.salon_italic ? 'italic' : 'normal';
 
   // Weather
   const elWx = document.getElementById('ic-el-weather');
@@ -2090,6 +2180,7 @@ function loadIdleControls() {
   _sv_range('ip-salon-size', parseFloat(d.salon_size), 'ipv-salon-size', 'vw');
   sv('ip-salon-font', d.salon_font);
   sc('ip-wx-vis', d.wx_vis);
+  _updateStyleButtons();
   _sv_range('ip-wx-size', parseFloat(d.wx_size), 'ipv-wx-size', 'vw');
   _sv_range('ip-wx-icon', parseFloat(d.wx_icon), 'ipv-wx-icon', 'vw');
   sv('ip-wx-color', d.wx_color);
