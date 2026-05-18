@@ -66,15 +66,40 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
   height:20%;display:flex;align-items:center;justify-content:center;
   flex-shrink:0;
   border-top:1px solid rgba(184,150,46,0.15);
+  padding:0 clamp(16px,2.5vw,40px);
 }
-.weather-widget {
-  display:flex;align-items:center;gap:clamp(12px,2vw,28px);
+.weather-full {
+  display:flex;align-items:center;gap:clamp(16px,2.5vw,40px);
+  width:100%;
 }
-.weather-icon{font-size:clamp(28px,4vw,52px);line-height:1;}
+/* Clima actual — izquierda */
+.weather-current {
+  display:flex;align-items:center;gap:clamp(8px,1vw,16px);
+  flex-shrink:0;
+  padding-right:clamp(16px,2.5vw,36px);
+  border-right:1px solid rgba(184,150,46,0.2);
+}
+.weather-icon{font-size:clamp(22px,3vw,42px);line-height:1;}
 .weather-info{}
-.weather-temp{font-size:clamp(22px,3vw,44px);color:rgba(255,255,255,.75);font-weight:300;letter-spacing:.02em;}
-.weather-desc{font-size:clamp(9px,1vw,13px);color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:3px;}
-.weather-feels{font-size:clamp(8px,0.85vw,11px);color:rgba(255,255,255,.25);margin-top:2px;}
+.weather-temp{font-size:clamp(18px,2.2vw,34px);color:rgba(255,255,255,.75);font-weight:300;letter-spacing:.02em;}
+.weather-desc{font-size:clamp(8px,0.8vw,11px);color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+.weather-feels{font-size:clamp(7px,0.7vw,10px);color:rgba(255,255,255,.2);margin-top:1px;}
+/* Pronóstico 7 días — derecha */
+.weather-forecast {
+  display:flex;align-items:center;gap:clamp(8px,1.2vw,20px);
+  flex:1;justify-content:space-between;
+}
+.forecast-day {
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  flex:1;
+}
+.forecast-dow {
+  font-size:clamp(7px,0.7vw,10px);letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+}
+.forecast-icon { font-size:clamp(14px,1.6vw,24px);line-height:1; }
+.forecast-max  { font-size:clamp(9px,1vw,15px);color:rgba(255,255,255,.65);font-weight:400; }
+.forecast-min  { font-size:clamp(7px,0.75vw,11px);color:rgba(255,255,255,.25); }
 .weather-loading{font-size:clamp(9px,1vw,12px);color:rgba(255,255,255,.2);letter-spacing:.1em;}
 
 /* ══ PANTALLA PAUSED ══ */
@@ -196,17 +221,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
     <div class="idle-salon-name" id="idle-salon-name">—</div>
   </div>
 
-  <!-- FOOTER: Widget del clima -->
+  <!-- FOOTER: Widget del clima — actual + pronóstico 7 días -->
   <div class="idle-footer">
-    <div id="weather-container">
+    <div id="weather-container" style="width:100%;">
       <div class="weather-loading" id="weather-loading">Cargando clima…</div>
-      <div class="weather-widget" id="weather-widget" style="display:none;">
-        <div class="weather-icon" id="w-icon">☁️</div>
-        <div class="weather-info">
-          <div class="weather-temp" id="w-temp">—°</div>
-          <div class="weather-desc" id="w-desc">—</div>
-          <div class="weather-feels" id="w-feels">Sensación —°</div>
+      <div class="weather-full" id="weather-full" style="display:none;">
+        <!-- Clima actual -->
+        <div class="weather-current">
+          <div class="weather-icon" id="w-icon">☁️</div>
+          <div class="weather-info">
+            <div class="weather-temp" id="w-temp">—°</div>
+            <div class="weather-desc" id="w-desc">—</div>
+            <div class="weather-feels" id="w-feels">Sensación —°</div>
+          </div>
         </div>
+        <!-- Pronóstico 7 días -->
+        <div class="weather-forecast" id="w-forecast"></div>
       </div>
     </div>
   </div>
@@ -313,20 +343,47 @@ const WX_DESC = {
 
 async function loadWeather() {
   try {
-    // Panama City coordinates
     const lat = 8.9936, lon = -79.5197;
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code&timezone=America%2FPanama&temperature_unit=celsius`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=America%2FPanama&temperature_unit=celsius&forecast_days=7`;
     const r = await fetch(url);
     if (!r.ok) throw new Error('wx');
     const d = await r.json();
-    const cur = d.current;
+
+    // ── Clima actual ──
+    const cur  = d.current;
     const code = cur.weather_code;
-    document.getElementById('w-icon').textContent = WX_ICONS[code] || '🌡️';
-    document.getElementById('w-temp').textContent = `${Math.round(cur.temperature_2m)}°C`;
-    document.getElementById('w-desc').textContent = WX_DESC[code] || 'Clima actual';
+    document.getElementById('w-icon').textContent  = WX_ICONS[code] || '🌡️';
+    document.getElementById('w-temp').textContent  = `${Math.round(cur.temperature_2m)}°C`;
+    document.getElementById('w-desc').textContent  = WX_DESC[code] || 'Clima actual';
     document.getElementById('w-feels').textContent = `Sensación ${Math.round(cur.apparent_temperature)}°C`;
+
+    // ── Pronóstico 7 días ──
+    const DAYS_ES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const daily   = d.daily;
+    const forecast = document.getElementById('w-forecast');
+    forecast.innerHTML = '';
+
+    daily.time.forEach((dateStr, i) => {
+      const date  = new Date(dateStr + 'T12:00:00');
+      const dow   = DAYS_ES[date.getDay()];
+      const icon  = WX_ICONS[daily.weather_code[i]] || '🌡️';
+      const max   = Math.round(daily.temperature_2m_max[i]);
+      const min   = Math.round(daily.temperature_2m_min[i]);
+      const isToday = i === 0;
+
+      const day = document.createElement('div');
+      day.className = 'forecast-day';
+      day.innerHTML = `
+        <div class="forecast-dow" style="${isToday ? 'color:rgba(184,150,46,.7);' : ''}">${isToday ? 'Hoy' : dow}</div>
+        <div class="forecast-icon">${icon}</div>
+        <div class="forecast-max">${max}°</div>
+        <div class="forecast-min">${min}°</div>
+      `;
+      forecast.appendChild(day);
+    });
+
     document.getElementById('weather-loading').style.display = 'none';
-    document.getElementById('weather-widget').style.display = 'flex';
+    document.getElementById('weather-full').style.display    = 'flex';
   } catch(e) {
     document.getElementById('weather-loading').textContent = '—';
   }
