@@ -1,58 +1,2324 @@
-// netlify/functions/upload.js
-// POST /api/upload  → sube imagen a Supabase Storage, devuelve URL pública
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administración — Marriott Panama Signage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Raleway:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Josefin+Sans:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#B8962E;--gold-l:#D4AF5A;--gold-pale:#F5EDD6;--dark:#1A1A1A;--surface:#F8F6F1;--border:rgba(184,150,46,0.25);--text:#2C2C2A;--muted:#888780;--white:#fff;--danger:#A32D2D;--success:#3B6D11;--marriott:#A0213F;}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh}
 
-const { createClient } = require('@supabase/supabase-js');
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:999}
+.login-box{background:#222;border:1px solid var(--border);border-radius:14px;padding:48px 40px;width:360px;text-align:center}
+.login-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:28px;margin-top:8px}
+.login-box input{width:100%;padding:11px 14px;background:#2A2A2A;border:1px solid rgba(184,150,46,.3);border-radius:7px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px;-webkit-text-fill-color:#fff;caret-color:#fff}.login-box input:focus{border-color:var(--gold);background:#2A2A2A}.login-box input:-webkit-autofill,.login-box input:-webkit-autofill:hover,.login-box input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 30px #2A2A2A inset !important;-webkit-text-fill-color:#fff !important;border-color:rgba(184,150,46,.3)}
+.login-box input:focus{border-color:var(--gold)}
+.login-btn{width:100%;padding:11px;background:var(--marriott);border:none;border-radius:7px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+.login-btn:hover{background:#c02850}
+.login-err{color:#E57373;font-size:12px;margin-top:10px;display:none}
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+/* TOPBAR */
+.topbar{background:var(--dark);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:54px;position:sticky;top:0;z-index:100}
+.topbar-nav{display:flex;gap:4px}
+.nav-btn{padding:7px 16px;background:transparent;border:none;color:rgba(255,255,255,.45);font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .15s}
+.nav-btn.active{background:rgba(184,150,46,.15);color:var(--gold-l)}
+.nav-btn:hover:not(.active){background:rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
+.logout-btn{padding:6px 14px;border:1px solid rgba(184,150,46,.25);background:transparent;color:rgba(255,255,255,.4);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;border-radius:5px}
+.logout-btn:hover{color:var(--gold-l);border-color:var(--gold)}
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hotel2024';
+/* PANELS */
+.panel{display:none;min-height:calc(100vh - 54px)}.panel.active{display:block}
 
-exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json',
+/* SIDEBAR + MAIN */
+.ev-layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 54px)}
+.sidebar{background:var(--dark);padding:20px 0;border-right:1px solid var(--border)}
+.sb-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:0 18px 12px}
+.salon-item{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;cursor:pointer;transition:background .15s}
+.salon-item:hover{background:rgba(255,255,255,.04)}
+.salon-item.sel{background:rgba(184,150,46,.12);border-left:2px solid var(--gold)}
+.salon-nm{font-size:13px;color:rgba(255,255,255,.8)}
+.salon-st{font-size:10px;padding:2px 8px;border-radius:20px}
+.st-on{background:rgba(59,109,17,.25);color:#7FBB3A}
+.st-off{background:rgba(136,135,128,.15);color:rgba(255,255,255,.3)}
+.sb-add{margin:12px 14px 0;width:calc(100% - 28px);padding:8px;background:rgba(184,150,46,.1);border:1px solid var(--border);color:var(--gold-l);font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;border-radius:5px}
+.sb-add:hover{background:rgba(184,150,46,.2)}
+.main{padding:28px 32px}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400}
+.sec-sub{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.date-nav{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.date-nav button{width:30px;height:30px;border:0.5px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;font-size:14px;color:var(--muted)}
+.date-nav button:hover{border-color:var(--gold);color:var(--gold)}
+.date-nav input[type=date]{padding:6px 10px;border:0.5px solid var(--border);border-radius:6px;background:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none}
+
+/* EVENT CARDS */
+.ev-list{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.ev-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:14px 18px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;transition:border-color .15s}
+.ev-card:hover{border-color:rgba(184,150,46,.5)}
+.ev-card.paused{border-color:rgba(163,45,45,.4);background:rgba(252,235,235,.3)}
+.ev-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.ev-nm{font-size:14px;font-weight:500}
+.ev-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--gold-pale);color:#7A6115;letter-spacing:.05em}
+.ev-badge-live{background:rgba(59,109,17,.15);color:#3B6D11}
+.ev-badge-paused{background:rgba(163,45,45,.15);color:var(--danger)}
+.ev-meta{font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.ev-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ic-btn{width:30px;height:30px;border:.5px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.ic-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-pale)}
+.ic-btn.del:hover{border-color:var(--danger);color:var(--danger);background:rgba(163,45,45,.06)}
+.ic-btn.pause-btn{font-size:11px;width:auto;padding:0 10px;letter-spacing:.04em}
+.ic-btn.pause-btn.paused{border-color:var(--success);color:var(--success)}
+.ic-btn.design-btn{font-size:11px;width:auto;padding:0 10px;letter-spacing:.04em;border-color:var(--marriott);color:var(--marriott)}
+.ic-btn.design-btn:hover{background:rgba(160,33,63,.08)}
+.empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-btn{padding:5px 14px;border-radius:20px;border:1.5px solid transparent;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;letter-spacing:.04em;transition:all .15s;background:transparent;}
+.filter-btn.all{border-color:rgba(136,135,128,.3);color:var(--muted);}
+.filter-btn.all.active{background:var(--dark);color:#fff;border-color:var(--dark);}
+.filter-btn.live{border-color:#3B6D11;color:#3B6D11;}
+.filter-btn.live.active{background:#3B6D11;color:#fff;}
+.filter-btn.upcoming{border-color:#B8962E;color:#B8962E;}
+.filter-btn.upcoming.active{background:#B8962E;color:#fff;}
+.filter-btn.done{border-color:#888780;color:#888780;}
+.filter-btn.done.active{background:#888780;color:#fff;}
+.filter-btn.paused-f{border-color:#A0213F;color:#A0213F;}
+.filter-btn.paused-f.active{background:#A0213F;color:#fff;}
+
+/* STATUS FLAGS */
+.ev-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600;letter-spacing:.04em;}
+.ev-status.live{background:rgba(59,109,17,.15);color:#3B6D11;border:1px solid rgba(59,109,17,.3);}
+.ev-status.upcoming{background:rgba(184,150,46,.15);color:#7A6115;border:1px solid rgba(184,150,46,.3);}
+.ev-status.done{background:rgba(136,135,128,.12);color:#888780;border:1px solid rgba(136,135,128,.25);}
+.ev-status.paused{background:rgba(160,33,63,.12);color:#A0213F;border:1px solid rgba(160,33,63,.25);}
+.ev-card.done{opacity:.65;}
+.ev-card.done:hover{opacity:.85;}
+
+/* FORMS */
+.form-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:24px;margin-bottom:16px}
+.form-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;padding-bottom:14px;border-bottom:.5px solid var(--border)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-row.s1{grid-template-columns:1fr}.form-row.s3{grid-template-columns:1fr 1fr 1fr}
+label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=date],input[type=time],input[type=url],input[type=number],select,textarea{width:100%;padding:9px 12px;border:.5px solid rgba(136,135,128,.4);border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
+input[type=range]{width:100%;accent-color:var(--marriott)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);background:var(--white)}
+textarea{resize:none;height:58px}
+
+/* MEDIA */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px}
+.media-item{border:.5px solid var(--border);border-radius:8px;overflow:hidden;background:var(--white)}
+.media-thumb{position:relative;aspect-ratio:16/9;background:#eee}
+.media-thumb img,.media-thumb video{width:100%;height:100%;object-fit:cover}
+.media-thumb .media-del{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(163,45,45,.85);border:none;border-radius:50%;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.media-thumb .media-type{position:absolute;bottom:4px;left:4px;font-size:9px;background:rgba(0,0,0,.6);color:#fff;padding:2px 6px;border-radius:10px}
+.media-dur{padding:6px 8px;display:flex;align-items:center;gap:6px}
+.media-dur label{font-size:10px;color:var(--muted);margin:0;text-transform:none;letter-spacing:0;white-space:nowrap}
+.media-dur input{width:52px;padding:3px 6px;font-size:12px;text-align:center}
+.color-row{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+.cswatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s}
+.cswatch.sel{border-color:var(--dark)}
+.form-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:18px;border-top:.5px solid var(--border)}
+.btn-sec{padding:8px 16px;border:.5px solid var(--border);background:transparent;border-radius:6px;font-size:13px;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif}
+.btn-pri{padding:8px 22px;background:var(--marriott);border:none;border-radius:6px;font-size:13px;cursor:pointer;color:#fff;font-family:'DM Sans',sans-serif;font-weight:500;transition:background .15s}
+.btn-pri:hover{background:#c02850}
+.btn-pri:disabled{background:var(--muted);cursor:not-allowed}
+.saving{font-size:12px;color:var(--muted);display:none;align-items:center;gap:6px}
+.saving.show{display:flex}
+
+/* AGENDA */
+.agenda-wrap{padding:28px 32px}
+.ag-time{padding:10px 14px;font-size:11px;color:var(--muted);border-right:.5px solid var(--border);background:rgba(248,246,241,.7)}
+.ag-slot{padding:6px 10px;border-right:.5px solid var(--border);min-height:44px;position:relative}
+.ag-slot:last-child{border-right:none}
+.ag-ev{border-radius:5px;padding:5px 8px;font-size:11px}
+.ag-ev-nm{font-weight:500}.ag-ev-hr{font-size:10px;opacity:.7;margin-top:1px}
+.type-boda{background:rgba(184,150,46,.15);border-left:2px solid var(--gold)}.type-boda .ag-ev-nm{color:#7A6115}
+.type-corp{background:rgba(55,138,221,.1);border-left:2px solid #378ADD}.type-corp .ag-ev-nm{color:#185FA5}
+.type-soc{background:rgba(212,83,126,.1);border-left:2px solid #D4537E}.type-soc .ag-ev-nm{color:#993556}
+.type-otro{background:rgba(136,135,128,.12);border-left:2px solid var(--muted)}.type-otro .ag-ev-nm{color:var(--muted)}
+
+/* SALONES */
+.salones-wrap{padding:28px 32px}
+.salones-tbl{width:100%;border-collapse:collapse;background:var(--white);border-radius:10px;overflow:hidden;border:.5px solid var(--border)}
+.salones-tbl th{background:var(--dark);color:rgba(255,255,255,.55);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:12px 16px;text-align:left;font-weight:400}
+.salones-tbl td{padding:12px 16px;border-bottom:.5px solid var(--border);font-size:13px}
+.salones-tbl tr:last-child td{border-bottom:none}
+.salon-url{font-size:11px;color:var(--muted);font-family:monospace}
+.toggle-sw{width:36px;height:20px;background:var(--muted);border-radius:20px;cursor:pointer;position:relative;transition:background .2s;border:none}
+.toggle-sw.on{background:var(--success)}
+.toggle-sw::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle-sw.on::after{left:19px}
+
+/* ══ VISUAL DESIGNER — 3 ZONAS ══ */
+#designer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:none;flex-direction:column;}
+.designer-topbar{background:#111;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;flex-shrink:0;}
+.designer-title{font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.06em}
+.designer-actions{display:flex;gap:8px}
+.d-btn{padding:7px 16px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif;font-size:12px;border-radius:6px;cursor:pointer;transition:all .15s}
+.d-btn:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.d-btn.primary{background:var(--marriott);border-color:var(--marriott);color:#fff}
+.d-btn.primary:hover{background:#c02850}
+.designer-body{display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;height:calc(100vh - 52px);}
+.designer-canvas-wrap{position:relative;display:flex;align-items:center;justify-content:center;background:#0D0D0B;overflow:hidden;padding:20px;}
+.designer-canvas{position:relative;background:#1A1A1A;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+.d-canvas-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.d-canvas-overlay{position:absolute;inset:0;}
+
+/* Zonas del canvas */
+.dc-zone{position:absolute;left:0;right:0;pointer-events:none;}
+.dc-zone-header{top:0;height:20%;border-bottom:1.5px dashed rgba(184,150,46,.5);}
+.dc-zone-body{top:20%;height:60%;}
+.dc-zone-footer{top:80%;height:20%;border-top:1.5px dashed rgba(184,150,46,.5);}
+.dc-zone-label{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(184,150,46,.55);white-space:nowrap;}
+.dc-zone-active{background:rgba(184,150,46,.06);}
+
+/* Elementos fijos en canvas */
+.d-zone-header-inner{position:absolute;top:0;left:0;right:0;height:20%;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(8px,2%,20px);z-index:3;}
+.d-zone-body-inner{position:absolute;top:20%;left:0;right:0;height:60%;display:flex;align-items:center;justify-content:center;z-index:3;cursor:pointer;}
+.d-zone-footer-inner{position:absolute;top:80%;left:0;right:0;height:20%;display:flex;align-items:center;justify-content:center;padding:0 clamp(8px,2%,20px);z-index:3;cursor:pointer;}
+
+/* Grid overlay */
+#d-grid-overlay{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;
+  background-image:linear-gradient(rgba(255,255,255,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.1) 1px,transparent 1px);
+  background-size:10% 10%,10% 10%;}
+
+/* Designer sidebar */
+.designer-sidebar{background:#161616;border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:16px;}
+.d-section{margin-bottom:20px;}
+.d-section-title{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);}
+.d-prop{margin-bottom:10px;}
+.d-prop label{display:block;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase;}
+.d-prop input[type=range]{width:100%;accent-color:var(--marriott);}
+.d-prop input[type=number],.d-prop input[type=text],.d-prop select{width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.d-prop-row{display:flex;align-items:center;justify-content:space-between;}
+.d-prop-val{font-size:11px;color:var(--marriott);min-width:36px;text-align:right;}
+.d-toggle{display:flex;align-items:center;gap:8px;}
+.d-toggle input[type=checkbox]{width:16px;height:16px;accent-color:var(--marriott);}
+.d-toggle label{font-size:12px;color:rgba(255,255,255,.6);margin:0;text-transform:none;letter-spacing:0;}
+
+/* Zone tabs */
+.d-zone-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.d-zone-tab{flex:1;padding:7px 4px;text-align:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.1);border-radius:5px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .15s;}
+.d-zone-tab.active{background:rgba(160,33,63,.25);border-color:var(--marriott);color:#fff;}
+.d-zone-tab:hover:not(.active){background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);}
+
+/* Estilos de elementos en canvas */
+.d-el-tipo{letter-spacing:.2em;text-transform:uppercase;color:#D4AF5A;font-family:'DM Sans',sans-serif;}
+.d-el-nombre{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.6);}
+.d-el-sub{color:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif;}
+.d-el-salon-lbl{font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);}
+.d-el-salon-nm{font-family:'Cormorant Garamond',serif;color:rgba(255,255,255,.9);font-weight:400;}
+
+/* PREVIEW MODAL */
+#preview-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;}
+.preview-modal-top{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:960px;padding:0 0 14px;flex-shrink:0;}
+.preview-modal-title{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.06em;}
+.preview-close{padding:6px 16px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:12px;border-radius:6px;cursor:pointer;}
+.preview-close:hover{color:#fff;border-color:rgba(255,255,255,.5);}
+.preview-frame{position:relative;width:100%;max-width:960px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.8);}
+.preview-frame-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.preview-frame-overlay{position:absolute;inset:0;}
+/* Preview 3-zone */
+.pf-zone-header{position:absolute;top:0;left:0;right:0;height:20%;display:flex;align-items:center;justify-content:space-between;padding:0 3%;z-index:3;}
+.pf-zone-body{position:absolute;top:20%;left:0;right:0;height:60%;display:flex;align-items:center;justify-content:center;z-index:3;}
+.pf-zone-footer{position:absolute;bottom:0;left:0;right:0;height:20%;display:flex;align-items:center;justify-content:center;z-index:3;}
+.pf-salon-lbl{font-size:.7vw;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.45);}
+.pf-salon-nm{font-family:'Cormorant Garamond',serif;color:rgba(255,255,255,.9);font-weight:400;}
+.pf-tipo{letter-spacing:.25em;text-transform:uppercase;color:#D4AF5A;}
+.pf-nombre{font-family:'Cormorant Garamond',serif;font-weight:300;color:#fff;line-height:1.1;text-shadow:0 2px 20px rgba(0,0,0,.6);}
+.pf-sub{color:rgba(255,255,255,.6);}
+.pf-divider{height:1px;margin:8px auto;}
+.pf-hora{display:inline-flex;flex-direction:column;align-items:center;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;margin-top:10px;}
+.pf-hora-lbl{font-size:.6vw;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);}
+.pf-hora-val{font-weight:500;}
+.pf-clock{font-size:.9vw;color:rgba(255,255,255,.4);letter-spacing:.1em;}
+
+/* UPSELLING */
+.up-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:20px;}
+.up-card{background:var(--white);border:.5px solid var(--border);border-radius:10px;overflow:hidden;}
+.up-card-head{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid var(--border);}
+.up-card-title{font-size:14px;font-weight:500;}
+.up-card-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.up-card-body{padding:14px 18px;}
+.up-timeline{display:flex;flex-direction:column;gap:6px;}
+.up-slide-row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface);border-radius:6px;border:.5px solid var(--border);}
+.up-slide-thumb{width:48px;height:30px;border-radius:4px;object-fit:cover;background:#eee;flex-shrink:0;}
+.up-slide-thumb-vid{width:48px;height:30px;border-radius:4px;background:#111;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.up-slide-info{flex:1;font-size:11px;color:var(--muted);}
+.up-slide-dur{font-size:11px;font-weight:500;color:var(--marriott);white-space:nowrap;}
+.up-badge-all{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(59,109,17,.12);color:#3B6D11;font-weight:500;}
+.up-badge-specific{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(184,150,46,.12);color:#7A6115;font-weight:500;}
+.up-badge-off{font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(136,135,128,.12);color:var(--muted);font-weight:500;}
+
+/* UPSELLING FORM */
+.up-form-wrap{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;}
+.up-salon-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px;}
+.up-salon-check{display:flex;align-items:center;gap:8px;padding:6px 10px;border:.5px solid var(--border);border-radius:6px;cursor:pointer;}
+.up-salon-check input{width:15px;height:15px;accent-color:var(--marriott);}
+.up-salon-check label{font-size:12px;cursor:pointer;}
+.up-timeline-builder{margin-top:12px;}
+.up-timeline-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.up-tl-item{display:grid;grid-template-columns:56px 1fr auto auto;gap:8px;align-items:center;padding:8px;background:var(--surface);border-radius:8px;border:.5px solid var(--border);}
+.up-tl-thumb{width:56px;height:35px;border-radius:4px;object-fit:cover;background:#eee;}
+.up-tl-thumb-vid{width:56px;height:35px;border-radius:4px;background:#111;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.up-tl-name{font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.up-tl-type{font-size:10px;color:var(--muted);}
+.up-tl-dur{display:flex;align-items:center;gap:4px;}
+.up-tl-dur input{width:52px;padding:4px 6px;border:.5px solid var(--border);border-radius:5px;font-size:12px;text-align:center;font-family:'DM Sans',sans-serif;}
+.up-tl-dur span{font-size:11px;color:var(--muted);}
+
+/* UPSELLING DESIGNER */
+#up-designer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:250;display:none;flex-direction:column;height:100vh;}
+.up-designer-topbar{background:#111;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;flex-shrink:0;}
+.up-designer-body{display:grid;grid-template-columns:1fr 300px;flex:1;overflow:hidden;height:calc(100vh - 52px);}
+.up-canvas-wrap{display:flex;align-items:center;justify-content:center;background:#0D0D0B;padding:20px;overflow:hidden;min-height:0;height:100%;}
+.up-canvas{position:relative;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+.up-canvas-bg{position:absolute;inset:0;background-size:cover;background-position:center;}
+.up-canvas-overlay{position:absolute;inset:0;}
+.up-d-element{position:absolute;cursor:move;user-select:none;padding:4px;}
+.up-d-element .d-handle{position:absolute;inset:-4px;border:1.5px dashed rgba(255,255,255,.3);border-radius:4px;pointer-events:none;opacity:0;transition:opacity .15s;}
+.up-d-element:hover .d-handle,.up-d-element.selected .d-handle{opacity:1;}
+.up-designer-sidebar{background:#161616;border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:16px;}
+.up-d-section{margin-bottom:20px;}
+.up-d-section-title{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);}
+.up-d-prop{margin-bottom:10px;}
+.up-d-prop label{display:block;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase;}
+.up-d-prop input[type=range]{width:100%;accent-color:var(--marriott);}
+.up-d-prop input[type=text],.up-d-prop input[type=url],.up-d-prop input[type=number],.up-d-prop select{width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.up-d-prop-row{display:flex;align-items:center;justify-content:space-between;}
+.up-d-prop-val{font-size:11px;color:var(--marriott);min-width:36px;text-align:right;}
+.up-el-list{display:flex;flex-direction:column;gap:4px;}
+.up-el-item{padding:8px 10px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.5);transition:background .15s;}
+.up-el-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.8);}
+.up-el-item.active{background:rgba(160,33,63,.2);color:#fff;border-left:2px solid var(--marriott);}
+
+/* ══ IDLE DESIGNER ══ */
+.idle-designer-wrap{display:grid;grid-template-columns:1fr 300px;height:calc(100vh - 54px);}
+.idle-canvas-area{background:#0D0D0B;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden;}
+.idle-canvas{position:relative;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.8);}
+/* 3 zones inside idle canvas */
+.ic-zone{position:absolute;left:0;right:0;}
+.ic-zone-header{top:0;height:20%;border-bottom:1.5px dashed rgba(184,150,46,.4);}
+.ic-zone-body{top:20%;height:60%;}
+.ic-zone-footer{top:80%;height:20%;border-top:1.5px dashed rgba(184,150,46,.4);}
+.ic-zone-label{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(184,150,46,.4);pointer-events:none;}
+/* Draggable idle elements */
+.ic-el{position:absolute;cursor:move;user-select:none;}
+.ic-el .ic-handle{position:absolute;inset:-5px;border:1.5px dashed rgba(255,255,255,.0);border-radius:4px;pointer-events:none;transition:border-color .15s;}
+.ic-el:hover .ic-handle,.ic-el.sel .ic-handle{border-color:rgba(255,255,255,.7);}
+/* Idle sidebar */
+.idle-sidebar{background:#161616;border-left:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:16px;}
+.idle-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.idle-tab{flex:1;padding:7px 4px;text-align:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.1);border-radius:5px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .15s;}
+.idle-tab.active{background:rgba(160,33,63,.25);border-color:var(--marriott);color:#fff;}
+.idle-tab:hover:not(.active){background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);}
+.idle-save-bar{background:#111;border-top:1px solid rgba(255,255,255,.1);padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;border-left:3px solid var(--marriott);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{border-left-color:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="background:white;padding:12px 20px;border-radius:8px;display:inline-block;margin-bottom:12px;">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:70px;width:auto;display:block;">
+    </div>
+    <div class="login-sub">Gestión de Señalización DigiSign</div>
+    <input type="email" id="email-input" placeholder="Correo electrónico" onkeydown="if(event.key==='Enter')doLogin()">
+    <input type="password" id="pwd-input" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar" style="display:none" id="topbar">
+  <div>
+    <div style="background:white;padding:4px 10px;border-radius:5px;display:inline-block;">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" alt="Marriott Panama" style="height:28px;width:auto;display:block;">
+    </div>
+  </div>
+  <div class="topbar-nav">
+    <button class="nav-btn active" onclick="showPanel('eventos')">Eventos</button>
+    <button class="nav-btn" onclick="showPanel('agenda')">Agenda</button>
+    <button class="nav-btn" onclick="showPanel('salones')">Salones</button>
+    <button class="nav-btn" onclick="showPanel('upselling')">🎯 Upselling</button>
+    <button class="nav-btn" id="nav-usuarios" onclick="showPanel('usuarios')" style="display:none">👥 Usuarios</button>
+    <button class="nav-btn" id="nav-idle" onclick="showPanel('idle')" style="display:none">🖥 Pantalla Idle</button>
+    <a href="/bi" class="nav-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;">📊 BI</a>
+  </div>
+  <button class="logout-btn" onclick="doLogout()">Salir</button>
+</div>
+
+<!-- EVENTOS -->
+<div id="panel-eventos" class="panel active" style="display:none">
+  <div class="ev-layout">
+    <aside class="sidebar">
+      <div class="sb-title">Salones</div>
+      <div id="sidebar-salones"></div>
+      <button class="sb-add" onclick="openSalonForm()">+ Agregar salón</button>
+    </aside>
+    <div class="main">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title" id="ev-salon-title">Selecciona un salón</div>
+          <div class="sec-sub" id="ev-salon-url"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="saving" id="saving-indicator"><span style="width:8px;height:8px;background:var(--gold);border-radius:50%;display:inline-block;animation:pulse 1s infinite"></span>Guardando...</span>
+          <button class="btn-pri" id="new-ev-btn" onclick="openEventForm()" style="display:none">+ Nuevo evento</button>
+        </div>
+      </div>
+      <div class="date-nav">
+        <button onclick="changeDate(-1)">‹</button>
+        <input type="date" id="fecha-filtro" onchange="loadEventos()">
+        <button onclick="changeDate(1)">›</button>
+        <span style="font-size:12px;color:var(--muted)" id="fecha-label"></span>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn all active" id="fb-all" onclick="setFilter('all')">Todos</button>
+        <button class="filter-btn live" id="fb-live" onclick="setFilter('live')">🔴 En ejecución</button>
+        <button class="filter-btn upcoming" id="fb-upcoming" onclick="setFilter('upcoming')">🟡 Por ejecutar</button>
+        <button class="filter-btn done" id="fb-done" onclick="setFilter('done')">⚫ Ejecutados</button>
+        <button class="filter-btn paused-f" id="fb-paused" onclick="setFilter('paused')">⏸ Pausados</button>
+      </div>
+      <div id="ev-list" class="ev-list"><div class="empty-state">Selecciona un salón para ver sus eventos</div></div>
+      <div id="ev-form" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENDA -->
+<div id="panel-agenda" class="panel" style="display:none">
+  <div class="agenda-wrap">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Agenda del día</div><div class="sec-sub" id="agenda-fecha-label"></div></div>
+      <div class="date-nav" style="margin:0">
+        <button onclick="changeAgendaDate(-1)">‹</button>
+        <input type="date" id="agenda-fecha" onchange="loadAgenda()">
+        <button onclick="changeAgendaDate(1)">›</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto"><div id="agenda-grid"></div></div>
+  </div>
+</div>
+
+<!-- SALONES -->
+<div id="panel-salones" class="panel" style="display:none">
+  <div class="salones-wrap">
+    <div class="sec-hdr">
+      <div class="sec-title">Gestión de salones</div>
+      <button class="btn-pri" onclick="openSalonForm()">+ Nuevo salón</button>
+    </div>
+    <table class="salones-tbl">
+      <thead><tr><th>Nombre</th><th>URL de tableta</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody id="salones-tbody"></tbody>
+    </table>
+    <div id="salon-form-area" style="margin-top:20px;display:none"></div>
+  </div>
+</div>
+
+<!-- USUARIOS -->
+<div id="panel-usuarios" class="panel" style="display:none">
+  <div class="main">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Gestión de Usuarios</div><div class="sec-sub">Acceso al panel de administración</div></div>
+      <button class="btn-pri" onclick="openUserForm()">+ Nuevo usuario</button>
+    </div>
+    <div id="user-form-area" style="display:none"></div>
+    <table class="salones-tbl" id="users-table">
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody id="users-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Cargando...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- UPSELLING -->
+<div id="panel-upselling" class="panel" style="display:none">
+  <div class="main">
+    <div class="sec-hdr">
+      <div><div class="sec-title">Upselling — Carrusel Promocional</div><div class="sec-sub">Se muestra en tabletas cuando no hay evento activo</div></div>
+      <button class="btn-pri" onclick="openUpsellingForm()">+ Nueva campaña</button>
+    </div>
+    <div id="up-form-area" style="display:none"></div>
+    <div id="up-campaigns-grid" class="up-grid"><div class="empty-state">Cargando campañas...</div></div>
+  </div>
+</div>
+
+<!-- ══ PANEL IDLE ══ -->
+<div id="panel-idle" class="panel" style="display:none">
+  <div class="idle-designer-wrap">
+    <div class="idle-canvas-area" id="idle-canvas-area">
+      <div class="idle-canvas" id="idle-canvas">
+        <div id="ic-bg" style="position:absolute;inset:0;background:#0D0D0B;"></div>
+        <div class="ic-zone ic-zone-header"><div class="ic-zone-label">HEADER</div></div>
+        <div class="ic-zone ic-zone-body"><div class="ic-zone-label">BODY</div></div>
+        <div class="ic-zone ic-zone-footer"><div class="ic-zone-label">FOOTER</div></div>
+        <!-- LOGO -->
+        <div class="ic-el" id="ic-el-logo" style="top:3%;left:2%;">
+          <div class="ic-handle"></div>
+          <div id="ic-logo-inner" style="background:white;padding:8px 16px;border-radius:6px;display:inline-block;">
+            <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" id="ic-logo-img" style="height:44px;width:auto;display:block;">
+          </div>
+        </div>
+        <!-- RELOJ -->
+        <div class="ic-el" id="ic-el-clock" style="top:3%;right:2%;text-align:right;">
+          <div class="ic-handle"></div>
+          <div id="ic-clock-time" style="font-size:2.5vw;color:rgba(255,255,255,.6);font-weight:300;letter-spacing:.05em;">11:10</div>
+          <div id="ic-clock-date" style="font-size:1vw;color:rgba(255,255,255,.3);letter-spacing:.12em;margin-top:2px;">Jueves, 7 de mayo</div>
+        </div>
+        <!-- BIENVENIDO -->
+        <div class="ic-el" id="ic-el-welcome" style="left:50%;top:32%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div id="ic-welcome-txt" style="font-size:1vw;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.35);text-align:center;white-space:nowrap;font-family:'DM Sans',sans-serif;">BIENVENIDO A · WELCOME TO</div>
+        </div>
+        <!-- ORNAMENTO -->
+        <div class="ic-el" id="ic-el-ornament" style="left:50%;top:38%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div id="ic-ornament-line" style="width:64px;height:1px;background:linear-gradient(to right,transparent,#B8962E,transparent);"></div>
+        </div>
+        <!-- NOMBRE SALÓN -->
+        <div class="ic-el" id="ic-el-salon" style="left:50%;top:50%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div id="ic-salon-nm" style="font-family:'Cormorant Garamond',serif;font-size:3.5vw;color:rgba(255,255,255,.8);font-weight:300;letter-spacing:.06em;text-align:center;white-space:nowrap;">Nombre del Salón</div>
+        </div>
+        <!-- CLIMA -->
+        <div class="ic-el" id="ic-el-weather" style="left:50%;top:90%;transform:translate(-50%,-50%);">
+          <div class="ic-handle"></div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="ic-wx-icon" style="font-size:4vw;line-height:1;">⛈️</div>
+            <div>
+              <div id="ic-wx-temp" style="font-size:3vw;color:rgba(255,255,255,.75);font-weight:300;">30°C</div>
+              <div id="ic-wx-desc" style="font-size:1vw;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;">TORMENTA</div>
+              <div id="ic-wx-feels" style="font-size:0.85vw;color:rgba(255,255,255,.25);">Sensación 37°C</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="idle-sidebar">
+      <div class="idle-tabs">
+        <div class="idle-tab active" id="itab-fondo" onclick="selectIdleTab('fondo')">🎨 Fondo</div>
+        <div class="idle-tab" id="itab-header" onclick="selectIdleTab('header')">🔝 Header</div>
+        <div class="idle-tab" id="itab-body" onclick="selectIdleTab('body')">📋 Body</div>
+        <div class="idle-tab" id="itab-footer" onclick="selectIdleTab('footer')">🔻 Footer</div>
+      </div>
+
+      <!-- FONDO -->
+      <div id="iprops-fondo">
+        <div class="d-section">
+          <div class="d-section-title">Color de fondo</div>
+          <div class="d-prop">
+            <label>Color</label>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+              <input type="color" id="ip-bg-color" value="#0D0D0B" oninput="updateIdleBg()" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;background:none;">
+              <input type="text" id="ip-bg-hex" value="#0D0D0B" oninput="syncBgHex()" style="flex:1;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-family:monospace;font-size:12px;outline:none;">
+              <button onclick="resetIdleBg()" style="padding:5px 8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:11px;cursor:pointer;">Reset</button>
+            </div>
+          </div>
+          <div class="d-prop" style="margin-top:8px;">
+            <label>Colores rápidos</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+              <div onclick="setIdleBgColor('#0D0D0B')" style="width:28px;height:28px;border-radius:50%;background:#0D0D0B;cursor:pointer;border:2px solid rgba(255,255,255,.3);" title="Negro (default)"></div>
+              <div onclick="setIdleBgColor('#0A1628')" style="width:28px;height:28px;border-radius:50%;background:#0A1628;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Azul marino"></div>
+              <div onclick="setIdleBgColor('#1A0A0A')" style="width:28px;height:28px;border-radius:50%;background:#1A0A0A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Rojo oscuro"></div>
+              <div onclick="setIdleBgColor('#0A1A0A')" style="width:28px;height:28px;border-radius:50%;background:#0A1A0A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Verde oscuro"></div>
+              <div onclick="setIdleBgColor('#1A1A0A')" style="width:28px;height:28px;border-radius:50%;background:#1A1A0A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Oliva"></div>
+              <div onclick="setIdleBgColor('#14100A')" style="width:28px;height:28px;border-radius:50%;background:#14100A;cursor:pointer;border:2px solid rgba(255,255,255,.1);" title="Café oscuro"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HEADER -->
+      <div id="iprops-header" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Logo del hotel</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-logo-vis" checked onchange="updateIdleEl('logo')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño (alto)</label><span class="d-prop-val" id="ipv-logo-size">44px</span></div>
+            <input type="range" min="20" max="100" step="4" value="44" id="ip-logo-size" oninput="updateIdleEl('logo')">
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el logo en el canvas para reposicionarlo.</p>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Reloj</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-clock-vis" checked onchange="updateIdleEl('clock')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <label>Color</label>
+            <input type="color" id="ip-clock-color" value="#999999" oninput="updateIdleEl('clock')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño hora</label><span class="d-prop-val" id="ipv-clock-size">2.5vw</span></div>
+            <input type="range" min="1" max="5" step="0.5" value="2.5" id="ip-clock-size" oninput="updateIdleEl('clock')">
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el reloj en el canvas para reposicionarlo.</p>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div id="iprops-body" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Texto "Bienvenido a"</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-welcome-vis" checked onchange="updateIdleEl('welcome')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <label>Texto</label>
+            <input type="text" id="ip-welcome-txt" value="BIENVENIDO A · WELCOME TO" oninput="updateIdleEl('welcome')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;font-family:'DM Sans',sans-serif;">
+          </div>
+          <div class="d-prop">
+            <label>Color</label>
+            <input type="color" id="ip-welcome-color" value="#595957" oninput="updateIdleEl('welcome')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño</label><span class="d-prop-val" id="ipv-welcome-size">1vw</span></div>
+            <input type="range" min="0.5" max="2.5" step="0.1" value="1" id="ip-welcome-size" oninput="updateIdleEl('welcome')">
+          </div>
+          <div class="d-prop">
+            <label>Fuente</label>
+            <select id="ip-welcome-font" onchange="updateIdleEl('welcome')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;">
+              <option value="'DM Sans',sans-serif">DM Sans (moderna)</option>
+              <option value="'Cormorant Garamond',serif">Cormorant (elegante)</option>
+              <option value="'Playfair Display',serif">Playfair Display (clásica)</option>
+              <option value="'Libre Baskerville',serif">Libre Baskerville (serif)</option>
+              <option value="'Montserrat',sans-serif">Montserrat (geométrica)</option>
+              <option value="'Raleway',sans-serif">Raleway (ligera)</option>
+              <option value="'Lato',sans-serif">Lato (neutra)</option>
+              <option value="'Josefin Sans',sans-serif">Josefin Sans (minimalista)</option>
+            </select>
+          </div>
+          <div class="d-prop">
+            <label>Estilo</label>
+            <div style="display:flex;gap:6px;margin-top:4px;">
+              <button id="ip-welcome-bold-btn" onclick="toggleIdleStyle('welcome','bold')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-weight:bold;cursor:pointer;">B</button>
+              <button id="ip-welcome-italic-btn" onclick="toggleIdleStyle('welcome','italic')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-style:italic;cursor:pointer;">I</button>
+            </div>
+          </div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Ornamento dorado</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-ornament-vis" checked onchange="updateIdleEl('ornament')"><label>Visible</label></div></div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Nombre del salón</div>
+          <div class="d-prop">
+            <label>Color</label>
+            <input type="color" id="ip-salon-color" value="#cccccc" oninput="updateIdleEl('salon')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño</label><span class="d-prop-val" id="ipv-salon-size">3.5vw</span></div>
+            <input type="range" min="1.5" max="7" step="0.5" value="3.5" id="ip-salon-size" oninput="updateIdleEl('salon')">
+          </div>
+          <div class="d-prop">
+            <label>Fuente</label>
+            <select id="ip-salon-font" onchange="updateIdleEl('salon')" style="width:100%;padding:5px 8px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:#fff;font-size:12px;outline:none;">
+              <option value="'Cormorant Garamond',serif">Cormorant (elegante)</option>
+              <option value="'Playfair Display',serif">Playfair Display (clásica)</option>
+              <option value="'Libre Baskerville',serif">Libre Baskerville (serif)</option>
+              <option value="'DM Sans',sans-serif">DM Sans (moderna)</option>
+              <option value="'Montserrat',sans-serif">Montserrat (geométrica)</option>
+              <option value="'Raleway',sans-serif">Raleway (ligera)</option>
+              <option value="'Lato',sans-serif">Lato (neutra)</option>
+              <option value="'Josefin Sans',sans-serif">Josefin Sans (minimalista)</option>
+            </select>
+          </div>
+          <div class="d-prop">
+            <label>Estilo</label>
+            <div style="display:flex;gap:6px;margin-top:4px;">
+              <button id="ip-salon-bold-btn" onclick="toggleIdleStyle('salon','bold')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-weight:bold;cursor:pointer;">B</button>
+              <button id="ip-salon-italic-btn" onclick="toggleIdleStyle('salon','italic')" style="flex:1;padding:5px;background:#222;border:1px solid rgba(255,255,255,.12);border-radius:5px;color:rgba(255,255,255,.5);font-size:13px;font-style:italic;cursor:pointer;">I</button>
+            </div>
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el nombre en el canvas para reposicionarlo.</p>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div id="iprops-footer" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Widget del clima</div>
+          <div class="d-prop"><div class="d-toggle"><input type="checkbox" id="ip-wx-vis" checked onchange="updateIdleEl('weather')"><label>Visible</label></div></div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño temperatura</label><span class="d-prop-val" id="ipv-wx-size">3vw</span></div>
+            <input type="range" min="1.5" max="5" step="0.5" value="3" id="ip-wx-size" oninput="updateIdleEl('weather')">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño ícono</label><span class="d-prop-val" id="ipv-wx-icon">4vw</span></div>
+            <input type="range" min="2" max="7" step="0.5" value="4" id="ip-wx-icon" oninput="updateIdleEl('weather')">
+          </div>
+          <div class="d-prop">
+            <label>Color temperatura</label>
+            <input type="color" id="ip-wx-color" value="#cccccc" oninput="updateIdleEl('weather')" style="width:44px;height:32px;border:none;border-radius:5px;cursor:pointer;margin-top:4px;">
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;">Arrastra el clima en el canvas para reposicionarlo.</p>
+        </div>
+      </div>
+
+      <!-- SAVE BAR -->
+      <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="d-btn" onclick="resetIdleDesign()">↺ Defaults</button>
+        <button class="d-btn primary" onclick="saveIdleDesign()">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     DISEÑADOR VISUAL — 3 ZONAS
+     Header 20% | Body 60% | Footer 20%
+     ══════════════════════════════════════════════════ -->
+<div id="designer-overlay">
+  <div class="designer-topbar">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="designer-title" id="designer-event-title">Editor Visual — Evento</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.06em;">Header 20% · Body 60% · Footer 20%</div>
+    </div>
+    <div class="designer-actions">
+      <button class="d-btn" id="d-grid-btn" onclick="toggleDesignerGrid()">⊞ Cuadrícula</button>
+      <button class="d-btn" onclick="closeDesigner()">✕ Cerrar sin guardar</button>
+      <button class="d-btn primary" onclick="saveDesign()">💾 Guardar diseño</button>
+    </div>
+  </div>
+  <div class="designer-body">
+    <!-- CANVAS -->
+    <div class="designer-canvas-wrap" id="canvas-wrap">
+      <div class="designer-canvas" id="designer-canvas">
+        <div class="d-canvas-bg" id="d-canvas-bg"></div>
+        <div class="d-canvas-overlay" id="d-canvas-overlay"></div>
+        <div id="d-grid-overlay"></div>
+
+        <!-- Líneas de zona -->
+        <div class="dc-zone dc-zone-header" id="dc-zone-header"><div class="dc-zone-label">HEADER</div></div>
+        <div class="dc-zone dc-zone-body" id="dc-zone-body"><div class="dc-zone-label">BODY</div></div>
+        <div class="dc-zone dc-zone-footer" id="dc-zone-footer"><div class="dc-zone-label">FOOTER</div></div>
+
+        <!-- HEADER: Salón (izq) + Logo (der) -->
+        <div class="d-zone-header-inner" id="d-header-inner" onclick="selectZone('header')" style="cursor:pointer;">
+          <div id="d-el-salon">
+            <div class="d-el-salon-lbl">Salón</div>
+            <div class="d-el-salon-nm" id="d-salon-nm">Nombre del Salón</div>
+          </div>
+          <div id="d-el-logo">
+            <div style="background:white;padding:6px 12px;border-radius:5px;">
+              <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" id="d-logo-img" style="display:block;width:auto;">
+            </div>
+          </div>
+        </div>
+
+        <!-- BODY: Contenido del evento -->
+        <div class="d-zone-body-inner" id="d-body-inner" onclick="selectZone('body')">
+          <div id="d-el-content" style="text-align:center;max-width:80%;padding:0 16px;">
+            <div class="d-el-tipo" id="d-tipo">TIPO DE EVENTO</div>
+            <div class="d-el-nombre" id="d-nombre">Nombre del Evento</div>
+            <div id="d-divider" style="height:1px;background:#B8962E;margin:8px auto;width:52px;"></div>
+            <div class="d-el-sub" id="d-sub">Subtítulo del evento</div>
+            <div id="d-hora" style="margin-top:12px;background:rgba(0,0,0,.45);border:.5px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;display:inline-flex;flex-direction:column;align-items:center;">
+              <div style="font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45)">Hasta las</div>
+              <div style="font-weight:500;color:#B8962E;font-size:14px;">18:00 hrs</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOOTER: Reloj / Texto -->
+        <div class="d-zone-footer-inner" id="d-footer-inner" onclick="selectZone('footer')">
+          <div id="d-el-footer" style="text-align:center;">
+            <div id="d-footer-clock" style="font-size:clamp(10px,1.1vw,16px);color:rgba(255,255,255,.4);letter-spacing:.1em;">18:45</div>
+            <div id="d-footer-text" style="display:none;font-size:1vw;color:rgba(255,255,255,.5);letter-spacing:.06em;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR del diseñador -->
+    <div class="designer-sidebar">
+      <!-- Tabs de zona -->
+      <div class="d-zone-tabs">
+        <div class="d-zone-tab active" id="dztab-header" onclick="selectZone('header')">🔝 Header</div>
+        <div class="d-zone-tab" id="dztab-body" onclick="selectZone('body')">📋 Body</div>
+        <div class="d-zone-tab" id="dztab-footer" onclick="selectZone('footer')">🔻 Footer</div>
+      </div>
+
+      <!-- HEADER PROPS -->
+      <div id="d-props-header">
+        <div class="d-section">
+          <div class="d-section-title">Nombre del salón</div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño</label><span class="d-prop-val" id="dpv-salon-size">1.7vw</span></div>
+            <input type="range" min="0.8" max="4" step="0.1" value="1.7" id="dp-salon-size" oninput="updateZoneHeader()">
+          </div>
+          <div class="d-prop">
+            <div class="d-toggle"><input type="checkbox" id="dp-vis-salon" checked onchange="updateZoneHeader()"><label>Visible</label></div>
+          </div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Logo del hotel</div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño (alto)</label><span class="d-prop-val" id="dpv-logo-size">50px</span></div>
+            <input type="range" min="20" max="120" step="5" value="50" id="dp-logo-size" oninput="updateZoneHeader()">
+          </div>
+          <div class="d-prop">
+            <div class="d-toggle"><input type="checkbox" id="dp-vis-logo" checked onchange="updateZoneHeader()"><label>Visible</label></div>
+          </div>
+          <div class="d-prop">
+            <label>Posición del logo</label>
+            <select id="dp-logo-pos" onchange="updateZoneHeader()">
+              <option value="right">Derecha (por defecto)</option>
+              <option value="left">Izquierda</option>
+            </select>
+          </div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Opacidad del fondo</div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Oscuridad overlay</label><span class="d-prop-val" id="dpv-overlay">60%</span></div>
+            <input type="range" min="0" max="90" step="5" value="60" id="dp-overlay" oninput="updateOverlay()">
+          </div>
+        </div>
+      </div>
+
+      <!-- BODY PROPS -->
+      <div id="d-props-body" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Texto del evento</div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño título</label><span class="d-prop-val" id="dpv-titulo">4vw</span></div>
+            <input type="range" min="1.5" max="9" step="0.5" value="4" id="dp-titulo" oninput="updateZoneBody()">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño subtítulo</label><span class="d-prop-val" id="dpv-sub">1.4vw</span></div>
+            <input type="range" min="0.6" max="3" step="0.1" value="1.4" id="dp-sub" oninput="updateZoneBody()">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño tipo evento</label><span class="d-prop-val" id="dpv-tipo">1.1vw</span></div>
+            <input type="range" min="0.5" max="2" step="0.1" value="1.1" id="dp-tipo" oninput="updateZoneBody()">
+          </div>
+          <div class="d-prop">
+            <label>Alineación</label>
+            <select id="dp-align" onchange="updateZoneBody()">
+              <option value="center">Centro</option>
+              <option value="left">Izquierda</option>
+              <option value="right">Derecha</option>
+            </select>
+          </div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Visibilidad</div>
+          <div class="d-prop">
+            <div class="d-toggle"><input type="checkbox" id="dp-vis-tipo" checked onchange="updateZoneBody()"><label>Mostrar tipo de evento</label></div>
+            <div class="d-toggle" style="margin-top:6px"><input type="checkbox" id="dp-vis-sub" checked onchange="updateZoneBody()"><label>Mostrar subtítulo</label></div>
+            <div class="d-toggle" style="margin-top:6px"><input type="checkbox" id="dp-vis-hora" checked onchange="updateZoneBody()"><label>Mostrar horario</label></div>
+          </div>
+        </div>
+        <div class="d-section">
+          <div class="d-section-title">Velocidad carrusel</div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Segundos por defecto</label><span class="d-prop-val" id="dpv-carrusel">5s</span></div>
+            <input type="range" min="2" max="30" step="1" value="5" id="dp-carrusel" oninput="document.getElementById('dpv-carrusel').textContent=this.value+'s'">
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER PROPS -->
+      <div id="d-props-footer" style="display:none;">
+        <div class="d-section">
+          <div class="d-section-title">Contenido del footer</div>
+          <div class="d-prop">
+            <div class="d-toggle"><input type="checkbox" id="dp-vis-footer" checked onchange="updateZoneFooter()"><label>Zona footer visible</label></div>
+          </div>
+          <div class="d-prop" style="margin-top:10px;">
+            <label>Tipo de contenido</label>
+            <select id="dp-footer-type" onchange="updateZoneFooter()">
+              <option value="clock">Reloj (hora actual)</option>
+              <option value="text">Texto personalizado</option>
+              <option value="empty">Vacío</option>
+            </select>
+          </div>
+          <div class="d-prop" id="dp-footer-text-wrap" style="display:none;">
+            <label>Texto del footer</label>
+            <input type="text" id="dp-footer-text-val" placeholder="Ej. Wifi: MarriottGuest | Clave: 12345" oninput="updateZoneFooter()">
+          </div>
+          <div class="d-prop">
+            <div class="d-prop-row"><label>Tamaño texto</label><span class="d-prop-val" id="dpv-footer-size">1vw</span></div>
+            <input type="range" min="0.6" max="2.5" step="0.1" value="1" id="dp-footer-size" oninput="updateZoneFooter()">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL — estructura 3 zonas -->
+<div id="preview-modal">
+  <div class="preview-modal-top">
+    <div class="preview-modal-title" id="preview-modal-title">Vista previa del evento</div>
+    <button class="preview-close" onclick="closePreview()">✕ Cerrar</button>
+  </div>
+  <div class="preview-frame" id="preview-frame">
+    <div class="preview-frame-bg" id="pf-bg"></div>
+    <div class="preview-frame-overlay" id="pf-overlay"></div>
+    <!-- Header zone -->
+    <div class="pf-zone-header" id="pf-zone-header">
+      <div id="pf-salon">
+        <div class="pf-salon-lbl">Salón</div>
+        <div class="pf-salon-nm" id="pf-salon-nm"></div>
+      </div>
+      <div id="pf-logo">
+        <div style="background:white;padding:6px 10px;border-radius:5px;">
+          <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:3vw;width:auto;display:block;" id="pf-logo-img">
+        </div>
+      </div>
+    </div>
+    <!-- Body zone -->
+    <div class="pf-zone-body" id="pf-zone-body">
+      <div id="pf-content" style="text-align:center;max-width:80%;padding:0 20px;">
+        <div class="pf-tipo" id="pf-tipo"></div>
+        <div class="pf-nombre" id="pf-nombre"></div>
+        <div class="pf-divider" id="pf-divider"></div>
+        <div class="pf-sub" id="pf-sub"></div>
+        <div class="pf-hora" id="pf-hora">
+          <div class="pf-hora-lbl">Hasta las</div>
+          <div class="pf-hora-val" id="pf-hora-val"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Footer zone -->
+    <div class="pf-zone-footer">
+      <div class="pf-clock" id="pf-clock"></div>
+      <div id="pf-footer-text" style="display:none;font-size:.9vw;color:rgba(255,255,255,.5);letter-spacing:.06em;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- UPSELLING DESIGNER -->
+<div id="up-designer-overlay">
+  <div class="up-designer-topbar">
+    <div style="font-size:13px;color:rgba(255,255,255,.7);letter-spacing:.06em" id="up-designer-title">Editor Visual — Upselling</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="d-btn" id="up-grid-btn" onclick="toggleUpGrid()" style="display:flex;align-items:center;gap:5px;">⊞ Cuadrícula</button>
+      <button class="d-btn" onclick="closeUpDesigner()">✕ Cerrar sin guardar</button>
+      <button class="d-btn primary" onclick="saveUpDesign()">💾 Guardar diseño</button>
+    </div>
+  </div>
+  <div class="up-designer-body">
+    <div class="up-canvas-wrap" id="up-canvas-wrap">
+      <div class="up-canvas" id="up-designer-canvas">
+        <div class="up-canvas-bg" id="up-canvas-bg"></div>
+        <div class="up-canvas-overlay" id="up-canvas-overlay"></div>
+        <div id="up-grid-overlay" style="position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;z-index:10;
+          background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);
+          background-size:10% 10%,10% 10%,2% 2%,2% 2%;"></div>
+        <div id="up-center-guides" style="position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;z-index:11;">
+          <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,200,0,.5);"></div>
+          <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,200,0,.5);"></div>
+        </div>
+      </div>
+    </div>
+    <div class="up-designer-sidebar">
+      <div class="up-d-section">
+        <div class="up-d-section-title">Elementos</div>
+        <div class="up-el-list">
+          <div class="up-el-item" onclick="selectUpEl('logo')" id="up-eli-logo"><span>🏨</span> Logo del hotel</div>
+          <div class="up-el-item" onclick="selectUpEl('titulo')" id="up-eli-titulo"><span>📝</span> Título principal</div>
+          <div class="up-el-item" onclick="selectUpEl('subtitulo')" id="up-eli-subtitulo"><span>✍️</span> Subtítulo</div>
+          <div class="up-el-item" onclick="selectUpEl('qr')" id="up-eli-qr"><span>📱</span> Código QR</div>
+        </div>
+      </div>
+      <div class="up-d-section" id="up-props-logo" style="display:none">
+        <div class="up-d-section-title">Logo del hotel</div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño</label><span class="up-d-prop-val" id="up-dpv-logo">50px</span></div>
+          <input type="range" min="20" max="120" step="5" value="50" id="up-dp-logo" oninput="updateUpElement()">
+        </div>
+      </div>
+      <div class="up-d-section" id="up-props-titulo" style="display:none">
+        <div class="up-d-section-title">Título principal</div>
+        <div class="up-d-prop"><label>Texto</label><input type="text" id="up-dp-titulo-val" placeholder="Ej. ¡Celebra con nosotros!" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño</label><span class="up-d-prop-val" id="up-dpv-titulo">3.5vw</span></div>
+          <input type="range" min="1.5" max="8" step="0.5" value="3.5" id="up-dp-titulo" oninput="updateUpElement()">
+        </div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Overlay oscuridad</label><span class="up-d-prop-val" id="up-dpv-overlay">50%</span></div>
+          <input type="range" min="0" max="90" step="5" value="50" id="up-dp-overlay" oninput="updateUpOverlay()">
+        </div>
+      </div>
+      <div class="up-d-section" id="up-props-subtitulo" style="display:none">
+        <div class="up-d-section-title">Subtítulo</div>
+        <div class="up-d-prop"><label>Texto</label><input type="text" id="up-dp-sub-val" placeholder="Ej. Contáctanos hoy" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño</label><span class="up-d-prop-val" id="up-dpv-sub">1.3vw</span></div>
+          <input type="range" min="0.6" max="3" step="0.1" value="1.3" id="up-dp-sub" oninput="updateUpElement()">
+        </div>
+      </div>
+      <div class="up-d-section">
+        <div class="up-d-section-title">Pantalla default (logo + salón)</div>
+        <p style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:10px">Tiempo que se muestra la pantalla con el logo y nombre del salón antes de pasar a los slides promocionales.</p>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Duración pantalla default</label><span class="up-d-prop-val" id="up-dpv-default-dur">8s</span></div>
+          <input type="range" min="2" max="60" step="1" value="8" id="up-dp-default-dur" oninput="document.getElementById('up-dpv-default-dur').textContent=this.value+'s';upDesign.default_dur=parseInt(this.value);">
+        </div>
+      </div>
+      <div class="up-d-section" id="up-props-qr" style="display:none">
+        <div class="up-d-section-title">Código QR</div>
+        <div class="up-d-prop"><label>URL o número de WhatsApp</label><input type="text" id="up-dp-qr-url" placeholder="https://wa.me/507XXXXXXXX" oninput="updateUpElement()"></div>
+        <div class="up-d-prop"><label>Texto bajo el QR</label><input type="text" id="up-dp-qr-text" placeholder="Ej. Contáctanos" oninput="updateUpElement()"></div>
+        <div class="up-d-prop">
+          <div class="up-d-prop-row"><label>Tamaño QR</label><span class="up-d-prop-val" id="up-dpv-qr">100px</span></div>
+          <input type="range" min="60" max="200" step="10" value="100" id="up-dp-qr-size" oninput="updateUpElement()">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const BASE='/.netlify/functions';
+const SUPA_URL='https://gumnnqpaieooxkvhneqi.supabase.co';
+const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bW5ucXBhaWVvb3hrdmhuZXFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDUyMDUsImV4cCI6MjA5MjUyMTIwNX0.b1E-f1WLLSw8yZTtQ4yFcrdj_7ZjMhhNYXqnQsm-v0U';
+let TOKEN='',activeSalonId=null,activeSalonSlug='',allSalones=[],selectedColor='#B8962E',editingEventId=null,editingSalonId=null,activeEventMedias=[];
+let activeFilter='all';
+let currentUser=null;
+
+// ── AUTH ──
+async function doLogin(){
+  const email=document.getElementById('email-input')?.value||'';
+  const pwd=document.getElementById('pwd-input').value;
+  const err=document.getElementById('login-err');
+  if(email){
+    const r=await fetch(`${BASE}/auth-users`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+    const d=await r.json();
+    if(d.ok){TOKEN=d.token;currentUser=d.user;sessionStorage.setItem('signage_token',TOKEN);sessionStorage.setItem('user_token',d.token);sessionStorage.setItem('current_user',JSON.stringify(d.user));document.getElementById('login-screen').style.display='none';document.getElementById('topbar').style.display='flex';applyRoleUI();showPanel('eventos');initApp();return;}
+  }
+  const r2=await fetch(`${BASE}/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+  const d2=await r2.json();
+  if(d2.ok){TOKEN=d2.token;currentUser={nombre:'Administrador',rol:'admin',email:'admin'};sessionStorage.setItem('signage_token',TOKEN);document.getElementById('login-screen').style.display='none';document.getElementById('topbar').style.display='flex';applyRoleUI();showPanel('eventos');initApp();}
+  else{if(err)err.style.display='block';}
+}
+
+function applyRoleUI(){
+  const rol=currentUser?.rol||'readonly';
+  const navU=document.getElementById('nav-usuarios');if(navU)navU.style.display=rol==='admin'?'inline-block':'none';
+  const navI=document.getElementById('nav-idle');if(navI)navI.style.display=rol==='admin'?'inline-block':'none';
+  const newEvBtn=document.getElementById('new-ev-btn');if(newEvBtn&&rol==='readonly')newEvBtn.style.display='none';
+  const topbar=document.getElementById('topbar');
+  if(topbar&&currentUser){
+    let badge=document.getElementById('user-badge');
+    if(!badge){badge=document.createElement('div');badge.id='user-badge';badge.style.cssText='font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:8px;';topbar.insertBefore(badge,topbar.querySelector('.logout-btn'));}
+    const rolLabel={admin:'Admin',operador:'Operador',readonly:'Solo lectura'};
+    badge.innerHTML=`<span style="color:var(--gold-l)">${currentUser.nombre}</span><span style="background:rgba(255,255,255,.1);padding:2px 8px;border-radius:10px;font-size:10px;">${rolLabel[rol]||rol}</span>`;
+  }
+}
+function doLogout(){sessionStorage.removeItem('signage_token');sessionStorage.removeItem('user_token');sessionStorage.removeItem('current_user');location.reload();}
+
+function showPanel(name){
+  const rol=currentUser?.rol||'admin';
+  if(name==='salones'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+  if(name==='upselling'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+  if(name==='usuarios'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+  if(name==='idle'&&rol!=='admin'){showToast('Sin acceso a esta sección',true);return;}
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).style.display='block';
+  const idx={eventos:0,agenda:1,salones:2,upselling:3,usuarios:4,idle:5};
+  const navBtns=document.querySelectorAll('.nav-btn');
+  if(idx[name]!==undefined)navBtns[idx[name]]?.classList.add('active');
+  if(name==='agenda')loadAgenda();
+  if(name==='salones')renderSalonesTable();
+  if(name==='upselling')loadCampaigns();
+  if(name==='usuarios')loadUsuarios();
+  if(name==='idle')initIdleDesigner();
+}
+
+async function initApp(){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('fecha-filtro').value=today;
+  document.getElementById('agenda-fecha').value=today;
+  updateFechaLabel();updateAgendaFechaLabel();
+  await loadSalones();
+}
+
+async function loadSalones(){
+  const r=await fetch(`${BASE}/salones`,{headers:{'x-admin-token':TOKEN}});
+  allSalones=await r.json();
+  renderSidebar();renderSalonesTable();
+}
+
+function renderSidebar(){
+  document.getElementById('sidebar-salones').innerHTML=allSalones.map((s,i)=>`
+    <div class="salon-item ${s.id===activeSalonId?'sel':''}" onclick="selectSalonByIndex(${i})" style="${!s.activo?'opacity:0.5':''}">
+      <span class="salon-nm">${s.nombre}${!s.activo?' <span style="font-size:9px;color:#888">(inactivo)</span>':''}</span>
+      <span class="salon-st ${s.activo?'st-on':'st-off'}">${s.activo?'Activo':'Inactivo'}</span>
+    </div>`).join('');
+}
+function selectSalonByIndex(i){const s=allSalones[i];selectSalon(s.id,s.slug,s.nombre);}
+async function selectSalon(id,slug,nombre){
+  activeSalonId=id;activeSalonSlug=slug;
+  document.getElementById('ev-salon-title').textContent=nombre;
+  document.getElementById('ev-salon-url').textContent=`${location.origin}/salon/${slug}`;
+  document.getElementById('new-ev-btn').style.display='inline-block';
+  document.getElementById('ev-form').style.display='none';
+  editingEventId=null;renderSidebar();loadEventos();
+}
+
+// ── EVENTS ──
+async function loadEventos(){
+  if(!activeSalonId)return;
+  const fecha=document.getElementById('fecha-filtro').value;
+  updateFechaLabel();
+  const r=await fetch(`${BASE}/eventos?salon_id=${activeSalonId}&fecha=${fecha}`,{headers:{'x-admin-token':TOKEN}});
+  renderEventos(await r.json());
+}
+
+function getEventStatus(e){
+  const now=new Date();
+  const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const today=now.toISOString().slice(0,10);
+  if(e.pausado)return 'paused';
+  if(e.fecha<today||(e.fecha===today&&e.hora_fin.slice(0,5)<cur))return 'done';
+  if(e.fecha===today&&e.hora_inicio.slice(0,5)<=cur&&e.hora_fin.slice(0,5)>=cur)return 'live';
+  return 'upcoming';
+}
+
+function setFilter(f){
+  activeFilter=f;
+  ['all','live','upcoming','done','paused'].forEach(k=>{
+    const b=document.getElementById('fb-'+k);
+    if(b)b.className=`filter-btn ${k==='paused'?'paused-f':k} ${f===k?'active':''}`;
+  });
+  loadEventos();
+}
+
+function renderEventos(evs){
+  const el=document.getElementById('ev-list');
+  if(!evs.length){el.innerHTML='<div class="empty-state">No hay eventos para este día.</div>';return;}
+  const counts={all:evs.length,live:0,upcoming:0,done:0,paused:0};
+  evs.forEach(e=>{const s=getEventStatus(e);counts[s]=(counts[s]||0)+1;});
+  ['all','live','upcoming','done','paused'].forEach(k=>{
+    const b=document.getElementById('fb-'+k);if(!b)return;
+    const labels={all:'Todos',live:'🔴 En ejecución',upcoming:'🟡 Por ejecutar',done:'⚫ Ejecutados',paused:'⏸ Pausados'};
+    b.textContent=`${labels[k]}${counts[k]>0?' ('+counts[k]+')':''}`;
+  });
+  let filtered=evs;
+  if(activeFilter!=='all')filtered=evs.filter(e=>getEventStatus(e)===activeFilter);
+  if(!filtered.length){el.innerHTML='<div class="empty-state">No hay eventos con este estado.</div>';return;}
+  const statusConfig={live:{label:'🔴 En ejecución',cls:'live'},upcoming:{label:'🟡 Por ejecutar',cls:'upcoming'},done:{label:'⚫ Ejecutado',cls:'done'},paused:{label:'⏸ Pausado',cls:'paused'}};
+  el.innerHTML=filtered.map(e=>{
+    const status=getEventStatus(e);const sc=statusConfig[status];
+    const isDone=status==='done';const isPaused=status==='paused';
+    return `<div class="ev-card ${isDone?'done':''} ${isPaused?'paused':''}" style="border-left:3px solid ${isDone?'#888780':isPaused?'#A0213F':status==='live'?'#3B6D11':'#B8962E'}">
+      <div>
+        <div class="ev-head"><span class="ev-nm">${e.nombre}</span><span class="ev-badge">${e.tipo}</span><span class="ev-status ${sc.cls}">${sc.label}</span></div>
+        <div class="ev-meta"><span>📅 ${formatFecha(e.fecha)}</span><span>🕐 ${e.hora_inicio.slice(0,5)} – ${e.hora_fin.slice(0,5)}</span></div>
+      </div>
+      <div class="ev-actions">
+        ${!isDone?`<button class="ic-btn pause-btn ${isPaused?'paused':''}" onclick="togglePause('${e.id}',${isPaused})">${isPaused?'▶ Reanudar':'⏸ Pausar'}</button>`:''}
+        ${!isDone?`<button class="ic-btn design-btn" onclick="openDesigner('${e.id}')">🎨 Diseñar</button>`:''}
+        ${isDone?`<button class="ic-btn" onclick="openPreview('${e.id}')">👁</button>`:`<button class="ic-btn" onclick="window.open('/salon/${activeSalonSlug}','_blank')">👁</button>`}
+        ${!isDone?`<button class="ic-btn" onclick="openEventForm('${e.id}')">✎</button>`:''}
+        <button class="ic-btn del" onclick="deleteEvento('${e.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function togglePause(id,currentlyPaused){
+  const r=await fetch(`${BASE}/eventos?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({pausado:!currentlyPaused})});
+  if(r.ok){showToast(currentlyPaused?'Evento reanudado':'Evento pausado');loadEventos();}else showToast('Error',true);
+}
+
+async function openEventForm(id=null){
+  editingEventId=id;activeEventMedias=[];
+  let ev=null;
+  if(id){
+    const [evR,medR]=await Promise.all([fetch(`${BASE}/eventos?id=${id}`),fetch(`${BASE}/medios?evento_id=${id}`)]);
+    ev=await evR.json();activeEventMedias=await medR.json();
+    window._originalEventMediaIds=activeEventMedias.map(m=>m.id).filter(Boolean);
+  }
+  const colors=['#B8962E','#D4537E','#378ADD','#1D9E75','#9B59B6','#E74C3C','#FFFFFF'];
+  selectedColor=ev?.color_acento||'#B8962E';
+  document.getElementById('ev-form').innerHTML=`
+  <div class="form-card">
+    <div class="form-title">${id?'Editar datos del evento':'Nuevo evento'}</div>
+    <div class="form-row">
+      <div><label>Nombre del evento</label><input type="text" id="f-nombre" value="${ev?.nombre||''}" placeholder="Ej. Boda Pérez–González"></div>
+      <div><label>Tipo</label><select id="f-tipo">${['Boda','Corporativo','Social','Quinceañero','Congreso','Conferencia','Otro'].map(t=>`<option ${ev?.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-row s3">
+      <div><label>Fecha</label><input type="date" id="f-fecha" value="${ev?.fecha||new Date().toISOString().slice(0,10)}"></div>
+      <div><label>Hora inicio</label><input type="time" id="f-inicio" value="${ev?.hora_inicio?.slice(0,5)||''}"></div>
+      <div><label>Hora fin</label><input type="time" id="f-fin" value="${ev?.hora_fin?.slice(0,5)||''}"></div>
+    </div>
+    <div class="form-row s1"><div><label>Subtítulo</label><textarea id="f-sub" placeholder="Ej. Ceremonia y Recepción">${ev?.subtitulo||''}</textarea></div></div>
+    <div class="form-row s1"><div><label>Color de acento</label>
+      <div class="color-row">${colors.map(c=>`<div class="cswatch ${c===selectedColor?'sel':''}" style="background:${c};${c==='#FFFFFF'?'border:1px solid #ccc':''}" onclick="pickColor(this,'${c}')"></div>`).join('')}</div>
+    </div></div>
+  </div>
+  <div class="form-card">
+    <div class="form-title">Imágenes y videos (carrusel)</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Puedes definir la duración de cada imagen o video individualmente.</p>
+    <div class="media-grid" id="media-grid"></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+        <input type="file" accept="image/*" multiple style="display:none" onchange="addImages(this)">🖼 Agregar imágenes
+      </label>
+      <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+        <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="addVideo(this)">🎬 Subir video (MP4)
+      </label>
+    </div>
+    <div id="video-progress" style="display:none;margin-top:10px;font-size:12px;color:var(--muted)">⏳ Subiendo video... 0%</div>
+  </div>
+  <div class="form-card">
+    <div class="form-footer" style="padding-top:0;border-top:none;margin-top:0">
+      <button class="btn-sec" onclick="closeEventForm()">Cancelar</button>
+      <button class="btn-pri" id="save-ev-btn" onclick="saveEvento()">Guardar evento</button>
+    </div>
+  </div>`;
+  document.getElementById('ev-form').style.display='block';
+  renderMediaGrid();
+  document.getElementById('ev-form').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function renderMediaGrid(){
+  const grid=document.getElementById('media-grid');if(!grid)return;
+  grid.innerHTML=activeEventMedias.map((m,i)=>`
+    <div class="media-item">
+      <div class="media-thumb">
+        ${m.tipo==='imagen'?`<img src="${m.url}" alt="img">`:m.tipo==='video_archivo'?`<video src="${m.url}" muted></video>`:`<div style="background:#111;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px">▶</div>`}
+        <button class="media-del" onclick="removeMedia(${i})">✕</button>
+        <div class="media-type">${m.tipo==='imagen'?'IMG':'VIDEO'}</div>
+      </div>
+      <div class="media-dur">
+        <label>Duración:</label>
+        <input type="number" min="1" max="300" value="${m.duracion_segundos||5}" onchange="setMediaDur(${i},this.value)" style="width:52px">
+        <span style="font-size:11px;color:var(--muted)">seg</span>
+      </div>
+    </div>`).join('');
+}
+function setMediaDur(i,val){activeEventMedias[i].duracion_segundos=parseInt(val)||5;}
+function removeMedia(i){activeEventMedias.splice(i,1);renderMediaGrid();}
+function pickColor(el,c){document.querySelectorAll('.cswatch').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');selectedColor=c;}
+
+async function addImages(input){
+  const files=Array.from(input.files);
+  for(const file of files){
+    await new Promise(resolve=>{
+      const reader=new FileReader();
+      reader.onload=e=>{activeEventMedias.push({tipo:'imagen',url:e.target.result,_file:file,_base64:e.target.result.split(',')[1],orden:activeEventMedias.length,_new:true,duracion_segundos:5});resolve();};
+      reader.readAsDataURL(file);
+    });
+  }
+  renderMediaGrid();
+}
+
+async function addVideo(input){
+  if(!input.files[0])return;
+  const file=input.files[0];const prog=document.getElementById('video-progress');
+  if(prog){prog.style.display='block';prog.textContent='⏳ Subiendo video... 0%';}
+  try{
+    const filename=`${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const uploadUrl=`${SUPA_URL}/storage/v1/object/imagenes-eventos/${filename}`;
+    const xhr=new XMLHttpRequest();xhr.open('POST',uploadUrl);
+    xhr.setRequestHeader('Authorization',`Bearer ${SUPA_ANON}`);xhr.setRequestHeader('Content-Type',file.type||'video/mp4');xhr.setRequestHeader('x-upsert','false');
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&prog)prog.textContent=`⏳ Subiendo video... ${Math.round(e.loaded/e.total*100)}%`;};
+    await new Promise((resolve,reject)=>{
+      xhr.onload=()=>{if(xhr.status===200||xhr.status===201){const publicUrl=`${SUPA_URL}/storage/v1/object/public/imagenes-eventos/${filename}`;activeEventMedias.push({tipo:'video_archivo',url:publicUrl,orden:activeEventMedias.length,_new:true,_uploaded:true,duracion_segundos:15});resolve();}else reject(new Error(`${xhr.status} ${xhr.responseText}`));};
+      xhr.onerror=()=>reject(new Error('Network error'));xhr.send(file);
+    });
+    if(prog)prog.style.display='none';renderMediaGrid();showToast('Video subido correctamente');
+  }catch(err){if(prog)prog.style.display='none';showToast('Error subiendo video: '+err.message,true);}
+}
+
+async function saveEvento(){
+  const btn=document.getElementById('save-ev-btn');btn.disabled=true;btn.textContent='Guardando...';showSaving(true);
+  const nombre=document.getElementById('f-nombre').value;
+  const horaInicio=document.getElementById('f-inicio').value;
+  const horaFin=document.getElementById('f-fin').value;
+  if(!nombre||!horaInicio||!horaFin){showToast('Completa nombre, hora inicio y hora fin',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
+  const payload={salon_id:activeSalonId,nombre,tipo:document.getElementById('f-tipo').value,subtitulo:document.getElementById('f-sub').value,fecha:document.getElementById('f-fecha').value,hora_inicio:horaInicio,hora_fin:horaFin,color_acento:selectedColor};
+  const url=editingEventId?`${BASE}/eventos?id=${editingEventId}`:`${BASE}/eventos`;
+  const method=editingEventId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(!r.ok){showToast(d.error||'Error al guardar',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
+  const eventoId=d.id;
+  if(editingEventId&&window._originalEventMediaIds&&window._originalEventMediaIds.length){
+    const currentIds=activeEventMedias.filter(m=>m.id).map(m=>m.id);
+    const deletedIds=window._originalEventMediaIds.filter(id=>!currentIds.includes(id));
+    for(const id of deletedIds){await fetch(`${BASE}/medios?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});}
+  }
+  for(let i=0;i<activeEventMedias.length;i++){
+    const m=activeEventMedias[i];
+    if(m.id&&!m._new){await fetch(`${BASE}/medios?id=${m.id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({orden:i,duracion_segundos:m.duracion_segundos||5})});}
+    else if(m._new){
+      const mp={evento_id:eventoId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||5};
+      if(m.tipo==='imagen'&&m._base64){mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';}else{mp.url=m.url;}
+      await fetch(`${BASE}/medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
+    }
+  }
+  window._originalEventMediaIds=null;showSaving(false);showToast('Evento guardado correctamente');closeEventForm();loadEventos();
+}
+
+async function deleteEvento(id){
+  if(!confirm('¿Eliminar este evento?'))return;
+  const r=await fetch(`${BASE}/eventos?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});
+  if(r.ok){showToast('Evento eliminado');loadEventos();}else showToast('Error',true);
+}
+function closeEventForm(){document.getElementById('ev-form').style.display='none';editingEventId=null;activeEventMedias=[];}
+
+// ── PREVIEW — 3 zonas ──
+async function openPreview(eventId){
+  const r=await fetch(`${BASE}/eventos?id=${eventId}`);
+  const ev=await r.json();
+  const d=ev.diseno||{};
+  const acento=ev.color_acento||d.acento||'#B8962E';
+  const salonNombre=allSalones.find(s=>s.id===activeSalonId)?.nombre||'Salón';
+
+  const bg=document.getElementById('pf-bg');
+  const firstImg=ev.medios?.find(m=>m.tipo==='imagen');
+  if(firstImg)bg.style.backgroundImage=`url('${firstImg.url}')`;
+  else if(ev.imagen_url)bg.style.backgroundImage=`url('${ev.imagen_url}')`;
+  else{bg.style.backgroundImage='none';bg.style.background='#1A1A1A';}
+
+  const ov=parseFloat(d.overlay_opacity!==undefined?d.overlay_opacity:0.6);
+  document.getElementById('pf-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.4}) 50%,rgba(0,0,0,${ov}) 100%)`;
+
+  // Header
+  const pfSalon=document.getElementById('pf-salon');
+  pfSalon.style.display=d.salon_visible===false?'none':'block';
+  document.getElementById('pf-salon-nm').textContent=salonNombre;
+  document.getElementById('pf-salon-nm').style.fontSize=d.salon_size||'1.7vw';
+  const pfLogo=document.getElementById('pf-logo');
+  pfLogo.style.display=d.logo_visible===false?'none':'block';
+  document.getElementById('pf-logo-img').style.height=(d.logo_size||50)*0.03+'vw';
+  // Logo position
+  const pfZoneHeader=document.getElementById('pf-zone-header');
+  pfZoneHeader.style.flexDirection=d.logo_position==='left'?'row-reverse':'row';
+
+  // Body
+  const pfContent=document.getElementById('pf-content');
+  pfContent.style.textAlign=d.content_align||'center';
+  document.getElementById('pf-tipo').textContent=ev.tipo||'';
+  document.getElementById('pf-tipo').style.fontSize=d.tipo_size||'1.1vw';
+  document.getElementById('pf-tipo').style.display=d.tipo_visible===false?'none':'block';
+  document.getElementById('pf-nombre').textContent=ev.nombre||'';
+  document.getElementById('pf-nombre').style.fontSize=d.titulo_size||'4vw';
+  document.getElementById('pf-sub').textContent=ev.subtitulo||'';
+  document.getElementById('pf-sub').style.fontSize=d.sub_size||'1.4vw';
+  document.getElementById('pf-sub').style.display=d.sub_visible===false?'none':'block';
+  document.getElementById('pf-divider').style.background=acento;
+  document.getElementById('pf-divider').style.width=d.divider_w||'52px';
+  document.getElementById('pf-hora').style.display=d.hora_visible===false?'none':'inline-flex';
+  document.getElementById('pf-hora-val').textContent=ev.hora_fin?ev.hora_fin.slice(0,5)+' hrs':'';
+  document.getElementById('pf-hora-val').style.color=acento;
+
+  // Footer
+  const pfClock=document.getElementById('pf-clock');
+  const pfFooterText=document.getElementById('pf-footer-text');
+  if(d.footer_type==='text'&&d.footer_content){
+    pfClock.style.display='none';pfFooterText.textContent=d.footer_content;pfFooterText.style.display='block';pfFooterText.style.fontSize=d.footer_size||'.9vw';
+  } else if(d.footer_type==='empty'){pfClock.style.display='none';pfFooterText.style.display='none';}
+  else{pfFooterText.style.display='none';pfClock.style.display='block';pfClock.textContent=new Date().toLocaleTimeString('es-PA',{hour:'2-digit',minute:'2-digit'});}
+
+  document.getElementById('preview-modal-title').textContent=`Vista previa — ${ev.nombre}`;
+  document.getElementById('preview-modal').style.display='flex';
+}
+function closePreview(){document.getElementById('preview-modal').style.display='none';}
+
+// ── AGENDA ──
+async function loadAgenda(){
+  updateAgendaFechaLabel();
+  const r=await fetch(`${BASE}/eventos?fecha=${document.getElementById('agenda-fecha').value}`);
+  renderAgenda(await r.json());
+}
+function renderAgenda(evs){
+  if(!allSalones.length)return;
+  const hours=Array.from({length:14},(_,i)=>i+8);
+  const typeClass=t=>({Boda:'type-boda',Corporativo:'type-corp',Social:'type-soc'}[t]||'type-otro');
+  const cols=`60px ${allSalones.map(()=>'1fr').join(' ')}`;
+  let html=`<div style="display:grid;grid-template-columns:${cols};border:.5px solid var(--border);border-radius:10px;overflow:hidden;min-width:600px">`;
+  html+=`<div style="background:var(--dark);padding:10px 14px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55)">Hora</div>`;
+  allSalones.forEach(s=>html+=`<div style="background:var(--dark);padding:10px 14px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.55);border-left:.5px solid rgba(255,255,255,.08)">${s.nombre}</div>`);
+  hours.forEach(h=>{
+    html+=`<div class="ag-time">${String(h).padStart(2,'0')}:00</div>`;
+    allSalones.forEach(s=>{
+      const ev=evs.find(e=>e.salon_id===s.id&&e.hora_inicio.slice(0,2)===String(h).padStart(2,'0'));
+      html+=`<div class="ag-slot">${ev?`<div class="ag-ev ${typeClass(ev.tipo)}"><div class="ag-ev-nm">${ev.nombre}</div><div class="ag-ev-hr">${ev.hora_inicio.slice(0,5)}–${ev.hora_fin.slice(0,5)}</div></div>`:''}</div>`;
+    });
+  });
+  html+='</div>';
+  document.getElementById('agenda-grid').innerHTML=html;
+}
+
+// ── SALONES ──
+function renderSalonesTable(){
+  const tbody=document.getElementById('salones-tbody');if(!tbody)return;
+  tbody.innerHTML=allSalones.map(s=>`
+    <tr>
+      <td><strong style="font-weight:500">${s.nombre}</strong></td>
+      <td><span class="salon-url">${location.origin}/salon/${s.slug}</span></td>
+      <td><button class="toggle-sw ${s.activo?'on':''}" onclick="toggleSalon('${s.id}',${s.activo})"></button></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="ic-btn" onclick="window.open('/salon/${s.slug}','_blank')">👁</button>
+        <button class="ic-btn" onclick="editSalon('${s.id}')">✎</button>
+        <button class="ic-btn del" onclick="deleteSalon('${s.id}')">✕</button>
+      </div></td>
+    </tr>`).join('');
+}
+function openSalonForm(id=null){
+  editingSalonId=id;const s=id?allSalones.find(x=>x.id===id):null;
+  const area=document.getElementById('salon-form-area');if(!area)return;
+  area.style.display='block';
+  area.innerHTML=`<div class="form-card">
+    <div class="form-title">${id?'Editar salón':'Nuevo salón'}</div>
+    <div class="form-row">
+      <div><label>Nombre</label><input type="text" id="sf-nombre" value="${s?.nombre||''}" placeholder="Ej. Salón Imperial"></div>
+      <div><label>Slug (URL)</label><input type="text" id="sf-slug" value="${s?.slug||''}" placeholder="ej. imperial" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'-')"></div>
+    </div>
+    <div class="form-footer"><button class="btn-sec" onclick="document.getElementById('salon-form-area').style.display='none'">Cancelar</button><button class="btn-pri" onclick="saveSalon()">Guardar salón</button></div>
+  </div>`;
+  area.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function editSalon(id){showPanel('salones');openSalonForm(id);}
+async function saveSalon(){
+  const payload={nombre:document.getElementById('sf-nombre').value,slug:document.getElementById('sf-slug').value,activo:true};
+  const url=editingSalonId?`${BASE}/salones?id=${editingSalonId}`:`${BASE}/salones`;
+  const method=editingSalonId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  if(r.ok){showToast('Salón guardado');document.getElementById('salon-form-area').style.display='none';await loadSalones();}
+  else{const d=await r.json();showToast(d.error||'Error',true);}
+}
+async function toggleSalon(id,current){await fetch(`${BASE}/salones?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({activo:!current})});await loadSalones();}
+async function deleteSalon(id){if(!confirm('¿Eliminar este salón?'))return;const r=await fetch(`${BASE}/salones?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});if(r.ok){showToast('Salón eliminado');loadSalones();}else showToast('Error',true);}
+
+// ══════════════════════════════════════════
+// DISEÑADOR VISUAL — 3 ZONAS
+// ══════════════════════════════════════════
+let _dEventId=null;
+let _dEvent=null;
+let _dSalonName='Salón';
+let _dFirstImg='';
+let _dAccent='#B8962E';
+let _dGridVisible=false;
+let _dActiveZone='header';
+let dState={};
+
+function _dDefault(){
+  return {
+    salon_visible:true,salon_size:'1.7vw',
+    logo_visible:true,logo_size:50,logo_position:'right',
+    titulo_size:'4vw',sub_size:'1.4vw',tipo_size:'1.1vw',
+    content_align:'center',content_maxw:'80%',
+    tipo_visible:true,sub_visible:true,hora_visible:true,
+    footer_visible:true,footer_type:'clock',footer_content:'',footer_size:'1vw',
+    overlay_opacity:0.6,carrusel_seg:5,acento:'#B8962E',
   };
+}
 
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  const _tok = event.headers['x-admin-token'] || event.headers['x-user-token'];
-  const _user = _tok ? (() => { try {
-    const p=_tok.replace(/-/g,'+').replace(/_/g,'/');
-    const n=p+'='.repeat((4-p.length%4)%4);
-    return JSON.parse(Buffer.from(n,'base64').toString('utf8'));
-  } catch { return null; } })() : null;
-  const _auth = _tok === ADMIN_PASSWORD || (_user && (_user.rol === 'admin' || _user.rol === 'operador'));
-  if (!_auth) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'No autorizado' }) };
+async function openDesigner(eventId){
+  _dEventId=eventId;
+  const [evR,medR]=await Promise.all([fetch(`${BASE}/eventos?id=${eventId}`),fetch(`${BASE}/medios?evento_id=${eventId}`)]);
+  _dEvent=await evR.json();
+  const meds=await medR.json();
+  _dSalonName=allSalones.find(s=>s.id===activeSalonId)?.nombre||'Salón';
+  _dAccent=_dEvent.color_acento||'#B8962E';
+  const firstImg=meds.find(m=>m.tipo==='imagen');
+  _dFirstImg=firstImg?.url||_dEvent.imagen_url||'';
+  dState=Object.assign(_dDefault(),_dEvent.diseno||{});
+  dState.acento=_dAccent;
+
+  document.getElementById('designer-event-title').textContent=`Diseñando: ${_dEvent.nombre}`;
+  document.getElementById('designer-overlay').style.display='flex';
+
+  setTimeout(()=>{_setupDCanvas();_renderDCanvas();_loadDControls();selectZone('header');},100);
+}
+
+function _setupDCanvas(){
+  const wrap=document.getElementById('canvas-wrap');
+  const canvas=document.getElementById('designer-canvas');
+  const ww=wrap.clientWidth-40,wh=wrap.clientHeight-40;
+  let cw=ww,ch=ww*9/16;
+  if(ch>wh){ch=wh;cw=wh*16/9;}
+  canvas.style.width=Math.round(cw)+'px';
+  canvas.style.height=Math.round(ch)+'px';
+}
+
+function _renderDCanvas(){
+  // Background
+  const bg=document.getElementById('d-canvas-bg');
+  if(_dFirstImg){bg.style.backgroundImage=`url('${_dFirstImg}')`;bg.style.backgroundSize='cover';bg.style.backgroundPosition='center';}
+  else{bg.style.background='#2A2A2A';bg.style.backgroundImage='none';}
+  // Overlay
+  _applyDOverlay(dState.overlay_opacity);
+  // Salon name
+  document.getElementById('d-salon-nm').textContent=_dSalonName;
+  // Event text
+  document.getElementById('d-tipo').textContent=_dEvent?.tipo||'TIPO DE EVENTO';
+  document.getElementById('d-nombre').textContent=_dEvent?.nombre||'Nombre del Evento';
+  document.getElementById('d-sub').textContent=_dEvent?.subtitulo||'Subtítulo del evento';
+  document.getElementById('d-divider').style.background=dState.acento;
+  _applyDStateToCanvas();
+}
+
+function _applyDOverlay(opacity){
+  document.getElementById('d-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${opacity}) 0%,rgba(0,0,0,${opacity*0.4}) 50%,rgba(0,0,0,${opacity}) 100%)`;
+}
+
+function _applyDStateToCanvas(){
+  // Header
+  const elSalon=document.getElementById('d-el-salon');
+  const elLogo=document.getElementById('d-el-logo');
+  const logoImg=document.getElementById('d-logo-img');
+  const hInner=document.getElementById('d-header-inner');
+  if(elSalon)elSalon.style.display=dState.salon_visible?'block':'none';
+  if(elLogo)elLogo.style.display=dState.logo_visible?'block':'none';
+  if(logoImg)logoImg.style.height=dState.logo_size+'px';
+  const sNm=document.getElementById('d-salon-nm');if(sNm)sNm.style.fontSize=dState.salon_size;
+  if(hInner)hInner.style.flexDirection=dState.logo_position==='left'?'row-reverse':'row';
+
+  // Body
+  const content=document.getElementById('d-el-content');
+  const bInner=document.getElementById('d-body-inner');
+  if(content){content.style.textAlign=dState.content_align;content.style.maxWidth=dState.content_maxw;}
+  if(bInner){
+    const a=dState.content_align;
+    bInner.style.justifyContent=a==='left'?'flex-start':a==='right'?'flex-end':'center';
+    bInner.style.paddingLeft=a==='left'?'clamp(10px,4vw,40px)':'';
+    bInner.style.paddingRight=a==='right'?'clamp(10px,4vw,40px)':'';
   }
+  const dTipo=document.getElementById('d-tipo');const dNom=document.getElementById('d-nombre');
+  const dSub=document.getElementById('d-sub');const dHora=document.getElementById('d-hora');
+  if(dTipo){dTipo.style.fontSize=dState.tipo_size;dTipo.style.display=dState.tipo_visible?'block':'none';}
+  if(dNom)dNom.style.fontSize=dState.titulo_size;
+  if(dSub){dSub.style.fontSize=dState.sub_size;dSub.style.display=dState.sub_visible?'block':'none';}
+  if(dHora)dHora.style.display=dState.hora_visible?'inline-flex':'none';
 
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Método no permitido' }) };
+  // Footer
+  const fInner=document.getElementById('d-footer-inner');
+  const fClock=document.getElementById('d-footer-clock');
+  const fText=document.getElementById('d-footer-text');
+  if(fInner)fInner.style.opacity=dState.footer_visible?'1':'0.1';
+  if(fClock&&fText){
+    if(dState.footer_type==='clock'){fClock.style.display='block';fText.style.display='none';}
+    else if(dState.footer_type==='text'){fClock.style.display='none';fText.style.display='block';fText.textContent=dState.footer_content||'Texto del footer';fText.style.fontSize=dState.footer_size;}
+    else{fClock.style.display='none';fText.style.display='none';}
   }
+}
 
-  try {
-    const body = JSON.parse(event.body);
-    // body.file = base64 string, body.name = filename, body.type = mime type
-    const { file, name, type } = body;
-    const buffer = Buffer.from(file, 'base64');
-    const filename = `${Date.now()}-${name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+function selectZone(zone){
+  _dActiveZone=zone;
+  ['header','body','footer'].forEach(z=>{
+    document.getElementById('dztab-'+z)?.classList.toggle('active',z===zone);
+    const p=document.getElementById('d-props-'+z);if(p)p.style.display=z===zone?'block':'none';
+    const dc=document.getElementById('dc-zone-'+z);if(dc)dc.classList.toggle('dc-zone-active',z===zone);
+  });
+}
 
-    const { error } = await supabase.storage
-      .from('imagenes-eventos')
-      .upload(filename, buffer, { contentType: type, upsert: false });
+function _loadDControls(){
+  const _sr=(id,val,lid,unit)=>{const e=document.getElementById(id);if(e)e.value=val;const l=document.getElementById(lid);if(l)l.textContent=val+unit;};
+  const _sc=(id,val)=>{const e=document.getElementById(id);if(e)e.checked=!!val;};
+  const _ss=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val||'';};
+  _sr('dp-salon-size',parseFloat(dState.salon_size)||1.7,'dpv-salon-size','vw');
+  _sc('dp-vis-salon',dState.salon_visible);
+  _sr('dp-logo-size',dState.logo_size||50,'dpv-logo-size','px');
+  _sc('dp-vis-logo',dState.logo_visible);
+  _ss('dp-logo-pos',dState.logo_position);
+  _sr('dp-overlay',Math.round((dState.overlay_opacity||0.6)*100),'dpv-overlay','%');
+  _sr('dp-titulo',parseFloat(dState.titulo_size)||4,'dpv-titulo','vw');
+  _sr('dp-sub',parseFloat(dState.sub_size)||1.4,'dpv-sub','vw');
+  _sr('dp-tipo',parseFloat(dState.tipo_size)||1.1,'dpv-tipo','vw');
+  _ss('dp-align',dState.content_align);
+  _sc('dp-vis-tipo',dState.tipo_visible);_sc('dp-vis-sub',dState.sub_visible);_sc('dp-vis-hora',dState.hora_visible);
+  _sr('dp-carrusel',dState.carrusel_seg||5,'dpv-carrusel','s');
+  _sc('dp-vis-footer',dState.footer_visible);
+  _ss('dp-footer-type',dState.footer_type);
+  const ftw=document.getElementById('dp-footer-text-wrap');if(ftw)ftw.style.display=dState.footer_type==='text'?'block':'none';
+  const fi=document.getElementById('dp-footer-text-val');if(fi)fi.value=dState.footer_content||'';
+  _sr('dp-footer-size',parseFloat(dState.footer_size)||1,'dpv-footer-size','vw');
+}
 
-    if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
+function updateZoneHeader(){
+  const sSize=parseFloat(document.getElementById('dp-salon-size').value);
+  const lSize=parseInt(document.getElementById('dp-logo-size').value);
+  document.getElementById('dpv-salon-size').textContent=sSize+'vw';
+  document.getElementById('dpv-logo-size').textContent=lSize+'px';
+  dState.salon_size=sSize+'vw';
+  dState.salon_visible=document.getElementById('dp-vis-salon').checked;
+  dState.logo_size=lSize;
+  dState.logo_visible=document.getElementById('dp-vis-logo').checked;
+  dState.logo_position=document.getElementById('dp-logo-pos').value;
+  _applyDStateToCanvas();
+}
 
-    const { data: urlData } = supabase.storage
-      .from('imagenes-eventos')
-      .getPublicUrl(filename);
+function updateZoneBody(){
+  const tSize=parseFloat(document.getElementById('dp-titulo').value);
+  const sSize=parseFloat(document.getElementById('dp-sub').value);
+  const tiSize=parseFloat(document.getElementById('dp-tipo').value);
+  const carr=parseInt(document.getElementById('dp-carrusel').value);
+  document.getElementById('dpv-titulo').textContent=tSize+'vw';
+  document.getElementById('dpv-sub').textContent=sSize+'vw';
+  document.getElementById('dpv-tipo').textContent=tiSize+'vw';
+  document.getElementById('dpv-carrusel').textContent=carr+'s';
+  dState.titulo_size=tSize+'vw';dState.sub_size=sSize+'vw';dState.tipo_size=tiSize+'vw';
+  dState.content_align=document.getElementById('dp-align').value;
+  dState.tipo_visible=document.getElementById('dp-vis-tipo').checked;
+  dState.sub_visible=document.getElementById('dp-vis-sub').checked;
+  dState.hora_visible=document.getElementById('dp-vis-hora').checked;
+  dState.carrusel_seg=carr;
+  _applyDStateToCanvas();
+}
 
-    return { statusCode: 200, headers, body: JSON.stringify({ url: urlData.publicUrl }) };
-  } catch (err) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+function updateZoneFooter(){
+  const fType=document.getElementById('dp-footer-type').value;
+  const fSize=parseFloat(document.getElementById('dp-footer-size').value);
+  document.getElementById('dpv-footer-size').textContent=fSize+'vw';
+  const ftw=document.getElementById('dp-footer-text-wrap');if(ftw)ftw.style.display=fType==='text'?'block':'none';
+  dState.footer_visible=document.getElementById('dp-vis-footer').checked;
+  dState.footer_type=fType;
+  dState.footer_content=document.getElementById('dp-footer-text-val')?.value||'';
+  dState.footer_size=fSize+'vw';
+  _applyDStateToCanvas();
+}
+
+function updateOverlay(){
+  const val=parseInt(document.getElementById('dp-overlay').value);
+  document.getElementById('dpv-overlay').textContent=val+'%';
+  dState.overlay_opacity=val/100;
+  _applyDOverlay(dState.overlay_opacity);
+}
+
+function toggleDesignerGrid(){
+  _dGridVisible=!_dGridVisible;
+  const g=document.getElementById('d-grid-overlay');if(g)g.style.opacity=_dGridVisible?'1':'0';
+  const btn=document.getElementById('d-grid-btn');if(btn)btn.style.borderColor=_dGridVisible?'rgba(255,255,255,.6)':'rgba(255,255,255,.2)';
+}
+
+function closeDesigner(){document.getElementById('designer-overlay').style.display='none';_dEventId=null;}
+
+async function saveDesign(){
+  if(!_dEventId)return;
+  const payload={
+    salon_visible:dState.salon_visible,salon_size:dState.salon_size,
+    logo_visible:dState.logo_visible,logo_size:dState.logo_size,logo_position:dState.logo_position,
+    titulo_size:dState.titulo_size,sub_size:dState.sub_size,tipo_size:dState.tipo_size,
+    content_align:dState.content_align,content_maxw:dState.content_maxw,
+    tipo_visible:dState.tipo_visible,sub_visible:dState.sub_visible,hora_visible:dState.hora_visible,
+    footer_visible:dState.footer_visible,footer_type:dState.footer_type,footer_content:dState.footer_content,footer_size:dState.footer_size,
+    overlay_opacity:dState.overlay_opacity,carrusel_seg:dState.carrusel_seg,acento:dState.acento,
+  };
+  const r=await fetch(`${BASE}/eventos?id=${_dEventId}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({diseno:payload})});
+  if(r.ok){showToast('Diseño guardado. La tableta se actualiza en 30 segundos.');closeDesigner();loadEventos();}
+  else showToast('Error al guardar diseño',true);
+}
+
+// ══════════════════════════════════════════
+// UPSELLING
+// ══════════════════════════════════════════
+let upEditingId=null,upMedias=[];
+const SUPA_URL_UP=SUPA_URL,SUPA_ANON_UP=SUPA_ANON;
+
+async function loadCampaigns(){
+  const r=await fetch(`${BASE}/upselling`,{headers:{'x-admin-token':TOKEN}});
+  renderCampaigns(await r.json());
+}
+function renderCampaigns(camps){
+  const grid=document.getElementById('up-campaigns-grid');
+  if(!camps||!camps.length){grid.innerHTML='<div class="empty-state">No hay campañas. Crea la primera.</div>';return;}
+  grid.innerHTML=camps.map(c=>{
+    const mediaCount=c.upselling_medios?.length||0;const salonCount=c.upselling_salones?.length||0;
+    const badgeCls=c.activo?(c.aplica_todos?'up-badge-all':'up-badge-specific'):'up-badge-off';
+    const badgeTxt=c.activo?(c.aplica_todos?'Todos los salones':`${salonCount} salón(es)`):'Inactiva';
+    return `<div class="up-card">
+      <div class="up-card-head">
+        <div><div class="up-card-title">${c.nombre}</div><div class="up-card-meta">${mediaCount} slides · <span class="${badgeCls}">${badgeTxt}</span></div></div>
+        <div style="display:flex;gap:6px">
+          <button class="ic-btn" onclick="toggleCampaign('${c.id}',${c.activo})">${c.activo?'⏸':'▶'}</button>
+          <button class="ic-btn" onclick="openUpsellingForm('${c.id}')">✎</button>
+          <button class="ic-btn del" onclick="deleteCampaign('${c.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openUpsellingForm(id=null){
+  upEditingId=id;upMedias=[];window._currentUpDesign=null;
+  let camp=null,selectedSalons=[];
+  if(id){
+    const r=await fetch(`${BASE}/upselling?id=${id}`,{headers:{'x-admin-token':TOKEN}});
+    camp=await r.json();upMedias=camp.upselling_medios||[];
+    window._originalUpMediaIds=upMedias.map(m=>m.id).filter(Boolean);
+    selectedSalons=camp.upselling_salones?.map(s=>s.salon_id)||[];
+    window._currentUpDesign=camp.diseno||{};
+    if(camp.qr_url)window._currentUpDesign.qr_url=camp.qr_url;
+    if(camp.qr_texto)window._currentUpDesign.qr_texto=camp.qr_texto;
   }
+  const aplica=camp?.aplica_todos!==false;
+  const area=document.getElementById('up-form-area');area.style.display='block';
+  area.innerHTML=`<div class="up-form-wrap">
+    <div class="form-title">${id?'Editar campaña':'Nueva campaña de upselling'}</div>
+    <div class="form-row">
+      <div><label>Nombre de la campaña</label><input type="text" id="up-nombre" value="${camp?.nombre||''}" placeholder="Ej. Promoción Bodas 2026"></div>
+      <div style="display:flex;align-items:flex-end;gap:10px"><div style="margin-top:20px"><input type="checkbox" id="up-activo" ${camp?.activo!==false?'checked':''}><label for="up-activo" style="text-transform:none;letter-spacing:0;font-size:13px;margin-left:6px">Campaña activa</label></div></div>
+    </div>
+    <div class="form-row s1"><div>
+      <label>Aplicar a</label>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <div><input type="radio" name="up-aplica" id="up-todos" value="todos" ${aplica?'checked':''} onchange="toggleSalonSelector()"><label for="up-todos" style="text-transform:none;letter-spacing:0;font-size:13px;margin-left:4px">Todos los salones</label></div>
+        <div><input type="radio" name="up-aplica" id="up-especificos" value="especificos" ${!aplica?'checked':''} onchange="toggleSalonSelector()"><label for="up-especificos" style="text-transform:none;letter-spacing:0;font-size:13px;margin-left:4px">Salones específicos</label></div>
+      </div>
+      <div id="up-salon-selector" style="display:${aplica?'none':'block'};margin-top:12px">
+        <div class="up-salon-checks" id="up-salon-checks">
+          ${allSalones.map(s=>`<div class="up-salon-check"><input type="checkbox" id="ups-${s.id}" value="${s.id}" ${selectedSalons.includes(s.id)?'checked':''}><label for="ups-${s.id}">${s.nombre}</label></div>`).join('')}
+        </div>
+      </div>
+    </div></div>
+    <div class="form-row s1"><div>
+      <label>Línea de tiempo (slides)</label>
+      <p style="font-size:12px;color:var(--muted);margin:6px 0 10px">Agrega fotos y videos en el orden que quieres que aparezcan.</p>
+      <div class="up-timeline-list" id="up-timeline-list"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+        <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+          <input type="file" accept="image/*" multiple style="display:none" onchange="upAddImages(this)">🖼 Agregar imágenes
+        </label>
+        <label style="text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer;padding:8px 16px;background:var(--surface);border:.5px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px">
+          <input type="file" accept="video/mp4,video/webm,video/*" style="display:none" onchange="upAddVideo(this)">🎬 Subir video (MP4)
+        </label>
+        <button class="btn-sec" style="display:flex;align-items:center;gap:6px" onclick="openUpDesigner()">🎨 Diseñar pantalla</button>
+      </div>
+      <div id="up-video-progress" style="display:none;margin-top:8px;font-size:12px;color:var(--muted)">⏳ Subiendo video... 0%</div>
+    </div></div>
+    <div class="form-footer">
+      <button class="btn-sec" onclick="closeUpsellingForm()">Cancelar</button>
+      <button class="btn-pri" onclick="saveCampaign()">Guardar campaña</button>
+    </div>
+  </div>`;
+  renderUpTimeline();area.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function toggleSalonSelector(){document.getElementById('up-salon-selector').style.display=document.getElementById('up-todos').checked?'none':'block';}
+
+function renderUpTimeline(){
+  const list=document.getElementById('up-timeline-list');if(!list)return;
+  if(!upMedias.length){list.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px 0">Sin slides. Agrega imágenes o videos.</div>';return;}
+  list.innerHTML=upMedias.map((m,i)=>`
+    <div class="up-tl-item" style="display:grid;grid-template-columns:56px 1fr auto auto auto;gap:8px;align-items:center;padding:10px;">
+      ${m.tipo==='imagen'?`<img class="up-tl-thumb" src="${m.url}" alt="slide">`:`<div class="up-tl-thumb-vid">▶</div>`}
+      <div><div class="up-tl-name">${m._name||m.url.split('/').pop().slice(0,28)}</div><div class="up-tl-type">${m.tipo==='imagen'?'Imagen':'Video'}</div></div>
+      <div class="up-tl-dur"><input type="number" min="1" max="600" value="${m.duracion_segundos||10}" onchange="upSetDur(${i},this.value)"><span>seg</span></div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="ic-btn" style="width:22px;height:22px;font-size:10px" onclick="upMoveMedia(${i},1)" ${i===upMedias.length-1?'disabled':''}>↓</button>
+      </div>
+      <button class="ic-btn del" onclick="upRemoveMedia(${i})">✕</button>
+    </div>`).join('');
+}
+
+function upMoveMedia(i,dir){const j=i+dir;if(j<0||j>=upMedias.length)return;[upMedias[i],upMedias[j]]=[upMedias[j],upMedias[i]];renderUpTimeline();}
+function upSetDur(i,val){upMedias[i].duracion_segundos=parseInt(val)||10;}
+function upRemoveMedia(i){upMedias.splice(i,1);renderUpTimeline();}
+
+async function upAddImages(input){
+  const files=Array.from(input.files);
+  for(const file of files){
+    await new Promise(resolve=>{
+      const reader=new FileReader();
+      reader.onload=e=>{upMedias.push({tipo:'imagen',url:e.target.result,_base64:e.target.result.split(',')[1],_file:file,_name:file.name,duracion_segundos:10,orden:upMedias.length,_new:true});resolve();};
+      reader.readAsDataURL(file);
+    });
+  }
+  renderUpTimeline();
+}
+
+async function upAddVideo(input){
+  if(!input.files[0])return;const file=input.files[0];const prog=document.getElementById('up-video-progress');
+  if(prog){prog.style.display='block';prog.textContent='⏳ Subiendo video... 0%';}
+  try{
+    const filename=`upselling-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const uploadUrl=`${SUPA_URL_UP}/storage/v1/object/imagenes-eventos/${filename}`;
+    const xhr=new XMLHttpRequest();xhr.open('POST',uploadUrl);
+    xhr.setRequestHeader('Authorization',`Bearer ${SUPA_ANON_UP}`);xhr.setRequestHeader('Content-Type',file.type||'video/mp4');xhr.setRequestHeader('x-upsert','false');
+    xhr.upload.onprogress=e=>{if(e.lengthComputable&&prog)prog.textContent=`⏳ Subiendo video... ${Math.round(e.loaded/e.total*100)}%`;};
+    await new Promise((resolve,reject)=>{
+      xhr.onload=()=>{if(xhr.status===200||xhr.status===201){const publicUrl=`${SUPA_URL_UP}/storage/v1/object/public/imagenes-eventos/${filename}`;upMedias.push({tipo:'video_archivo',url:publicUrl,_name:file.name,duracion_segundos:15,orden:upMedias.length,_new:true,_uploaded:true});resolve();}else reject(new Error(`${xhr.status}`));};
+      xhr.onerror=()=>reject(new Error('Network error'));xhr.send(file);
+    });
+    if(prog)prog.style.display='none';renderUpTimeline();showToast('Video subido correctamente');
+  }catch(err){if(prog)prog.style.display='none';showToast('Error subiendo video: '+err.message,true);}
+}
+
+async function saveCampaign(){
+  const nombre=document.getElementById('up-nombre').value.trim();
+  if(!nombre){showToast('Ingresa un nombre para la campaña',true);return;}
+  const aplica_todos=document.getElementById('up-todos').checked;
+  const activo=document.getElementById('up-activo').checked;
+  const salon_ids=aplica_todos?[]:Array.from(document.querySelectorAll('#up-salon-checks input:checked')).map(i=>i.value);
+  const design=window._currentUpDesign||{};
+  const payload={nombre,activo,aplica_todos,salon_ids,diseno:design,qr_url:design.qr_url||'',qr_texto:design.qr_texto||''};
+  const url=upEditingId?`${BASE}/upselling?id=${upEditingId}`:`${BASE}/upselling`;
+  const method=upEditingId?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  const d=await r.json();if(!r.ok){showToast(d.error||'Error',true);return;}
+  const campId=d.id;
+  for(let i=0;i<upMedias.length;i++){
+    const m=upMedias[i];
+    if(m.id&&!m._new){await fetch(`${BASE}/upselling-medios?id=${m.id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({orden:i,duracion_segundos:m.duracion_segundos})});}
+    else if(m._new){
+      const mp={upselling_id:campId,tipo:m.tipo,orden:i,duracion_segundos:m.duracion_segundos||10,titulo:m.titulo||'',subtitulo:m.subtitulo||''};
+      if(m.tipo==='imagen'&&m._base64){mp.file_base64=m._base64;mp.file_name=m._file?.name||'imagen.jpg';mp.file_type=m._file?.type||'image/jpeg';}else mp.url=m.url;
+      await fetch(`${BASE}/upselling-medios`,{method:'POST',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(mp)});
+    }
+  }
+  showToast('Campaña guardada. Las tabletas se actualizan en 30 segundos.');closeUpsellingForm();loadCampaigns();
+}
+
+async function toggleCampaign(id,current){await fetch(`${BASE}/upselling?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({activo:!current})});showToast(current?'Campaña desactivada':'Campaña activada');loadCampaigns();}
+async function deleteCampaign(id){if(!confirm('¿Eliminar esta campaña de upselling?'))return;const r=await fetch(`${BASE}/upselling?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});if(r.ok){showToast('Campaña eliminada');loadCampaigns();}else showToast('Error',true);}
+function closeUpsellingForm(){document.getElementById('up-form-area').style.display='none';upEditingId=null;upMedias=[];}
+
+// ── UPSELLING DESIGNER ──
+let upDesign={},upSelectedEl=null,upDragState=null,upCanvasScale=1;
+
+function openUpDesigner(){
+  const savedDesign=window._currentUpDesign||{};
+  upDesign=Object.assign({logo_size:50,logo_top:'3%',logo_right:'3%',logo_left:'auto',titulo_x:'10%',titulo_y:'58%',sub_x:'10%',sub_y:'72%',titulo_size:'3.5vw',sub_size:'1.3vw',titulo_global:'',subtitulo_global:'',qr_url:'',qr_texto:'',qr_size:100,qr_x:'3%',qr_y_top:'auto',qr_y_bottom:'3%',overlay:50,default_dur:8},savedDesign);
+  const titre=document.getElementById('up-nombre');
+  document.getElementById('up-designer-title').textContent='Editor Visual — '+(titre?titre.value:'Upselling');
+  document.getElementById('up-designer-overlay').style.display='flex';
+  setTimeout(()=>{
+    const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v;};
+    const st=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    sv('up-dp-logo',upDesign.logo_size||50);st('up-dpv-logo',(upDesign.logo_size||50)+'px');
+    sv('up-dp-titulo',parseFloat(upDesign.titulo_size)||3.5);st('up-dpv-titulo',upDesign.titulo_size||'3.5vw');
+    sv('up-dp-titulo-val',upDesign.titulo_global||'');
+    sv('up-dp-sub',parseFloat(upDesign.sub_size)||1.3);st('up-dpv-sub',upDesign.sub_size||'1.3vw');
+    sv('up-dp-sub-val',upDesign.subtitulo_global||'');
+    sv('up-dp-overlay',upDesign.overlay||50);st('up-dpv-overlay',(upDesign.overlay||50)+'%');
+    sv('up-dp-default-dur',upDesign.default_dur||8);st('up-dpv-default-dur',(upDesign.default_dur||8)+'s');
+    sv('up-dp-qr-url',upDesign.qr_url||'');sv('up-dp-qr-text',upDesign.qr_texto||'');
+    sv('up-dp-qr-size',upDesign.qr_size||100);st('up-dpv-qr',(upDesign.qr_size||100)+'px');
+    buildUpCanvas();
+  },200);
+}
+
+function buildUpCanvas(){
+  const wrap=document.getElementById('up-canvas-wrap');const canvas=document.getElementById('up-designer-canvas');
+  const availW=window.innerWidth-320-40,availH=window.innerHeight-52-40;
+  let cw=availW,ch=availW*9/16;if(ch>availH){ch=availH;cw=availH*16/9;}
+  canvas.style.width=Math.round(cw)+'px';canvas.style.height=Math.round(ch)+'px';
+  upCanvasScale=cw/1920;
+  const bg=document.getElementById('up-canvas-bg');
+  const firstImg=upMedias.find(m=>m.tipo==='imagen');
+  if(firstImg)bg.style.backgroundImage=`url('${firstImg.url}')`;else bg.style.background='#2A2A2A';
+  const ov=upDesign.overlay/100;
+  document.getElementById('up-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%)`;
+  canvas.querySelectorAll('.up-d-element').forEach(e=>e.remove());
+  buildUpElement('logo');buildUpElement('titulo');buildUpElement('subtitulo');buildUpElement('qr');
+}
+
+function buildUpElement(type){
+  const canvas=document.getElementById('up-designer-canvas');const d=upDesign;const el=document.createElement('div');
+  el.className='up-d-element';el.dataset.type=type;el.id='up-d-el-'+type;const s=upCanvasScale;
+  if(type==='logo'){
+    const h=(d.logo_size||50)*s;const hasCustomPos=(d.logo_left&&d.logo_left!=='auto');
+    el.style.cssText=hasCustomPos?`left:${d.logo_left};top:${d.logo_top||'3%'};right:auto;position:absolute;`:`right:${d.logo_right||'3%'};top:${d.logo_top||'3%'};left:auto;position:absolute;`;
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px ${Math.round(10*s)}px;border-radius:${Math.round(4*s)}px;display:inline-block;"><img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:${h}px;width:auto;display:block;"></div>`;
+  }else if(type==='titulo'){
+    el.style.cssText=`left:${d.titulo_x||'10%'};top:${d.titulo_y||'58%'};position:absolute;transform:none;display:inline-block;max-width:85%;`;
+    el.innerHTML=`<div class="d-handle"></div><div style="font-family:'Cormorant Garamond',serif;font-size:${d.titulo_size||'3.5vw'};font-weight:300;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.6);line-height:1.1;white-space:nowrap;">${d.titulo_global||'Título de campaña'}</div>`;
+  }else if(type==='subtitulo'){
+    el.style.cssText=`left:${d.sub_x||'10%'};top:${d.sub_y||'72%'};position:absolute;transform:none;display:inline-block;max-width:85%;`;
+    el.innerHTML=`<div class="d-handle"></div><div style="font-family:'DM Sans',sans-serif;font-size:${d.sub_size||'1.3vw'};color:rgba(255,255,255,.75);white-space:nowrap;">${d.subtitulo_global||'Subtítulo promocional'}</div>`;
+  }else if(type==='qr'){
+    const qrS=Math.round((d.qr_size||100)*s);
+    el.style.cssText=`left:${d.qr_x||'3%'};top:${d.qr_y_top||'auto'};bottom:${d.qr_y_bottom||'3%'};position:absolute;`;
+    const qrUrl=d.qr_url||'https://marriott.com';
+    el.innerHTML=`<div class="d-handle"></div><div style="background:white;padding:${Math.round(6*s)}px;border-radius:${Math.round(6*s)}px;display:inline-block;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}" style="width:${qrS}px;height:${qrS}px;display:block;">${d.qr_texto?`<div style="font-size:${Math.round(9*s)}px;text-align:center;color:#333;margin-top:${Math.round(3*s)}px;max-width:${qrS}px;">${d.qr_texto}</div>`:''}</div>`;
+  }
+  el.addEventListener('mousedown',startUpDrag);el.addEventListener('click',()=>selectUpEl(type));
+  canvas.appendChild(el);
+}
+
+function selectUpEl(type){
+  upSelectedEl=type;
+  document.querySelectorAll('.up-d-element').forEach(e=>e.classList.remove('selected'));
+  document.querySelectorAll('.up-el-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById('up-d-el-'+type)?.classList.add('selected');
+  document.getElementById('up-eli-'+type)?.classList.add('active');
+  ['logo','titulo','subtitulo','qr'].forEach(t=>{const pp=document.getElementById('up-props-'+t);if(pp)pp.style.display=t===type?'block':'none';});
+}
+
+function updateUpElement(){
+  const d=upDesign;
+  if(upSelectedEl==='logo'){d.logo_size=parseInt(document.getElementById('up-dp-logo').value);document.getElementById('up-dpv-logo').textContent=d.logo_size+'px';}
+  else if(upSelectedEl==='titulo'){d.titulo_size=document.getElementById('up-dp-titulo').value+'vw';document.getElementById('up-dpv-titulo').textContent=d.titulo_size;d.titulo_global=document.getElementById('up-dp-titulo-val').value;}
+  else if(upSelectedEl==='subtitulo'){d.sub_size=document.getElementById('up-dp-sub').value+'vw';document.getElementById('up-dpv-sub').textContent=d.sub_size;d.subtitulo_global=document.getElementById('up-dp-sub-val').value;}
+  else if(upSelectedEl==='qr'){d.qr_url=document.getElementById('up-dp-qr-url').value;d.qr_texto=document.getElementById('up-dp-qr-text').value;d.qr_size=parseInt(document.getElementById('up-dp-qr-size').value);document.getElementById('up-dpv-qr').textContent=d.qr_size+'px';}
+  const old=document.getElementById('up-d-el-'+upSelectedEl);if(old)old.remove();
+  buildUpElement(upSelectedEl);document.getElementById('up-d-el-'+upSelectedEl)?.classList.add('selected');
+}
+
+function updateUpOverlay(){
+  const val=document.getElementById('up-dp-overlay').value;document.getElementById('up-dpv-overlay').textContent=val+'%';upDesign.overlay=parseInt(val);
+  const ov=parseInt(val)/100;document.getElementById('up-canvas-overlay').style.background=`linear-gradient(135deg,rgba(0,0,0,${ov}) 0%,rgba(0,0,0,${ov*0.3}) 50%,rgba(0,0,0,${ov}) 100%)`;
+}
+
+function startUpDrag(e){
+  e.preventDefault();const el=e.currentTarget;const canvas=document.getElementById('up-designer-canvas');
+  const cr=canvas.getBoundingClientRect();const er=el.getBoundingClientRect();
+  upDragState={el,type:el.dataset.type,startX:e.clientX,startY:e.clientY,origLeft:er.left-cr.left,origTop:er.top-cr.top,cw:cr.width,ch:cr.height};
+  document.addEventListener('mousemove',onUpDrag);document.addEventListener('mouseup',endUpDrag);selectUpEl(el.dataset.type);
+}
+function onUpDrag(e){
+  if(!upDragState)return;const dx=e.clientX-upDragState.startX,dy=e.clientY-upDragState.startY;const el=upDragState.el;
+  el.style.position='absolute';el.style.transform='none';el.style.left=(upDragState.origLeft+dx)+'px';el.style.top=(upDragState.origTop+dy)+'px';el.style.right='auto';el.style.bottom='auto';
+}
+function endUpDrag(e){
+  if(!upDragState)return;document.removeEventListener('mousemove',onUpDrag);document.removeEventListener('mouseup',endUpDrag);
+  const el=upDragState.el;const canvas=document.getElementById('up-designer-canvas');
+  const cr=canvas.getBoundingClientRect();const er=el.getBoundingClientRect();
+  const lPct=((er.left-cr.left)/cr.width*100).toFixed(1)+'%';const tPct=((er.top-cr.top)/cr.height*100).toFixed(1)+'%';
+  const type=upDragState.type;
+  if(type==='logo'){upDesign.logo_left=lPct;upDesign.logo_top=tPct;upDesign.logo_right='auto';}
+  else if(type==='titulo'){upDesign.titulo_x=lPct;upDesign.titulo_y=tPct;}
+  else if(type==='subtitulo'){upDesign.sub_x=lPct;upDesign.sub_y=tPct;}
+  else if(type==='qr'){upDesign.qr_x=lPct;upDesign.qr_y_top=tPct;upDesign.qr_y_bottom='auto';}
+  el.remove();buildUpElement(type);document.getElementById('up-d-el-'+type)?.classList.add('selected');upDragState=null;
+}
+
+async function saveUpDesign(){
+  window._currentUpDesign={...upDesign};
+  if(upEditingId){
+    const r=await fetch(`${BASE}/upselling?id=${upEditingId}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({diseno:upDesign,qr_url:upDesign.qr_url||'',qr_texto:upDesign.qr_texto||''})});
+    if(r.ok)showToast('Diseño guardado. Tabletas se actualizan en 30 segundos.');else showToast('Error al guardar diseño',true);
+  }else{showToast('Diseño listo. Guarda la campaña para aplicarlo.');}
+  closeUpDesigner();
+}
+
+let _gridOn=false;
+function toggleUpGrid(){
+  _gridOn=!_gridOn;
+  document.getElementById('up-grid-overlay').style.opacity=_gridOn?'1':'0';
+  document.getElementById('up-center-guides').style.opacity=_gridOn?'1':'0';
+  const btn=document.getElementById('up-grid-btn');if(btn){btn.style.background=_gridOn?'rgba(184,150,46,.3)':'transparent';btn.style.borderColor=_gridOn?'#B8962E':'rgba(255,255,255,.2)';}
+}
+function closeUpDesigner(){
+  document.getElementById('up-designer-overlay').style.display='none';upSelectedEl=null;upDragState=null;_gridOn=false;
+  const g=document.getElementById('up-grid-overlay');if(g)g.style.opacity='0';
+  const c=document.getElementById('up-center-guides');if(c)c.style.opacity='0';
+}
+
+// ── USUARIOS ──
+async function loadUsuarios(){
+  const r=await fetch(`${BASE}/auth-users?action=list`,{headers:{'x-admin-token':TOKEN}});renderUsuarios(await r.json());
+}
+function renderUsuarios(users){
+  const tbody=document.getElementById('users-tbody');
+  if(!users||!users.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No hay usuarios registrados.</td></tr>';return;}
+  const rolLabel={admin:'👑 Admin',operador:'✏️ Operador',readonly:'👁 Solo lectura'};
+  tbody.innerHTML=users.map(u=>`
+    <tr>
+      <td><strong style="font-weight:500">${u.nombre}</strong></td>
+      <td style="font-size:12px;color:var(--muted)">${u.email}</td>
+      <td><span style="font-size:11px;padding:2px 10px;border-radius:10px;background:${u.rol==='admin'?'rgba(160,33,63,.12)':u.rol==='operador'?'rgba(184,150,46,.12)':'rgba(136,135,128,.12)'};color:${u.rol==='admin'?'var(--marriott)':u.rol==='operador'?'#7A6115':'var(--muted)'}">${rolLabel[u.rol]||u.rol}</span></td>
+      <td><button class="toggle-sw ${u.activo?'on':''}" onclick="toggleUsuario('${u.id}',${u.activo})"></button></td>
+      <td><div style="display:flex;gap:6px"><button class="ic-btn" onclick="openUserForm('${u.id}')">✎</button><button class="ic-btn del" onclick="deleteUsuario('${u.id}','${u.nombre}')">✕</button></div></td>
+    </tr>`).join('');
+}
+function openUserForm(id=null){
+  const area=document.getElementById('user-form-area');area.style.display='block';
+  area.innerHTML=`<div class="form-card">
+    <div class="form-title">${id?'Editar usuario':'Nuevo usuario'}</div>
+    <div class="form-row">
+      <div><label>Nombre completo</label><input type="text" id="uf-nombre" placeholder="Ej. María González"></div>
+      <div><label>Correo electrónico</label><input type="email" id="uf-email" placeholder="usuario@marriottpanama.com"></div>
+    </div>
+    <div class="form-row">
+      <div><label>${id?'Nueva contraseña (dejar vacío para no cambiar)':'Contraseña'}</label><input type="password" id="uf-password" placeholder="${id?'Dejar vacío para mantener':'Mínimo 6 caracteres'}"></div>
+      <div><label>Rol</label><select id="uf-rol"><option value="operador">✏️ Operador — Gestiona eventos</option><option value="admin">👑 Admin — Acceso total</option><option value="readonly">👁 Solo lectura — Ver agenda</option></select></div>
+    </div>
+    <div class="form-footer">
+      <button class="btn-sec" onclick="document.getElementById('user-form-area').style.display='none'">Cancelar</button>
+      <button class="btn-pri" onclick="saveUsuario('${id||''}')">Guardar usuario</button>
+    </div>
+  </div>`;
+  if(id){
+    fetch(`${BASE}/auth-users?action=list`,{headers:{'x-admin-token':TOKEN}}).then(r=>r.json()).then(users=>{
+      const u=users.find(x=>x.id===id);
+      if(u){document.getElementById('uf-nombre').value=u.nombre;document.getElementById('uf-email').value=u.email;document.getElementById('uf-rol').value=u.rol;}
+    });
+  }
+  area.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function saveUsuario(id){
+  const nombre=document.getElementById('uf-nombre').value.trim();const email=document.getElementById('uf-email').value.trim();
+  const password=document.getElementById('uf-password').value;const rol=document.getElementById('uf-rol').value;
+  if(!nombre||!email){showToast('Nombre y correo son requeridos',true);return;}
+  if(!id&&!password){showToast('La contraseña es requerida para nuevos usuarios',true);return;}
+  if(password&&password.length<6){showToast('La contraseña debe tener al menos 6 caracteres',true);return;}
+  const payload={nombre,email,rol};if(password)payload.password=password;
+  const url=id?`${BASE}/auth-users?id=${id}`:`${BASE}/auth-users?action=create`;const method=id?'PUT':'POST';
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});
+  const d=await r.json();if(!r.ok){showToast(d.error||'Error al guardar',true);return;}
+  showToast(id?'Usuario actualizado':'Usuario creado correctamente');document.getElementById('user-form-area').style.display='none';loadUsuarios();
+}
+async function toggleUsuario(id,current){await fetch(`${BASE}/auth-users?id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify({activo:!current})});loadUsuarios();}
+async function deleteUsuario(id,nombre){if(!confirm(`¿Eliminar al usuario "${nombre}"?`))return;const r=await fetch(`${BASE}/auth-users?id=${id}`,{method:'DELETE',headers:{'x-admin-token':TOKEN}});if(r.ok){showToast('Usuario eliminado');loadUsuarios();}else showToast('Error al eliminar',true);}
+
+// ── UTILS ──
+function changeDate(d){const el=document.getElementById('fecha-filtro');const dt=new Date(el.value);dt.setDate(dt.getDate()+d);el.value=dt.toISOString().slice(0,10);loadEventos();}
+function changeAgendaDate(d){const el=document.getElementById('agenda-fecha');const dt=new Date(el.value);dt.setDate(dt.getDate()+d);el.value=dt.toISOString().slice(0,10);loadAgenda();}
+function updateFechaLabel(){document.getElementById('fecha-label').textContent=new Date(document.getElementById('fecha-filtro').value+'T12:00:00').toLocaleDateString('es-PA',{weekday:'long',day:'numeric',month:'long'});}
+function updateAgendaFechaLabel(){document.getElementById('agenda-fecha-label').textContent=new Date(document.getElementById('agenda-fecha').value+'T12:00:00').toLocaleDateString('es-PA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+function formatFecha(f){return new Date(f+'T12:00:00').toLocaleDateString('es-PA',{day:'numeric',month:'short',year:'numeric'});}
+function showToast(msg,error=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(error?' error':'');setTimeout(()=>t.className='toast',3500);}
+function showSaving(v){document.getElementById('saving-indicator').className='saving'+(v?' show':'');}
+
+// ══════════════════════════════════════════
+// IDLE DESIGNER — Pantalla sin evento
+// ══════════════════════════════════════════
+const IDLE_DEFAULTS = {
+  bg_color:'#0D0D0B',
+  logo_vis:true, logo_size:44, logo_x:'2%', logo_y:'3%',
+  clock_vis:true, clock_color:'#999999', clock_size:'2.5vw', clock_x:'right:2%', clock_y:'3%',
+  welcome_vis:true, welcome_txt:'BIENVENIDO A · WELCOME TO', welcome_color:'#595957', welcome_size:'1vw', welcome_font:"'DM Sans',sans-serif", welcome_bold:false, welcome_italic:false, welcome_x:'50%', welcome_y:'32%',
+  ornament_vis:true, ornament_x:'50%', ornament_y:'38%',
+  salon_color:'#cccccc', salon_size:'3.5vw', salon_font:"'Cormorant Garamond',serif", salon_bold:false, salon_italic:false, salon_x:'50%', salon_y:'50%',
+  wx_vis:true, wx_size:'3vw', wx_icon:'4vw', wx_color:'#cccccc', wx_x:'50%', wx_y:'90%',
 };
+let idleDesign = {...IDLE_DEFAULTS};
+let idleDragState = null;
+let idleCanvasW = 0, idleCanvasH = 0;
+let idleInitDone = false;
+
+async function initIdleDesigner() {
+  // Load saved config from server
+  try {
+    const r = await fetch(`${BASE}/configuracion`, {headers:{'x-admin-token':TOKEN}});
+    const cfg = await r.json();
+    if (cfg.idle_design) {
+      idleDesign = Object.assign({...IDLE_DEFAULTS}, JSON.parse(cfg.idle_design));
+    }
+  } catch(e) {}
+
+  // Setup canvas size
+  const area = document.getElementById('idle-canvas-area');
+  const canvas = document.getElementById('idle-canvas');
+  const aw = area.clientWidth - 40, ah = area.clientHeight - 40;
+  let cw = aw, ch = aw * 9 / 16;
+  if (ch > ah) { ch = ah; cw = ah * 16 / 9; }
+  canvas.style.width = Math.round(cw) + 'px';
+  canvas.style.height = Math.round(ch) + 'px';
+  idleCanvasW = cw; idleCanvasH = ch;
+
+  applyIdleDesignToCanvas();
+  loadIdleControls();
+  setupIdleDrag();
+  idleInitDone = true;
+}
+
+function toggleIdleStyle(el, style) {
+  if (el === 'welcome') {
+    if (style === 'bold')   idleDesign.welcome_bold   = !idleDesign.welcome_bold;
+    if (style === 'italic') idleDesign.welcome_italic = !idleDesign.welcome_italic;
+  } else if (el === 'salon') {
+    if (style === 'bold')   idleDesign.salon_bold   = !idleDesign.salon_bold;
+    if (style === 'italic') idleDesign.salon_italic = !idleDesign.salon_italic;
+  }
+  _updateStyleButtons();
+  applyIdleDesignToCanvas();
+}
+
+function _updateStyleButtons() {
+  const wb = document.getElementById('ip-welcome-bold-btn');
+  const wi = document.getElementById('ip-welcome-italic-btn');
+  const sb = document.getElementById('ip-salon-bold-btn');
+  const si = document.getElementById('ip-salon-italic-btn');
+  const on  = 'background:rgba(160,33,63,.4);border-color:var(--marriott);color:#fff;';
+  const off = 'background:#222;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.5);';
+  if (wb) wb.style.cssText = wb.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.welcome_bold   ? on : off);
+  if (wi) wi.style.cssText = wi.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.welcome_italic ? on : off);
+  if (sb) sb.style.cssText = sb.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.salon_bold     ? on : off);
+  if (si) si.style.cssText = si.style.cssText.replace(/background[^;]+;|border[^;]+;|color[^;]+;/g,'') + (idleDesign.salon_italic   ? on : off);
+}
+
+function applyIdleDesignToCanvas() {
+  const d = idleDesign;
+
+  // Background
+  document.getElementById('ic-bg').style.background = d.bg_color;
+
+  // Logo
+  const elLogo = document.getElementById('ic-el-logo');
+  elLogo.style.display = d.logo_vis ? 'block' : 'none';
+  elLogo.style.left = d.logo_x; elLogo.style.top = d.logo_y;
+  elLogo.style.right = 'auto'; elLogo.style.transform = 'none';
+  document.getElementById('ic-logo-img').style.height = d.logo_size + 'px';
+
+  // Clock
+  const elClock = document.getElementById('ic-el-clock');
+  elClock.style.display = d.clock_vis ? 'block' : 'none';
+  // Handle clock x — supports "right:X%" format for initial right-align
+  if (d.clock_x && d.clock_x.startsWith('right:')) {
+    elClock.style.right = d.clock_x.replace('right:','');
+    elClock.style.left = 'auto';
+  } else {
+    elClock.style.left = d.clock_x || 'auto';
+    elClock.style.right = 'auto';
+  }
+  elClock.style.top = d.clock_y;
+  elClock.style.transform = 'none';
+  document.getElementById('ic-clock-time').style.color = d.clock_color;
+  document.getElementById('ic-clock-time').style.fontSize = d.clock_size;
+  document.getElementById('ic-clock-date').style.color = d.clock_color;
+
+  // Welcome
+  const elWelcome = document.getElementById('ic-el-welcome');
+  elWelcome.style.display = d.welcome_vis ? 'block' : 'none';
+  elWelcome.style.left = d.welcome_x; elWelcome.style.top = d.welcome_y;
+  elWelcome.style.transform = (d.welcome_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+  const wt = document.getElementById('ic-welcome-txt');
+  wt.textContent = d.welcome_txt;
+  wt.style.color = d.welcome_color;
+  wt.style.fontSize = d.welcome_size;
+  wt.style.fontFamily = d.welcome_font;
+  wt.style.fontWeight = d.welcome_bold ? 'bold' : 'normal';
+  wt.style.fontStyle  = d.welcome_italic ? 'italic' : 'normal';
+
+  // Ornament
+  const elOrn = document.getElementById('ic-el-ornament');
+  elOrn.style.display = d.ornament_vis ? 'block' : 'none';
+  elOrn.style.left = d.ornament_x; elOrn.style.top = d.ornament_y;
+  elOrn.style.transform = (d.ornament_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+
+  // Salon name
+  const elSalon = document.getElementById('ic-el-salon');
+  elSalon.style.left = d.salon_x; elSalon.style.top = d.salon_y;
+  elSalon.style.transform = (d.salon_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+  const sn = document.getElementById('ic-salon-nm');
+  sn.style.color = d.salon_color;
+  sn.style.fontSize = d.salon_size;
+  sn.style.fontFamily = d.salon_font;
+  sn.style.fontWeight = d.salon_bold ? 'bold' : '300';
+  sn.style.fontStyle  = d.salon_italic ? 'italic' : 'normal';
+
+  // Weather
+  const elWx = document.getElementById('ic-el-weather');
+  elWx.style.display = d.wx_vis ? 'block' : 'none';
+  elWx.style.left = d.wx_x; elWx.style.top = d.wx_y;
+  elWx.style.transform = (d.wx_x === '50%') ? 'translate(-50%,-50%)' : 'none';
+  document.getElementById('ic-wx-temp').style.fontSize = d.wx_size;
+  document.getElementById('ic-wx-temp').style.color = d.wx_color;
+  document.getElementById('ic-wx-icon').style.fontSize = d.wx_icon;
+  document.getElementById('ic-wx-desc').style.fontSize = `calc(${d.wx_size} * 0.33)`;
+  document.getElementById('ic-wx-feels').style.fontSize = `calc(${d.wx_size} * 0.28)`;
+}
+
+function loadIdleControls() {
+  const d = idleDesign;
+  const sv = (id,v) => { const e=document.getElementById(id); if(e)e.value=v; };
+  const sc = (id,v) => { const e=document.getElementById(id); if(e)e.checked=!!v; };
+  sv('ip-bg-color', d.bg_color); sv('ip-bg-hex', d.bg_color);
+  sc('ip-logo-vis', d.logo_vis); _sv_range('ip-logo-size', parseFloat(d.logo_size), 'ipv-logo-size', 'px');
+  sc('ip-clock-vis', d.clock_vis); sv('ip-clock-color', d.clock_color);
+  _sv_range('ip-clock-size', parseFloat(d.clock_size), 'ipv-clock-size', 'vw');
+  sc('ip-welcome-vis', d.welcome_vis); sv('ip-welcome-txt', d.welcome_txt);
+  sv('ip-welcome-color', d.welcome_color);
+  _sv_range('ip-welcome-size', parseFloat(d.welcome_size), 'ipv-welcome-size', 'vw');
+  sv('ip-welcome-font', d.welcome_font);
+  sc('ip-ornament-vis', d.ornament_vis);
+  sv('ip-salon-color', d.salon_color);
+  _sv_range('ip-salon-size', parseFloat(d.salon_size), 'ipv-salon-size', 'vw');
+  sv('ip-salon-font', d.salon_font);
+  sc('ip-wx-vis', d.wx_vis);
+  _updateStyleButtons();
+  _sv_range('ip-wx-size', parseFloat(d.wx_size), 'ipv-wx-size', 'vw');
+  _sv_range('ip-wx-icon', parseFloat(d.wx_icon), 'ipv-wx-icon', 'vw');
+  sv('ip-wx-color', d.wx_color);
+}
+
+function _sv_range(id, val, labelId, unit) {
+  const e = document.getElementById(id); if(e) e.value = val;
+  const l = document.getElementById(labelId); if(l) l.textContent = val + unit;
+}
+
+// Updaters
+function updateIdleBg() {
+  const v = document.getElementById('ip-bg-color').value;
+  idleDesign.bg_color = v;
+  document.getElementById('ip-bg-hex').value = v;
+  document.getElementById('ic-bg').style.background = v;
+}
+function syncBgHex() {
+  const v = document.getElementById('ip-bg-hex').value.trim();
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+    idleDesign.bg_color = v;
+    document.getElementById('ip-bg-color').value = v;
+    document.getElementById('ic-bg').style.background = v;
+  }
+}
+function setIdleBgColor(c) {
+  idleDesign.bg_color = c;
+  document.getElementById('ip-bg-color').value = c;
+  document.getElementById('ip-bg-hex').value = c;
+  document.getElementById('ic-bg').style.background = c;
+}
+function resetIdleBg() { setIdleBgColor('#0D0D0B'); }
+
+function updateIdleEl(type) {
+  const d = idleDesign;
+  if (type === 'logo') {
+    d.logo_vis = document.getElementById('ip-logo-vis').checked;
+    d.logo_size = parseInt(document.getElementById('ip-logo-size').value);
+    document.getElementById('ipv-logo-size').textContent = d.logo_size + 'px';
+  } else if (type === 'clock') {
+    d.clock_vis = document.getElementById('ip-clock-vis').checked;
+    d.clock_color = document.getElementById('ip-clock-color').value;
+    d.clock_size = parseFloat(document.getElementById('ip-clock-size').value) + 'vw';
+    document.getElementById('ipv-clock-size').textContent = document.getElementById('ip-clock-size').value + 'vw';
+  } else if (type === 'welcome') {
+    d.welcome_vis = document.getElementById('ip-welcome-vis').checked;
+    d.welcome_txt = document.getElementById('ip-welcome-txt').value;
+    d.welcome_color = document.getElementById('ip-welcome-color').value;
+    d.welcome_size = parseFloat(document.getElementById('ip-welcome-size').value) + 'vw';
+    document.getElementById('ipv-welcome-size').textContent = document.getElementById('ip-welcome-size').value + 'vw';
+    d.welcome_font = document.getElementById('ip-welcome-font').value;
+  } else if (type === 'ornament') {
+    d.ornament_vis = document.getElementById('ip-ornament-vis').checked;
+  } else if (type === 'salon') {
+    d.salon_color = document.getElementById('ip-salon-color').value;
+    d.salon_size = parseFloat(document.getElementById('ip-salon-size').value) + 'vw';
+    document.getElementById('ipv-salon-size').textContent = document.getElementById('ip-salon-size').value + 'vw';
+    d.salon_font = document.getElementById('ip-salon-font').value;
+  } else if (type === 'weather') {
+    d.wx_vis = document.getElementById('ip-wx-vis').checked;
+    d.wx_size = parseFloat(document.getElementById('ip-wx-size').value) + 'vw';
+    document.getElementById('ipv-wx-size').textContent = document.getElementById('ip-wx-size').value + 'vw';
+    d.wx_icon = parseFloat(document.getElementById('ip-wx-icon').value) + 'vw';
+    document.getElementById('ipv-wx-icon').textContent = document.getElementById('ip-wx-icon').value + 'vw';
+    d.wx_color = document.getElementById('ip-wx-color').value;
+  }
+  applyIdleDesignToCanvas();
+}
+
+// Tab selector
+function selectIdleTab(tab) {
+  ['fondo','header','body','footer'].forEach(t => {
+    document.getElementById('itab-'+t)?.classList.toggle('active', t===tab);
+    const p = document.getElementById('iprops-'+t);
+    if (p) p.style.display = t===tab ? 'block' : 'none';
+  });
+}
+
+// Drag & drop for idle elements
+function setupIdleDrag() {
+  ['logo','clock','welcome','ornament','salon','weather'].forEach(type => {
+    const el = document.getElementById('ic-el-'+type);
+    if (!el) return;
+    el.addEventListener('mousedown', e => startIdleDrag(e, type));
+    el.addEventListener('click', () => {
+      // Activate relevant tab on click
+      const tabMap = {logo:'header',clock:'header',welcome:'body',ornament:'body',salon:'body',weather:'footer'};
+      selectIdleTab(tabMap[type]||'body');
+    });
+  });
+}
+
+function startIdleDrag(e, type) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  e.preventDefault();
+  const el = document.getElementById('ic-el-'+type);
+  const canvas = document.getElementById('idle-canvas');
+  const cr = canvas.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  idleDragState = {
+    type, el,
+    startX: e.clientX, startY: e.clientY,
+    origLeft: er.left - cr.left, origTop: er.top - cr.top,
+    cw: cr.width, ch: cr.height
+  };
+  document.addEventListener('mousemove', onIdleDrag);
+  document.addEventListener('mouseup', endIdleDrag);
+  // Highlight
+  document.querySelectorAll('.ic-el').forEach(e => e.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function onIdleDrag(e) {
+  if (!idleDragState) return;
+  const dx = e.clientX - idleDragState.startX;
+  const dy = e.clientY - idleDragState.startY;
+  const el = idleDragState.el;
+  el.style.transform = 'none';
+  el.style.left = (idleDragState.origLeft + dx) + 'px';
+  el.style.top  = (idleDragState.origTop  + dy) + 'px';
+  el.style.right  = 'auto';
+  el.style.bottom = 'auto';
+}
+
+function endIdleDrag(e) {
+  if (!idleDragState) return;
+  document.removeEventListener('mousemove', onIdleDrag);
+  document.removeEventListener('mouseup', endIdleDrag);
+  const { type, el } = idleDragState;
+  const canvas = document.getElementById('idle-canvas');
+  const cr = canvas.getBoundingClientRect();
+  const er = el.getBoundingClientRect();
+  const xPct = ((er.left - cr.left) / cr.width * 100).toFixed(1) + '%';
+  const yPct = ((er.top  - cr.top)  / cr.height * 100).toFixed(1) + '%';
+  // Save position back to design
+  const posMap = {
+    logo:    ['logo_x','logo_y'],
+    clock:   ['clock_x','clock_y'],
+    welcome: ['welcome_x','welcome_y'],
+    ornament:['ornament_x','ornament_y'],
+    salon:   ['salon_x','salon_y'],
+    weather: ['wx_x','wx_y'],
+  };
+  if (posMap[type]) {
+    idleDesign[posMap[type][0]] = xPct;
+    idleDesign[posMap[type][1]] = yPct;
+  }
+  idleDragState = null;
+}
+
+async function saveIdleDesign() {
+  try {
+    const r = await fetch(`${BASE}/configuracion`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-admin-token':TOKEN},
+      body: JSON.stringify({idle_design: JSON.stringify(idleDesign)})
+    });
+    if (r.ok) showToast('Diseño idle guardado. Tabletas se actualizan en 30 segundos.');
+    else showToast('Error al guardar', true);
+  } catch(e) { showToast('Error de conexión', true); }
+}
+
+function resetIdleDesign() {
+  if (!confirm('¿Restablecer todos los valores por defecto?')) return;
+  idleDesign = {...IDLE_DEFAULTS};
+  applyIdleDesignToCanvas();
+  loadIdleControls();
+}
+
+window.addEventListener('load',()=>{
+  const saved=sessionStorage.getItem('signage_token');const savedUser=sessionStorage.getItem('current_user');
+  if(saved){TOKEN=saved;currentUser=savedUser?JSON.parse(savedUser):{nombre:'Administrador',rol:'admin'};document.getElementById('login-screen').style.display='none';document.getElementById('topbar').style.display='flex';applyRoleUI();showPanel('eventos');initApp();}
+});
+</script>
+</body>
+</html>
