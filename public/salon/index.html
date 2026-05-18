@@ -71,60 +71,60 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
 .weather-full {
   display:flex;align-items:center;justify-content:center;
   gap:0;
-  width:100%;max-width:90%;
+  width:auto;
+  margin:0 auto;
 }
 /* Columna TODAY */
 .weather-today {
-  display:flex;flex-direction:column;align-items:center;
-  padding:0 clamp(12px,2vw,32px);
-  border-right:1px solid rgba(255,255,255,0.2);
+  display:flex;flex-direction:column;align-items:flex-start;
+  padding:0 clamp(16px,2.2vw,36px);
+  border-right:1px solid rgba(255,255,255,0.25);
   flex-shrink:0;
 }
 .weather-today-label {
-  font-size:clamp(7px,0.7vw,10px);letter-spacing:.18em;text-transform:uppercase;
-  color:rgba(255,255,255,.9);font-weight:600;margin-bottom:4px;
+  font-size:clamp(8px,0.8vw,11px);letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(255,255,255,.9);font-weight:700;margin-bottom:5px;
 }
 .weather-today-main {
   display:flex;align-items:center;gap:clamp(6px,0.8vw,12px);
 }
 .weather-today-temp {
-  font-size:clamp(20px,2.4vw,36px);color:#fff;font-weight:300;line-height:1;
+  font-size:clamp(24px,2.8vw,42px);color:#fff;font-weight:300;line-height:1;
 }
-.weather-today-icon { font-size:clamp(16px,2vw,28px);line-height:1; }
+.weather-today-icon { font-size:clamp(18px,2.2vw,30px);line-height:1; }
 .weather-today-hl {
-  display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
 }
 .weather-today-high,.weather-today-low {
-  font-size:clamp(7px,0.7vw,10px);color:rgba(255,255,255,.7);white-space:nowrap;
+  font-size:clamp(8px,0.8vw,11px);color:rgba(255,255,255,.8);white-space:nowrap;font-weight:500;
 }
 .weather-today-sub {
-  font-size:clamp(6px,0.6vw,9px);letter-spacing:.08em;text-transform:uppercase;
-  color:rgba(255,255,255,.4);margin-top:3px;
+  font-size:clamp(7px,0.65vw,10px);letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(255,255,255,.45);margin-top:4px;
 }
 /* Columnas días siguientes */
 .forecast-days {
-  display:flex;align-items:center;flex:1;justify-content:space-evenly;
+  display:flex;align-items:stretch;
 }
 .forecast-col {
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:0 clamp(10px,1.5vw,24px);
-  border-right:1px solid rgba(255,255,255,0.15);
-  flex:1;
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  padding:0 clamp(16px,2.2vw,36px);
+  border-right:1px solid rgba(255,255,255,0.18);
 }
 .forecast-col:last-child { border-right:none; }
 .forecast-col-dow {
-  font-size:clamp(7px,0.7vw,10px);letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(255,255,255,.85);font-weight:600;
+  font-size:clamp(8px,0.8vw,11px);letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.9);font-weight:700;
 }
-.forecast-col-icon { font-size:clamp(14px,1.8vw,26px);line-height:1; }
+.forecast-col-icon { font-size:clamp(16px,2vw,28px);line-height:1; margin:2px 0;}
 .forecast-col-hl {
-  display:flex;flex-direction:column;align-items:center;gap:1px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
 }
 .forecast-col-high {
-  font-size:clamp(8px,0.85vw,12px);color:rgba(255,255,255,.8);
+  font-size:clamp(8px,0.8vw,11px);color:rgba(255,255,255,.85);font-weight:500;
 }
 .forecast-col-low {
-  font-size:clamp(7px,0.7vw,10px);color:rgba(255,255,255,.4);
+  font-size:clamp(7px,0.7vw,10px);color:rgba(255,255,255,.45);
 }
 .weather-loading{font-size:clamp(9px,1vw,12px);color:rgba(255,255,255,.2);letter-spacing:.1em;}
 
