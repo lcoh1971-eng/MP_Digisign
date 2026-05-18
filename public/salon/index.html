@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Señalización — Salón</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Josefin+Sans:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:'DM Sans',sans-serif}
@@ -373,6 +373,8 @@ function applyIdleDesignToScreen(d) {
     if (d.welcome_color) welcomeEl.style.color = d.welcome_color;
     if (d.welcome_size)  welcomeEl.style.fontSize = d.welcome_size;
     if (d.welcome_font)  welcomeEl.style.fontFamily = d.welcome_font;
+    welcomeEl.style.fontWeight = d.welcome_bold ? 'bold' : 'normal';
+    welcomeEl.style.fontStyle  = d.welcome_italic ? 'italic' : 'normal';
   }
 
   // Ornament
@@ -385,6 +387,8 @@ function applyIdleDesignToScreen(d) {
     if (d.salon_color) salonEl.style.color = d.salon_color;
     if (d.salon_size)  salonEl.style.fontSize = d.salon_size;
     if (d.salon_font)  salonEl.style.fontFamily = d.salon_font;
+    salonEl.style.fontWeight = d.salon_bold ? 'bold' : '300';
+    salonEl.style.fontStyle  = d.salon_italic ? 'italic' : 'normal';
   }
 
   // Weather
