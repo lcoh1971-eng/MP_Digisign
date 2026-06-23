@@ -1156,7 +1156,7 @@ async function openEventForm(id=null){
     <div class="form-title">${id?'Editar datos del evento':'Nuevo evento'}</div>
     <div class="form-row">
       <div><label>Nombre del evento</label><input type="text" id="f-nombre" value="${ev?.nombre||''}" placeholder="Ej. Boda Pérez–González"></div>
-      <div><label>Tipo</label><select id="f-tipo">${['Boda','Corporativo','Social','Quinceañero','Congreso','Conferencia','Otro'].map(t=>`<option ${ev?.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div><label>Tipo</label><select id="f-tipo"><option value="">-- Sin tipo --</option>${['Boda','Corporativo','Social','Quinceañero','Congreso','Conferencia','Otro'].map(t=>`<option ${ev?.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
     </div>
     <div class="form-row s3">
       <div><label>Fecha</label><input type="date" id="f-fecha" value="${ev?.fecha||new Date().toISOString().slice(0,10)}"></div>
@@ -1248,7 +1248,7 @@ async function saveEvento(){
   const nombre=document.getElementById('f-nombre').value;
   const horaInicio=document.getElementById('f-inicio').value;
   const horaFin=document.getElementById('f-fin').value;
-  if(!nombre||!horaInicio||!horaFin){showToast('Completa nombre, hora inicio y hora fin',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
+  if(!horaInicio||!horaFin){showToast('Completa hora inicio y hora fin',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
   const payload={salon_id:activeSalonId,nombre,tipo:document.getElementById('f-tipo').value,subtitulo:document.getElementById('f-sub').value,fecha:document.getElementById('f-fecha').value,hora_inicio:horaInicio,hora_fin:horaFin,color_acento:selectedColor};
   const url=editingEventId?`${BASE}/eventos?id=${editingEventId}`:`${BASE}/eventos`;
   const method=editingEventId?'PUT':'POST';
