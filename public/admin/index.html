@@ -1167,6 +1167,10 @@ async function openEventForm(id=null){
     <div class="form-row s1"><div><label>Color de acento</label>
       <div class="color-row">${colors.map(c=>`<div class="cswatch ${c===selectedColor?'sel':''}" style="background:${c};${c==='#FFFFFF'?'border:1px solid #ccc':''}" onclick="pickColor(this,'${c}')"></div>`).join('')}</div>
     </div></div>
+    <div class="form-row s1"><div style="display:flex;align-items:center;gap:10px;padding:6px 0;">
+      <input type="checkbox" id="f-body-only" style="width:16px;height:16px;cursor:pointer;" ${ev?.media_body_only?'checked':''}>
+      <label for="f-body-only" style="margin:0;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;">Mostrar imágenes solo en zona body (header con logo y footer con clima visibles)</label>
+    </div></div>
   </div>
   <div class="form-card">
     <div class="form-title">Imágenes y videos (carrusel)</div>
@@ -1249,7 +1253,7 @@ async function saveEvento(){
   const horaInicio=document.getElementById('f-inicio').value;
   const horaFin=document.getElementById('f-fin').value;
   if(!horaInicio||!horaFin){showToast('Completa hora inicio y hora fin',true);btn.disabled=false;btn.textContent='Guardar evento';showSaving(false);return;}
-  const payload={salon_id:activeSalonId,nombre,tipo:document.getElementById('f-tipo').value,subtitulo:document.getElementById('f-sub').value,fecha:document.getElementById('f-fecha').value,hora_inicio:horaInicio,hora_fin:horaFin,color_acento:selectedColor};
+  const payload={salon_id:activeSalonId,nombre,tipo:document.getElementById('f-tipo').value,subtitulo:document.getElementById('f-sub').value,fecha:document.getElementById('f-fecha').value,hora_inicio:horaInicio,hora_fin:horaFin,color_acento:selectedColor,media_body_only:document.getElementById('f-body-only')?.checked||false};
   const url=editingEventId?`${BASE}/eventos?id=${editingEventId}`:`${BASE}/eventos`;
   const method=editingEventId?'PUT':'POST';
   const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:JSON.stringify(payload)});

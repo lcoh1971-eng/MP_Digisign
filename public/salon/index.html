@@ -212,6 +212,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
 .carousel-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .3s;}
 .carousel-dot.active{background:#fff;}
 
+/* ══ BODY-ONLY MODE: carrusel confinado al 60% de la zona body ══ */
+#screen-event.body-only-mode .carousel-container,
+#screen-event.body-only-mode .ev-overlay{inset:auto;top:20%;bottom:20%;left:0;right:0;}
+#screen-event.body-only-mode .ev-zone-header{background:#0D0D0B;border-bottom:1px solid rgba(184,150,46,.15);}
+#screen-event.body-only-mode .ev-zone-footer{background:#0D0D0B;border-top:1px solid rgba(255,255,255,.12);}
+#screen-event.body-only-mode .carousel-dots{bottom:22%;}
+#ev-footer-weather{display:none;width:100%;justify-content:center;align-items:center;}
+
 /* ══ LOADER ══ */
 #loading{position:fixed;inset:0;background:#0D0D0B;display:flex;align-items:center;justify-content:center;z-index:99;transition:opacity .5s ease;}
 .spinner{width:32px;height:32px;border:2px solid rgba(184,150,46,.2);border-top-color:#B8962E;border-radius:50%;animation:spin .8s linear infinite}
@@ -331,6 +339,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0D0D0B;font-family:
       <div class="ev-footer-clock" id="ev-clock"></div>
       <div class="ev-footer-text" id="ev-footer-text" style="display:none;"></div>
     </div>
+    <!-- Clima para body-only mode -->
+    <div id="ev-footer-weather">
+      <span class="weather-loading" id="evw-loading">Cargando clima...</span>
+      <div class="weather-full" id="evw-full" style="display:none">
+        <div class="weather-today">
+          <div class="weather-today-label">Clima</div>
+          <div class="weather-today-main">
+            <div class="weather-today-temp" id="evw-temp">—</div>
+            <div class="weather-today-icon" id="evw-icon">🌡️</div>
+            <div class="weather-today-hl">
+              <div class="weather-today-high" id="evw-high">—</div>
+              <div class="weather-today-low" id="evw-low">—</div>
+            </div>
+          </div>
+          <div class="weather-today-sub" id="evw-desc">—</div>
+        </div>
+        <div class="forecast-days" id="evw-forecast"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Dots del carrusel -->
@@ -416,6 +443,30 @@ async function loadWeather() {
 
     document.getElementById('weather-loading').style.display = 'none';
     document.getElementById('weather-full').style.display    = 'flex';
+
+    // Poblar también el widget de clima del footer de evento (body-only mode)
+    document.getElementById('evw-icon').textContent = WX_ICONS[code] || '🌡️';
+    document.getElementById('evw-temp').textContent = `${Math.round(cur.temperature_2m)}°`;
+    document.getElementById('evw-desc').textContent = WX_DESC[code] || '';
+    document.getElementById('evw-high').textContent = `High: ${Math.round(d.daily.temperature_2m_max[0])}°`;
+    document.getElementById('evw-low').textContent  = `Low: ${Math.round(d.daily.temperature_2m_min[0])}°`;
+    const evwForecast = document.getElementById('evw-forecast');
+    evwForecast.innerHTML = '';
+    for (let i = 1; i <= 3; i++) {
+      const date = new Date(d.daily.time[i] + 'T12:00:00');
+      const dow  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][date.getDay()];
+      const col  = document.createElement('div');
+      col.className = 'forecast-col';
+      col.innerHTML = `<div class="forecast-col-dow">${dow}</div>
+        <div class="forecast-col-icon">${WX_ICONS[d.daily.weather_code[i]] || '🌡️'}</div>
+        <div class="forecast-col-hl">
+          <div class="forecast-col-high">High: ${Math.round(d.daily.temperature_2m_max[i])}°</div>
+          <div class="forecast-col-low">Low: ${Math.round(d.daily.temperature_2m_min[i])}°</div>
+        </div>`;
+      evwForecast.appendChild(col);
+    }
+    document.getElementById('evw-loading').style.display = 'none';
+    document.getElementById('evw-full').style.display    = 'flex';
   } catch(e) {
     document.getElementById('weather-loading').textContent = '—';
   }
@@ -686,6 +737,18 @@ function renderState(d) {
       carouselIndex = 0;
       if (carouselTimer) clearTimeout(carouselTimer);
       buildCarousel(ev, ev.medios || []);
+
+      // Body-only mode: confinar carrusel a la zona body
+      const se = document.getElementById('screen-event');
+      if (ev.media_body_only) {
+        se.classList.add('body-only-mode');
+        document.getElementById('ev-footer-content').style.display = 'none';
+        document.getElementById('ev-footer-weather').style.display = 'flex';
+      } else {
+        se.classList.remove('body-only-mode');
+        document.getElementById('ev-footer-content').style.display = '';
+        document.getElementById('ev-footer-weather').style.display = 'none';
+      }
     }
   } else {
     // IDLE / NO EVENT
