@@ -1423,8 +1423,8 @@ let dState={};
 
 function _dDefault(){
   return {
-    salon_visible:true,salon_size:'1.7vw',
-    logo_visible:true,logo_size:50,logo_position:'right',
+    salon_visible:true,salon_size:'3.5vw',
+    logo_visible:true,logo_size:100,logo_position:'right',
     titulo_size:'4vw',sub_size:'1.4vw',tipo_size:'1.1vw',
     content_align:'center',content_maxw:'80%',
     tipo_visible:true,sub_visible:true,hora_visible:true,
@@ -1536,9 +1536,9 @@ function _loadDControls(){
   const _sr=(id,val,lid,unit)=>{const e=document.getElementById(id);if(e)e.value=val;const l=document.getElementById(lid);if(l)l.textContent=val+unit;};
   const _sc=(id,val)=>{const e=document.getElementById(id);if(e)e.checked=!!val;};
   const _ss=(id,val)=>{const e=document.getElementById(id);if(e)e.value=val||'';};
-  _sr('dp-salon-size',parseFloat(dState.salon_size)||1.7,'dpv-salon-size','vw');
+  _sr('dp-salon-size',parseFloat(dState.salon_size)||3.5,'dpv-salon-size','vw');
   _sc('dp-vis-salon',dState.salon_visible);
-  _sr('dp-logo-size',dState.logo_size||50,'dpv-logo-size','px');
+  _sr('dp-logo-size',dState.logo_size||100,'dpv-logo-size','px');
   _sc('dp-vis-logo',dState.logo_visible);
   _ss('dp-logo-pos',dState.logo_position);
   _sr('dp-overlay',Math.round((dState.overlay_opacity||0.6)*100),'dpv-overlay','%');
