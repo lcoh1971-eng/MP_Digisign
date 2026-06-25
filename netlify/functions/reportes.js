@@ -17,17 +17,20 @@ exports.handler = async (event) => {
   };
 
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  const _tok = event.headers['x-admin-token'] || event.headers['x-user-token'];
+
+  // ── Autenticación ────────────────────────────────────────────────────────
+  const _tok  = event.headers['x-admin-token'] || event.headers['x-user-token'];
   const _user = _tok ? (() => { try {
-    const p=_tok.replace(/-/g,'+').replace(/_/g,'/');
-    const n=p+'='.repeat((4-p.length%4)%4);
-    return JSON.parse(Buffer.from(n,'base64').toString('utf8'));
+    const p = _tok.replace(/-/g, '+').replace(/_/g, '/');
+    const n = p + '='.repeat((4 - p.length % 4) % 4);
+    return JSON.parse(Buffer.from(n, 'base64').toString('utf8'));
   } catch { return null; } })() : null;
   const _auth = _tok === ADMIN_PASSWORD || (_user && (_user.rol === 'admin' || _user.rol === 'operador'));
   if (!_auth) {
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'No autorizado' }) };
   }
 
+  // ── Parámetros ───────────────────────────────────────────────────────────
   const params = event.queryStringParameters || {};
   const { desde, hasta } = params;
 
@@ -35,8 +38,16 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Parámetros desde y hasta requeridos' }) };
   }
 
-  // Fetch all events in range with salon info
-  const { data: eventos, error } = await supabase
+  // Filtro de salones: ?salones=uuid1,uuid2,uuid3
+  // Si no se envía el parámetro (o viene vacío), se analizan todos.
+  const salonesParam = params.salones || '';
+  const salonesIds   = salonesParam
+    ? salonesParam.split(',').map(id => id.trim()).filter(Boolean)
+    : [];
+  const filtrandoSalones = salonesIds.length > 0;
+
+  // ── Fetch de eventos ─────────────────────────────────────────────────────
+  let eventosQuery = supabase
     .from('eventos')
     .select('*, salones(nombre, slug)')
     .gte('fecha', desde)
@@ -44,18 +55,35 @@ exports.handler = async (event) => {
     .order('fecha')
     .order('hora_inicio');
 
+  if (filtrandoSalones) {
+    eventosQuery = eventosQuery.in('salon_id', salonesIds);
+  }
+
+  const { data: eventos, error } = await eventosQuery;
   if (error) return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
 
-  // Fetch all salones
-  const { data: salones } = await supabase.from('salones').select('id, nombre, slug').eq('activo', true).order('nombre');
+  // ── Fetch de salones ─────────────────────────────────────────────────────
+  // Si hay filtro, traemos solo los salones seleccionados para que las métricas
+  // de ocupación/ociosidad y los totales reflejen únicamente el subconjunto elegido.
+  let salonesQuery = supabase
+    .from('salones')
+    .select('id, nombre, slug')
+    .eq('activo', true)
+    .order('nombre');
 
-  // ── METRICS ──
+  if (filtrandoSalones) {
+    salonesQuery = salonesQuery.in('id', salonesIds);
+  }
+
+  const { data: salones } = await salonesQuery;
+
+  // ── MÉTRICAS ─────────────────────────────────────────────────────────────
 
   // 1. Eventos por tipo
   const porTipo = {};
   eventos.forEach(e => { porTipo[e.tipo] = (porTipo[e.tipo] || 0) + 1; });
 
-  // 2. Eventos por salón
+  // 2. Eventos por salón (inicializar en 0 para todos los salones del filtro)
   const porSalon = {};
   salones.forEach(s => { porSalon[s.nombre] = 0; });
   eventos.forEach(e => {
@@ -71,7 +99,7 @@ exports.handler = async (event) => {
     for (let h = hIni; h <= hFin; h++) { if (h < 24) porHora[h]++; }
   });
 
-  // 4. Ociosidad por salón (días sin eventos / total días en rango)
+  // 4. Ociosidad por salón
   const totalDias = Math.round((new Date(hasta) - new Date(desde)) / 86400000) + 1;
   const diasConEvento = {};
   salones.forEach(s => { diasConEvento[s.nombre] = new Set(); });
@@ -86,8 +114,8 @@ exports.handler = async (event) => {
     ociosidad[s.nombre] = {
       dias_con_evento: activos,
       dias_sin_evento: totalDias - activos,
-      pct_ocupacion: Math.round(activos / totalDias * 100),
-      pct_ociosidad: Math.round((totalDias - activos) / totalDias * 100),
+      pct_ocupacion:   Math.round(activos / totalDias * 100),
+      pct_ociosidad:   Math.round((totalDias - activos) / totalDias * 100),
     };
   });
 
@@ -95,7 +123,7 @@ exports.handler = async (event) => {
   const porDia = {};
   eventos.forEach(e => { porDia[e.fecha] = (porDia[e.fecha] || 0) + 1; });
 
-  // 6. Duración promedio de eventos (horas)
+  // 6. Duración promedio (minutos)
   let totalMinutos = 0;
   eventos.forEach(e => {
     const [hI, mI] = e.hora_inicio.split(':').map(Number);
@@ -114,17 +142,17 @@ exports.handler = async (event) => {
     headers,
     body: JSON.stringify({
       resumen: {
-        total_eventos: eventos.length,
-        total_salones: salones.length,
-        dias_analizados: totalDias,
+        total_eventos:         eventos.length,
+        total_salones:         salones.length,
+        dias_analizados:       totalDias,
         duracion_promedio_min: duracionPromedio,
-        tipo_mas_frecuente: Object.entries(porTipo).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—',
-        salon_mas_activo: topSalones[0]?.[0] || '—',
+        tipo_mas_frecuente:    Object.entries(porTipo).sort((a, b) => b[1] - a[1])[0]?.[0] || '—',
+        salon_mas_activo:      topSalones[0]?.[0] || '—',
       },
-      por_tipo: porTipo,
-      por_salon: porSalon,
-      por_hora: porHora,
-      por_dia: porDia,
+      por_tipo:    porTipo,
+      por_salon:   porSalon,
+      por_hora:    porHora,
+      por_dia:     porDia,
       ociosidad,
       top_salones: topSalones,
       eventos_raw: eventos,
