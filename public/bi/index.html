@@ -10,19 +10,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--marriott:#A0213F;--dark:#1A1A1A;--surface:#F8F6F1;--border:rgba(184,150,46,0.2);--text:#2C2C2A;--muted:#888780;--white:#fff;--gold:#B8962E;}
+:root{
+  --marriott:#A0213F;
+  --dark:#1A1A1A;
+  --surface:#F8F6F1;
+  --border:rgba(184,150,46,0.2);
+  --text:#2C2C2A;
+  --muted:#888780;
+  --white:#fff;
+  --gold:#B8962E;
+}
 body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh;}
+
+/* ── Topbar ─────────────────────────────────────────── */
 .topbar{background:var(--dark);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:54px;position:sticky;top:0;z-index:100;}
 .topbar-left{display:flex;align-items:center;gap:16px;}
 .topbar-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:#D4AF5A;letter-spacing:.06em;}
 .topbar-sub{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;}
 .back-btn{padding:6px 14px;border:1px solid rgba(184,150,46,.25);background:transparent;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;border-radius:5px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
 .back-btn:hover{color:#D4AF5A;border-color:var(--gold);}
+
+/* ── Layout ─────────────────────────────────────────── */
 .main{padding:28px 32px;max-width:1400px;margin:0 auto;}
+
+/* ── Filters card ───────────────────────────────────── */
 .filters-card{background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;}
 .filter-group{display:flex;flex-direction:column;gap:5px;}
 .filter-group label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
-.filter-group input[type=date],.filter-group select{padding:8px 12px;border:.5px solid rgba(136,135,128,.4);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;}
+.filter-group input[type=date]{padding:8px 12px;border:.5px solid rgba(136,135,128,.4);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;}
 .filter-group input:focus{border-color:var(--gold);}
 .period-btns{display:flex;gap:6px;}
 .period-btn{padding:8px 14px;border:.5px solid var(--border);background:transparent;border-radius:7px;font-size:12px;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;transition:all .15s;}
@@ -31,6 +46,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 .run-btn:hover{background:#c02850;}
 .export-btn{padding:9px 18px;background:transparent;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
 .export-btn:hover{background:var(--gold);color:#fff;}
+
+/* ── Salon multi-select ─────────────────────────────── */
+.salon-filter{position:relative;}
+.salon-toggle{display:flex;align-items:center;gap:8px;padding:8px 12px;border:.5px solid rgba(136,135,128,.4);border-radius:7px;background:var(--surface);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);cursor:pointer;min-width:220px;user-select:none;transition:border-color .15s;}
+.salon-toggle:hover{border-color:var(--gold);}
+.salon-toggle.open{border-color:var(--gold);}
+.salon-toggle-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.salon-count-badge{background:var(--marriott);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;display:none;flex-shrink:0;}
+.salon-count-badge.visible{display:inline-flex;}
+.salon-toggle-arrow{color:var(--muted);font-size:10px;flex-shrink:0;transition:transform .2s;}
+.salon-toggle.open .salon-toggle-arrow{transform:rotate(180deg);}
+.salon-dropdown{position:absolute;top:calc(100% + 6px);left:0;background:var(--white);border:.5px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.12);min-width:250px;max-height:320px;overflow-y:auto;z-index:200;display:none;padding:6px 0;}
+.salon-dropdown.open{display:block;}
+.salon-dropdown::-webkit-scrollbar{width:4px;}
+.salon-dropdown::-webkit-scrollbar-track{background:transparent;}
+.salon-dropdown::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.salon-option{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;color:var(--text);transition:background .1s;}
+.salon-option:hover{background:var(--surface);}
+.salon-option.master{border-bottom:.5px solid var(--border);margin-bottom:4px;padding-bottom:11px;font-weight:500;color:var(--dark);}
+.salon-option input[type=checkbox]{accent-color:var(--marriott);width:15px;height:15px;cursor:pointer;flex-shrink:0;}
+.salon-option-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── Filtro activo badge ────────────────────────────── */
+.filter-badge{display:none;align-items:center;gap:8px;background:rgba(160,33,63,.06);border:.5px solid rgba(160,33,63,.2);border-radius:8px;padding:8px 14px;font-size:12px;color:var(--marriott);margin-bottom:18px;}
+.filter-badge.visible{display:flex;}
+.filter-badge strong{font-weight:600;}
+.filter-badge-clear{margin-left:auto;cursor:pointer;font-size:11px;color:var(--marriott);border-bottom:.5px dashed var(--marriott);white-space:nowrap;}
+
+/* ── KPIs ───────────────────────────────────────────── */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
 .kpi-card{background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:18px 20px;}
 .kpi-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
@@ -38,6 +82,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
 .kpi-card.highlight{border-color:rgba(160,33,63,.3);background:rgba(160,33,63,.04);}
 .kpi-card.highlight .kpi-value{color:var(--marriott);}
+
+/* ── Charts ─────────────────────────────────────────── */
 .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
 .charts-grid.full{grid-template-columns:1fr;}
 .chart-card{background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:20px 24px;}
@@ -45,6 +91,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 .chart-sub{font-size:11px;color:var(--muted);margin-bottom:18px;}
 .chart-wrap{position:relative;height:240px;}
 .chart-wrap.tall{height:300px;}
+
+/* ── Tabla ──────────────────────────────────────────── */
 .table-card{background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px;}
 .bi-table{width:100%;border-collapse:collapse;}
 .bi-table th{background:var(--dark);color:rgba(255,255,255,.55);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:10px 14px;text-align:left;font-weight:400;}
@@ -57,10 +105,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 .badge-high{background:rgba(59,109,17,.12);color:#3B6D11;}
 .badge-mid{background:rgba(184,150,46,.12);color:#7A6115;}
 .badge-low{background:rgba(163,45,45,.1);color:var(--marriott);}
+
+/* ── States ─────────────────────────────────────────── */
 .loading-state{text-align:center;padding:60px;color:var(--muted);font-size:13px;}
 .spinner-sm{width:24px;height:24px;border:2px solid rgba(160,33,63,.2);border-top-color:var(--marriott);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:768px){.charts-grid{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+
+@media(max-width:768px){
+  .charts-grid{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .filters-card{flex-direction:column;align-items:stretch;}
+  .salon-toggle{min-width:unset;width:100%;}
+}
 </style>
 </head>
 <body>
@@ -68,7 +124,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 <div class="topbar">
   <div class="topbar-left">
     <div style="background:white;padding:4px 10px;border-radius:5px;">
-      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png" style="height:26px;width:auto;display:block;">
+      <img src="https://gumnnqpaieooxkvhneqi.supabase.co/storage/v1/object/public/imagenes-eventos/Logo-MARRIOTT-PANAMA-HOTEL.png"
+           style="height:26px;width:auto;display:block;">
     </div>
     <div>
       <div class="topbar-title">Business Intelligence</div>
@@ -79,7 +136,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
 </div>
 
 <div class="main">
+
+  <!-- ═══════════════════════════════════════════════
+       BARRA DE FILTROS
+  ═══════════════════════════════════════════════ -->
   <div class="filters-card">
+
     <div class="filter-group">
       <label>Período rápido</label>
       <div class="period-btns">
@@ -89,14 +151,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
         <button class="period-btn" onclick="setPeriod('quarter',this)">Trimestre</button>
       </div>
     </div>
+
     <div class="filter-group">
       <label>Desde</label>
       <input type="date" id="f-desde">
     </div>
+
     <div class="filter-group">
       <label>Hasta</label>
       <input type="date" id="f-hasta">
     </div>
+
+    <!-- ── FILTRO MULTI-SALÓN ──────────────────────── -->
+    <div class="filter-group">
+      <label>Salones</label>
+      <div class="salon-filter" id="salon-filter">
+
+        <div class="salon-toggle" id="salon-toggle" onclick="toggleSalonDropdown()">
+          <span class="salon-toggle-label" id="salon-toggle-label">Cargando…</span>
+          <span class="salon-count-badge" id="salon-count-badge"></span>
+          <span class="salon-toggle-arrow">▼</span>
+        </div>
+
+        <div class="salon-dropdown" id="salon-dropdown">
+          <!-- Opción maestra "Todos" -->
+          <div class="salon-option master" onclick="toggleAll(event)">
+            <input type="checkbox" id="chk-all" checked onchange="toggleAll(event)">
+            <span class="salon-option-name">Todos los salones</span>
+          </div>
+          <!-- Opciones individuales inyectadas por JS -->
+          <div id="salon-options-list"></div>
+        </div>
+
+      </div>
+    </div>
+    <!-- ──────────────────────────────────────────── -->
+
     <button class="run-btn" onclick="runReport()">📊 Generar reporte</button>
     <button class="export-btn" onclick="exportExcel()">📥 Exportar Excel</button>
   </div>
@@ -104,171 +194,460 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text
   <div id="report-content">
     <div class="loading-state"><p>Selecciona un período y genera el reporte.</p></div>
   </div>
-</div>
+
+</div><!-- /.main -->
 
 <script>
-const BASE='/.netlify/functions';
-const TOKEN=sessionStorage.getItem('signage_token')||'';
-let reportData=null;
-let charts=[];
+const BASE  = '/.netlify/functions';
+const TOKEN = sessionStorage.getItem('signage_token') || '';
 
-function setPeriod(p,btn){
-  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  const now=new Date();
-  let desde,hasta=now.toISOString().slice(0,10);
-  if(p==='today'){desde=hasta;}
-  else if(p==='week'){const d=new Date(now);d.setDate(d.getDate()-6);desde=d.toISOString().slice(0,10);}
-  else if(p==='month'){const d=new Date(now.getFullYear(),now.getMonth(),1);desde=d.toISOString().slice(0,10);}
-  else if(p==='quarter'){const d=new Date(now);d.setMonth(d.getMonth()-3);desde=d.toISOString().slice(0,10);}
-  document.getElementById('f-desde').value=desde;
-  document.getElementById('f-hasta').value=hasta;
+let reportData = null;
+let charts     = [];
+
+/* ─────────────────────────────────────────────────────
+   ESTADO DEL FILTRO DE SALONES
+   salonList:       [{ id, nombre }]  — cargado al iniciar
+   selectedSalones: Set<id>           — IDs actualmente seleccionados
+───────────────────────────────────────────────────── */
+let salonList       = [];
+let selectedSalones = new Set();
+
+/* ═════════════════════════════════════════════════════
+   1. CARGAR SALONES AL INICIAR
+═════════════════════════════════════════════════════ */
+async function loadSalones() {
+  try {
+    const r = await fetch(`${BASE}/salones`, { headers: { 'x-admin-token': TOKEN } });
+    if (!r.ok) throw new Error('fetch failed');
+    const data = await r.json();
+    // El endpoint puede devolver un array directo o { salones: [...] }
+    salonList = Array.isArray(data) ? data : (data.salones || []);
+    // Por defecto: todos seleccionados
+    salonList.forEach(s => selectedSalones.add(s.id));
+    renderSalonOptions();
+    updateSalonToggleLabel();
+  } catch {
+    // Si falla (p. ej. sesión no iniciada), el filtro queda en "Todos"
+    document.getElementById('salon-toggle-label').textContent = 'Todos los salones';
+  }
 }
 
-async function runReport(){
-  const desde=document.getElementById('f-desde').value;
-  const hasta=document.getElementById('f-hasta').value;
-  if(!desde||!hasta){alert('Selecciona el rango de fechas.');return;}
-  document.getElementById('report-content').innerHTML='<div class="loading-state"><div class="spinner-sm"></div><p>Generando reporte...</p></div>';
-  const r=await fetch(`${BASE}/reportes?desde=${desde}&hasta=${hasta}`,{headers:{'x-admin-token':TOKEN}});
-  if(!r.ok){document.getElementById('report-content').innerHTML='<div class="loading-state">Error al generar el reporte. Verifica que hayas iniciado sesión en el panel admin primero.</div>';return;}
-  reportData=await r.json();
-  renderReport(reportData,desde,hasta);
+function renderSalonOptions() {
+  document.getElementById('salon-options-list').innerHTML = [...salonList]
+    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+    .map(s => `
+      <div class="salon-option" onclick="toggleSalon(event,'${s.id}')">
+        <input type="checkbox" id="chk-salon-${s.id}" value="${s.id}" checked
+               onchange="toggleSalon(event,'${s.id}')">
+        <span class="salon-option-name">${s.nombre}</span>
+      </div>`).join('');
 }
 
-function renderReport(d,desde,hasta){
-  charts.forEach(c=>c.destroy());charts=[];
-  const{resumen,por_tipo,por_salon,por_hora,por_dia,ociosidad}=d;
+/* ═════════════════════════════════════════════════════
+   2. LÓGICA DEL DROPDOWN
+═════════════════════════════════════════════════════ */
+function toggleSalonDropdown() {
+  const toggle   = document.getElementById('salon-toggle');
+  const dropdown = document.getElementById('salon-dropdown');
+  dropdown.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
 
-  document.getElementById('report-content').innerHTML=`
+// Cerrar al hacer clic fuera del componente
+document.addEventListener('click', e => {
+  const el = document.getElementById('salon-filter');
+  if (el && !el.contains(e.target)) {
+    document.getElementById('salon-dropdown')?.classList.remove('open');
+    document.getElementById('salon-toggle')?.classList.remove('open');
+  }
+});
+
+/* ── Toggle individual ─────────────────────────────── */
+function toggleSalon(e, id) {
+  if (e.target.tagName !== 'INPUT') e.stopPropagation();
+  selectedSalones.has(id) ? selectedSalones.delete(id) : selectedSalones.add(id);
+  const chk = document.getElementById(`chk-salon-${id}`);
+  if (chk) chk.checked = selectedSalones.has(id);
+  syncMasterCheckbox();
+  updateSalonToggleLabel();
+}
+
+/* ── Toggle maestro ────────────────────────────────── */
+function toggleAll(e) {
+  if (e.target.tagName !== 'INPUT') e.stopPropagation();
+  const selectAll = document.getElementById('chk-all').checked;
+  selectedSalones.clear();
+  salonList.forEach(s => {
+    if (selectAll) selectedSalones.add(s.id);
+    const chk = document.getElementById(`chk-salon-${s.id}`);
+    if (chk) chk.checked = selectAll;
+  });
+  updateSalonToggleLabel();
+}
+
+/* ── Sincronizar checkbox maestro (estado indeterminado) */
+function syncMasterCheckbox() {
+  const chkAll = document.getElementById('chk-all');
+  if (!chkAll) return;
+  if (selectedSalones.size === 0) {
+    chkAll.checked = false; chkAll.indeterminate = false;
+  } else if (selectedSalones.size === salonList.length) {
+    chkAll.checked = true;  chkAll.indeterminate = false;
+  } else {
+    chkAll.checked = false; chkAll.indeterminate = true;
+  }
+}
+
+/* ── Actualizar etiqueta del botón toggle ─────────────*/
+function isAllSelected() {
+  return selectedSalones.size === 0 || selectedSalones.size === salonList.length;
+}
+
+function updateSalonToggleLabel() {
+  const label = document.getElementById('salon-toggle-label');
+  const badge = document.getElementById('salon-count-badge');
+  if (isAllSelected() || salonList.length === 0) {
+    label.textContent = 'Todos los salones';
+    badge.classList.remove('visible');
+  } else {
+    const n = selectedSalones.size;
+    label.textContent = n === 1
+      ? (salonList.find(s => selectedSalones.has(s.id))?.nombre || '1 salón')
+      : `${n} salones seleccionados`;
+    badge.textContent = n;
+    badge.classList.add('visible');
+  }
+}
+
+/* ═════════════════════════════════════════════════════
+   3. PERÍODOS RÁPIDOS
+═════════════════════════════════════════════════════ */
+function setPeriod(p, btn) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const now = new Date();
+  let desde, hasta = now.toISOString().slice(0, 10);
+  if      (p === 'today')   { desde = hasta; }
+  else if (p === 'week')    { const d = new Date(now); d.setDate(d.getDate()-6); desde = d.toISOString().slice(0,10); }
+  else if (p === 'month')   { desde = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10); }
+  else if (p === 'quarter') { const d = new Date(now); d.setMonth(d.getMonth()-3); desde = d.toISOString().slice(0,10); }
+  document.getElementById('f-desde').value = desde;
+  document.getElementById('f-hasta').value = hasta;
+}
+
+/* ═════════════════════════════════════════════════════
+   4. GENERAR REPORTE
+   Si no son todos los salones, se envía el parámetro
+   ?salones=id1,id2,id3 al endpoint de Netlify.
+═════════════════════════════════════════════════════ */
+async function runReport() {
+  const desde = document.getElementById('f-desde').value;
+  const hasta = document.getElementById('f-hasta').value;
+  if (!desde || !hasta) { alert('Selecciona el rango de fechas.'); return; }
+
+  const salonesParam = isAllSelected()
+    ? ''
+    : `&salones=${[...selectedSalones].join(',')}`;
+
+  document.getElementById('report-content').innerHTML =
+    '<div class="loading-state"><div class="spinner-sm"></div><p>Generando reporte…</p></div>';
+
+  const r = await fetch(
+    `${BASE}/reportes?desde=${desde}&hasta=${hasta}${salonesParam}`,
+    { headers: { 'x-admin-token': TOKEN } }
+  );
+
+  if (!r.ok) {
+    document.getElementById('report-content').innerHTML =
+      '<div class="loading-state">Error al generar el reporte. Verifica que hayas iniciado sesión en el panel admin primero.</div>';
+    return;
+  }
+
+  reportData = await r.json();
+  renderReport(reportData, desde, hasta);
+}
+
+/* ═════════════════════════════════════════════════════
+   5. RENDERIZAR REPORTE
+═════════════════════════════════════════════════════ */
+function renderReport(d, desde, hasta) {
+  charts.forEach(c => c.destroy());
+  charts = [];
+  const { resumen, por_tipo, por_salon, por_hora, por_dia, ociosidad } = d;
+
+  // Badge de filtro activo (aparece entre KPIs y gráficos)
+  const salonNames = isAllSelected()
+    ? ''
+    : [...selectedSalones]
+        .map(id => salonList.find(s => s.id === id)?.nombre || id)
+        .join(', ');
+  const filterBadgeHtml = isAllSelected() ? '' : `
+    <div class="filter-badge visible">
+      <span>Filtrando por: <strong>${salonNames}</strong></span>
+      <span class="filter-badge-clear" onclick="clearSalonFilter()">✕ Ver todos</span>
+    </div>`;
+
+  document.getElementById('report-content').innerHTML = `
   <div class="kpi-grid">
-    <div class="kpi-card highlight"><div class="kpi-label">Total eventos</div><div class="kpi-value">${resumen.total_eventos}</div><div class="kpi-sub">${desde} → ${hasta}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Salones</div><div class="kpi-value">${resumen.total_salones}</div><div class="kpi-sub">en operación</div></div>
-    <div class="kpi-card"><div class="kpi-label">Días analizados</div><div class="kpi-value">${resumen.dias_analizados}</div><div class="kpi-sub">días calendario</div></div>
-    <div class="kpi-card"><div class="kpi-label">Duración promedio</div><div class="kpi-value">${Math.floor(resumen.duracion_promedio_min/60)}<span style="font-size:18px">h ${resumen.duracion_promedio_min%60}m</span></div><div class="kpi-sub">por evento</div></div>
-    <div class="kpi-card"><div class="kpi-label">Tipo más frecuente</div><div class="kpi-value" style="font-size:20px;padding-top:8px">${resumen.tipo_mas_frecuente}</div><div class="kpi-sub">${por_tipo[resumen.tipo_mas_frecuente]||0} eventos</div></div>
-    <div class="kpi-card"><div class="kpi-label">Salón más activo</div><div class="kpi-value" style="font-size:18px;padding-top:8px">${resumen.salon_mas_activo}</div><div class="kpi-sub">${por_salon[resumen.salon_mas_activo]||0} eventos</div></div>
+    <div class="kpi-card highlight">
+      <div class="kpi-label">Total eventos</div>
+      <div class="kpi-value">${resumen.total_eventos}</div>
+      <div class="kpi-sub">${desde} → ${hasta}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Salones</div>
+      <div class="kpi-value">${resumen.total_salones}</div>
+      <div class="kpi-sub">en operación</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Días analizados</div>
+      <div class="kpi-value">${resumen.dias_analizados}</div>
+      <div class="kpi-sub">días calendario</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Duración promedio</div>
+      <div class="kpi-value">${Math.floor(resumen.duracion_promedio_min/60)}<span style="font-size:18px">h ${resumen.duracion_promedio_min%60}m</span></div>
+      <div class="kpi-sub">por evento</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Tipo más frecuente</div>
+      <div class="kpi-value" style="font-size:20px;padding-top:8px">${resumen.tipo_mas_frecuente || '—'}</div>
+      <div class="kpi-sub">${por_tipo[resumen.tipo_mas_frecuente] || 0} eventos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Salón más activo</div>
+      <div class="kpi-value" style="font-size:18px;padding-top:8px">${resumen.salon_mas_activo || '—'}</div>
+      <div class="kpi-sub">${por_salon[resumen.salon_mas_activo] || 0} eventos</div>
+    </div>
   </div>
+
+  ${filterBadgeHtml}
+
   <div class="charts-grid">
-    <div class="chart-card"><div class="chart-title">Eventos por tipo</div><div class="chart-sub">Distribución de categorías en el período</div><div class="chart-wrap"><canvas id="chart-tipo"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Eventos por salón</div><div class="chart-sub">Utilización de cada salón</div><div class="chart-wrap"><canvas id="chart-salon"></canvas></div></div>
+    <div class="chart-card">
+      <div class="chart-title">Eventos por tipo</div>
+      <div class="chart-sub">Distribución de categorías en el período</div>
+      <div class="chart-wrap"><canvas id="chart-tipo"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Eventos por salón</div>
+      <div class="chart-sub">Utilización de cada salón seleccionado</div>
+      <div class="chart-wrap"><canvas id="chart-salon"></canvas></div>
+    </div>
   </div>
+
   <div class="charts-grid full">
-    <div class="chart-card"><div class="chart-title">Ocupación por hora del día</div><div class="chart-sub">Franja horaria con mayor actividad</div><div class="chart-wrap tall"><canvas id="chart-hora"></canvas></div></div>
+    <div class="chart-card">
+      <div class="chart-title">Ocupación por hora del día</div>
+      <div class="chart-sub">Franja horaria con mayor actividad</div>
+      <div class="chart-wrap tall"><canvas id="chart-hora"></canvas></div>
+    </div>
   </div>
+
   <div class="charts-grid full">
-    <div class="chart-card"><div class="chart-title">Volumen de eventos por día</div><div class="chart-sub">Actividad diaria en el período</div><div class="chart-wrap tall"><canvas id="chart-dia"></canvas></div></div>
+    <div class="chart-card">
+      <div class="chart-title">Volumen de eventos por día</div>
+      <div class="chart-sub">Actividad diaria en el período</div>
+      <div class="chart-wrap tall"><canvas id="chart-dia"></canvas></div>
+    </div>
   </div>
+
   <div class="table-card">
     <div class="chart-title">Ocupación y ociosidad por salón</div>
     <div class="chart-sub" style="margin-bottom:18px">Análisis de días con y sin eventos en el período seleccionado</div>
     <table class="bi-table">
-      <thead><tr><th>Salón</th><th>Eventos</th><th>Días con evento</th><th>Días sin evento</th><th>% Ocupación</th><th>% Ociosidad</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Salón</th><th>Eventos</th>
+          <th>Días con evento</th><th>Días sin evento</th>
+          <th>% Ocupación</th><th>% Ociosidad</th>
+        </tr>
+      </thead>
       <tbody id="ociosidad-tbody"></tbody>
     </table>
   </div>`;
 
-  // Ociosidad table
-  const tbody=document.getElementById('ociosidad-tbody');
-  tbody.innerHTML=Object.entries(ociosidad).sort((a,b)=>b[1].pct_ocupacion-a[1].pct_ocupacion).map(([nombre,o])=>{
-    const pct=o.pct_ocupacion;
-    const bc=pct>=70?'#3B6D11':pct>=30?'#B8962E':'#A0213F';
-    const bCls=pct>=70?'badge-high':pct>=30?'badge-mid':'badge-low';
-    const oCls=o.pct_ociosidad<=30?'badge-high':o.pct_ociosidad<=70?'badge-mid':'badge-low';
-    return `<tr>
-      <td><strong style="font-weight:500">${nombre}</strong></td>
-      <td>${por_salon[nombre]||0}</td>
-      <td>${o.dias_con_evento}</td>
-      <td>${o.dias_sin_evento}</td>
-      <td><div style="display:flex;align-items:center"><div class="occ-bar-wrap"><div class="occ-bar" style="width:${pct}%;background:${bc}"></div></div><span class="badge-pct ${bCls}">${pct}%</span></div></td>
-      <td><span class="badge-pct ${oCls}">${o.pct_ociosidad}%</span></td>
-    </tr>`;
-  }).join('');
+  // Tabla de ociosidad
+  document.getElementById('ociosidad-tbody').innerHTML =
+    Object.entries(ociosidad)
+      .sort((a, b) => b[1].pct_ocupacion - a[1].pct_ocupacion)
+      .map(([nombre, o]) => {
+        const pct  = o.pct_ocupacion;
+        const bc   = pct>=70 ? '#3B6D11' : pct>=30 ? '#B8962E' : '#A0213F';
+        const bCls = pct>=70 ? 'badge-high' : pct>=30 ? 'badge-mid' : 'badge-low';
+        const oCls = o.pct_ociosidad<=30 ? 'badge-high' : o.pct_ociosidad<=70 ? 'badge-mid' : 'badge-low';
+        return `<tr>
+          <td><strong style="font-weight:500">${nombre}</strong></td>
+          <td>${por_salon[nombre]||0}</td>
+          <td>${o.dias_con_evento}</td>
+          <td>${o.dias_sin_evento}</td>
+          <td><div style="display:flex;align-items:center">
+            <div class="occ-bar-wrap"><div class="occ-bar" style="width:${pct}%;background:${bc}"></div></div>
+            <span class="badge-pct ${bCls}">${pct}%</span>
+          </div></td>
+          <td><span class="badge-pct ${oCls}">${o.pct_ociosidad}%</span></td>
+        </tr>`;
+      }).join('');
 
-  const COLORS=['#A0213F','#B8962E','#378ADD','#3B6D11','#9B59B6','#E74C3C','#1D9E75','#888780'];
+  const COLORS = ['#A0213F','#B8962E','#378ADD','#3B6D11','#9B59B6','#E74C3C','#1D9E75','#888780'];
 
-  charts.push(new Chart(document.getElementById('chart-tipo'),{
-    type:'doughnut',
-    data:{labels:Object.keys(por_tipo),datasets:[{data:Object.values(por_tipo),backgroundColor:COLORS,borderWidth:2,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'DM Sans',size:12},boxWidth:12}}}}
+  // Donut — con etiqueta "Sin clasificar" para tipos vacíos
+  charts.push(new Chart(document.getElementById('chart-tipo'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(por_tipo).map(t => t || 'Sin clasificar'),
+      datasets: [{ data: Object.values(por_tipo), backgroundColor: COLORS, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'right', labels:{ font:{family:'DM Sans',size:12}, boxWidth:12 } } } }
   }));
 
-  charts.push(new Chart(document.getElementById('chart-salon'),{
-    type:'bar',
-    data:{labels:Object.keys(por_salon),datasets:[{data:Object.values(por_salon),backgroundColor:'#A0213F',borderRadius:6}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{family:'DM Sans',size:11}}},x:{ticks:{font:{family:'DM Sans',size:10}}}}}
+  // Barras: por salón
+  charts.push(new Chart(document.getElementById('chart-salon'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(por_salon),
+      datasets: [{ data: Object.values(por_salon), backgroundColor: '#A0213F', borderRadius: 6 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1, font:{family:'DM Sans',size:11} } },
+               x:{ ticks:{ font:{family:'DM Sans',size:10} } } } }
   }));
 
-  const horaLabels=Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`);
-  charts.push(new Chart(document.getElementById('chart-hora'),{
-    type:'bar',
-    data:{labels:horaLabels,datasets:[{label:'Eventos',data:por_hora,backgroundColor:por_hora.map(v=>v===Math.max(...por_hora)?'#A0213F':'rgba(160,33,63,.35)'),borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{family:'DM Sans',size:11}}},x:{ticks:{font:{family:'DM Sans',size:10}}}}}
+  // Barras: por hora
+  const horaLabels = Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`);
+  charts.push(new Chart(document.getElementById('chart-hora'), {
+    type: 'bar',
+    data: {
+      labels: horaLabels,
+      datasets: [{ label:'Eventos', data: por_hora,
+        backgroundColor: por_hora.map(v => v===Math.max(...por_hora) ? '#A0213F' : 'rgba(160,33,63,.35)'),
+        borderRadius: 4 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1, font:{family:'DM Sans',size:11} } },
+               x:{ ticks:{ font:{family:'DM Sans',size:10} } } } }
   }));
 
-  const diaKeys=Object.keys(por_dia).sort();
-  charts.push(new Chart(document.getElementById('chart-dia'),{
-    type:'line',
-    data:{labels:diaKeys,datasets:[{label:'Eventos',data:diaKeys.map(k=>por_dia[k]),borderColor:'#A0213F',backgroundColor:'rgba(160,33,63,.1)',fill:true,tension:.3,pointBackgroundColor:'#A0213F',pointRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{family:'DM Sans',size:11}}},x:{ticks:{font:{family:'DM Sans',size:10}}}}}
+  // Línea: por día
+  const diaKeys = Object.keys(por_dia).sort();
+  charts.push(new Chart(document.getElementById('chart-dia'), {
+    type: 'line',
+    data: {
+      labels: diaKeys,
+      datasets: [{ label:'Eventos', data: diaKeys.map(k=>por_dia[k]),
+        borderColor:'#A0213F', backgroundColor:'rgba(160,33,63,.1)',
+        fill:true, tension:.3, pointBackgroundColor:'#A0213F', pointRadius:4 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1, font:{family:'DM Sans',size:11} } },
+               x:{ ticks:{ font:{family:'DM Sans',size:10} } } } }
   }));
 }
 
-function exportExcel(){
-  if(!reportData){alert('Genera un reporte primero.');return;}
-  const wb=XLSX.utils.book_new();
-  const desde=document.getElementById('f-desde').value;
-  const hasta=document.getElementById('f-hasta').value;
+/* ── Limpiar filtro desde el badge ─────────────────── */
+function clearSalonFilter() {
+  selectedSalones.clear();
+  salonList.forEach(s => {
+    selectedSalones.add(s.id);
+    const chk = document.getElementById(`chk-salon-${s.id}`);
+    if (chk) chk.checked = true;
+  });
+  const chkAll = document.getElementById('chk-all');
+  if (chkAll) { chkAll.checked = true; chkAll.indeterminate = false; }
+  updateSalonToggleLabel();
+  runReport();
+}
 
-  const ws1=XLSX.utils.aoa_to_sheet([
+/* ═════════════════════════════════════════════════════
+   6. EXPORTAR EXCEL
+   Incluye la fila "Salones:" con el filtro aplicado.
+═════════════════════════════════════════════════════ */
+function exportExcel() {
+  if (!reportData) { alert('Genera un reporte primero.'); return; }
+  const wb    = XLSX.utils.book_new();
+  const desde = document.getElementById('f-desde').value;
+  const hasta = document.getElementById('f-hasta').value;
+  const filtroLabel = isAllSelected()
+    ? 'Todos los salones'
+    : [...selectedSalones].map(id => salonList.find(s=>s.id===id)?.nombre||id).join(', ');
+
+  const ws1 = XLSX.utils.aoa_to_sheet([
     ['Reporte de Señalización Digital — Marriott Panama'],
-    [`Período: ${desde} al ${hasta}`],[],
+    [`Período: ${desde} al ${hasta}`],
+    [`Salones: ${filtroLabel}`],
+    [],
     ['INDICADOR','VALOR'],
-    ['Total de eventos',reportData.resumen.total_eventos],
-    ['Salones activos',reportData.resumen.total_salones],
-    ['Días analizados',reportData.resumen.dias_analizados],
-    ['Duración promedio (min)',reportData.resumen.duracion_promedio_min],
-    ['Tipo más frecuente',reportData.resumen.tipo_mas_frecuente],
-    ['Salón más activo',reportData.resumen.salon_mas_activo],
+    ['Total de eventos',          reportData.resumen.total_eventos],
+    ['Salones activos',           reportData.resumen.total_salones],
+    ['Días analizados',           reportData.resumen.dias_analizados],
+    ['Duración promedio (min)',    reportData.resumen.duracion_promedio_min],
+    ['Tipo más frecuente',        reportData.resumen.tipo_mas_frecuente||'—'],
+    ['Salón más activo',          reportData.resumen.salon_mas_activo||'—'],
   ]);
   ws1['!cols']=[{wch:30},{wch:20}];
   XLSX.utils.book_append_sheet(wb,ws1,'Resumen');
 
-  const ws2=XLSX.utils.aoa_to_sheet([['TIPO','CANTIDAD'],...Object.entries(reportData.por_tipo)]);
+  const ws2=XLSX.utils.aoa_to_sheet([
+    ['TIPO','CANTIDAD'],
+    ...Object.entries(reportData.por_tipo).map(([t,v])=>[t||'Sin clasificar',v])
+  ]);
   ws2['!cols']=[{wch:20},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws2,'Por Tipo');
 
-  const ws3=XLSX.utils.aoa_to_sheet([['SALÓN','EVENTOS'],...Object.entries(reportData.por_salon)]);
+  const ws3=XLSX.utils.aoa_to_sheet([
+    ['SALÓN','EVENTOS'],
+    ...Object.entries(reportData.por_salon)
+  ]);
   ws3['!cols']=[{wch:25},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws3,'Por Salón');
 
   const ws4=XLSX.utils.aoa_to_sheet([
     ['SALÓN','EVENTOS','DÍAS CON EVENTO','DÍAS SIN EVENTO','% OCUPACIÓN','% OCIOSIDAD'],
-    ...Object.entries(reportData.ociosidad).map(([n,o])=>[n,reportData.por_salon[n]||0,o.dias_con_evento,o.dias_sin_evento,o.pct_ocupacion+'%',o.pct_ociosidad+'%'])
+    ...Object.entries(reportData.ociosidad).map(([n,o])=>[
+      n, reportData.por_salon[n]||0,
+      o.dias_con_evento, o.dias_sin_evento,
+      o.pct_ocupacion+'%', o.pct_ociosidad+'%'
+    ])
   ]);
   ws4['!cols']=[{wch:25},{wch:10},{wch:18},{wch:18},{wch:14},{wch:14}];
   XLSX.utils.book_append_sheet(wb,ws4,'Ocupación y Ociosidad');
 
-  const ws5=XLSX.utils.aoa_to_sheet([['HORA','EVENTOS ACTIVOS'],...reportData.por_hora.map((v,i)=>[`${String(i).padStart(2,'0')}:00`,v])]);
+  const ws5=XLSX.utils.aoa_to_sheet([
+    ['HORA','EVENTOS ACTIVOS'],
+    ...reportData.por_hora.map((v,i)=>[`${String(i).padStart(2,'0')}:00`,v])
+  ]);
   ws5['!cols']=[{wch:12},{wch:18}];
   XLSX.utils.book_append_sheet(wb,ws5,'Por Hora');
 
   const ws6=XLSX.utils.aoa_to_sheet([
     ['FECHA','SALÓN','EVENTO','TIPO','HORA INICIO','HORA FIN'],
-    ...reportData.eventos_raw.map(e=>[e.fecha,e.salones?.nombre||'',e.nombre,e.tipo,e.hora_inicio.slice(0,5),e.hora_fin.slice(0,5)])
+    ...reportData.eventos_raw.map(e=>[
+      e.fecha, e.salones?.nombre||'', e.nombre,
+      e.tipo||'Sin clasificar',
+      e.hora_inicio.slice(0,5), e.hora_fin.slice(0,5)
+    ])
   ]);
   ws6['!cols']=[{wch:12},{wch:20},{wch:35},{wch:15},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws6,'Detalle Eventos');
 
-  XLSX.writeFile(wb,`DigiSign_BI_${desde}_${hasta}.xlsx`);
+  const slug = isAllSelected() ? 'todos' : `${selectedSalones.size}-salones`;
+  XLSX.writeFile(wb,`DigiSign_BI_${desde}_${hasta}_${slug}.xlsx`);
 }
 
-window.addEventListener('load',()=>{
-  const now=new Date();
-  document.getElementById('f-desde').value=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);
-  document.getElementById('f-hasta').value=now.toISOString().slice(0,10);
+/* ═════════════════════════════════════════════════════
+   7. INIT
+═════════════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  const now = new Date();
+  document.getElementById('f-desde').value =
+    new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  document.getElementById('f-hasta').value = now.toISOString().slice(0,10);
+  loadSalones();
 });
 </script>
 </body>
 </html>
-
